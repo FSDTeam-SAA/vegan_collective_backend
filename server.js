@@ -7,6 +7,15 @@ const PORT = process.env.PORT || 3001;
 
 app.use(express.json());
 
+const userRoute = require("./routes/user.routes.js");
+const reviewRoute = require("./routes/review.routes.js");
+
+
+app.use("/api", userRoute);
+app.use("/api", reviewRoute);
+
+
+
 app.get("/", (req, res) => {
   res.status(201).json({
     status: true,
