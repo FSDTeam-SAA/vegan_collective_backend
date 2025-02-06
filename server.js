@@ -27,6 +27,9 @@ const professionalInfo = require("./routes/professionalInfo.routes.js");
 const professionalPolicies = require("./routes/professionalPolicies.routes.js");
 const professionalServices = require("./routes/professionalServices.routes.js");
 const salesManagement = require("./routes/salesManagement.routes.js");
+const vendorManagement = require("./routes/vendorManagement.routes.js");
+const vendorVerification = require("./routes/vendorVerification.routes.js");
+const founderSupportandHelp = require("./routes/founderSupportandHelp.routes.js");
 
 app.use("/api/v1", userRoute);
 app.use("/api/v1", reviewRoute);
@@ -48,6 +51,9 @@ app.use("/api/v1", professionalInfo);
 app.use("/api/v1", professionalPolicies);
 app.use("/api/v1", professionalServices);
 app.use("/api/v1", salesManagement);
+app.use("/api/v1", vendorManagement);
+app.use("/api/v1", vendorVerification);
+app.use("/api/v1", founderSupportandHelp);
 
 
 
