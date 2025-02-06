@@ -7,14 +7,15 @@ const customerCommunicationSchema = new mongoose.Schema(
       ref: 'Merchantinfo',
       required: true,
     },
-    title: {
+    emailAddress: {
       type: String,
-      required: true,
     },
-    url: {
+    whatsappLink: {
       type: String,
-      required: true,
-    }
+    },
+    messangerLink: {
+      type: String,
+    },
   },
   {
     timestamps: true,
