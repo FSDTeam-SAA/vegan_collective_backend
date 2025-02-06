@@ -7,6 +7,11 @@ const userSchema = new mongoose.Schema(
       enum : ["customer", "vendor"],
       required: true,
     },
+    accountType: {
+      type: String,
+      enum : ["merchant", "professional", "organization"],
+      required: true,
+    },
     fullName: {
       type: String,
       required: true,
