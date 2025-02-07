@@ -14,7 +14,6 @@ const userSignup = async (req, res)=>{
     } = req.body;
     try {
        
-
         const existingUser = await User.findOne({ email });
         if (existingUser) {
             return res.status(400).json({
@@ -34,7 +33,6 @@ const userSignup = async (req, res)=>{
            image,
            verifyEmail: false,
          })
-         console.log(process.env.JWT_SECRET)
 
          // generate a verify token
          const verifyToken = jwt.sign(
@@ -44,12 +42,41 @@ const userSignup = async (req, res)=>{
          )
          
          // send the verify email
+        // const mailOption = {
+        //   from: process.env.EMAIL_USER,
+        //   to: email,
+        //   subject: 'Verify your email___',
+        //   html: `<p>Please click the following link to verify your email:</p>
+        //  <a href="http://localhost:8001/api/v1/verify-email?token=${verifyToken}">Verify Email</a>`,
+        // }
         const mailOption = {
           from: process.env.EMAIL_USER,
           to: email,
-          subject: 'Verify your email___',
-          html: `<p>Please click the following link to verify your email:</p>
-         <a href="http://localhost:8001/api/v1/verify-email?token=${verifyToken}">Verify Email</a>`,
+          subject: 'Verify Your Email - Vegan Collective',
+          html: `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9f9f9;">
+      <h1 style="color: #2c5282; text-align: center;">Welcome to Vegan Collective!</h1>
+      <div style="background-color: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+        <p style="color: #4a5568; font-size: 16px; line-height: 1.6;">Thank you for joining us! Please verify your email address by clicking the button below:</p>
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="http://localhost:8001/api/v1/verify-email?token=${verifyToken}" 
+             style="background-color: #48bb78; 
+                    color: white; 
+                    padding: 12px 30px; 
+                    text-decoration: none; 
+                    border-radius: 5px; 
+                    font-weight: bold;
+                    display: inline-block;
+                    text-transform: uppercase;
+                    letter-spacing: 1px;
+                    transition: background-color 0.3s ease;">
+            Verify Email
+          </a>
+        </div>
+        <p style="color: #718096; font-size: 14px; text-align: center;">If you didn't create an account, please ignore this email.</p>
+      </div>
+    </div>
+  `,
         }
 
          await sendEmail(mailOption)
@@ -70,7 +97,6 @@ const userSignup = async (req, res)=>{
 
 const verifyEmail = async (req,res)=>{
     const { token } = req.query
-    console.log("this is the token__",token)
 
     try {
         // verify the token
