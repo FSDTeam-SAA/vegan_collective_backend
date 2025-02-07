@@ -1,13 +1,15 @@
 const express = require("express");
 const dbConnection = require("./dbConfig/dbConnection");
 const dotenv = require("dotenv").config();
-const cookieParser = require('cookie-parser')
+const cookieParser = require("cookie-parser");
+const cors = require("cors");
 
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-app.use(cookieParser())
+app.use(cookieParser());
 app.use(express.json());
+app.use(cors({ origin: "*" }));
 
 const userRoute = require("./routes/user.routes.js");
 const reviewRoute = require("./routes/review.routes.js");
@@ -57,16 +59,12 @@ app.use("/api/v1", vendorManagement);
 app.use("/api/v1", vendorVerification);
 app.use("/api/v1", founderSupportandHelp);
 
-
-
-
-
 app.get("/api/v1/", (req, res) => {
   res.status(201).json({
     status: true,
-    message: "Welcome to Vegan Collective"
+    message: "Welcome to Vegan Collective",
   });
-})
+});
 
 app.listen(PORT, async () => {
   await dbConnection();
