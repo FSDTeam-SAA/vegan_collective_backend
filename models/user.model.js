@@ -11,15 +11,15 @@ const userSchema = new mongoose.Schema(
       type: String,
       enum : ["merchant", "professional", "organization"],
       required: true,
-    },
-    fullName: {
+    }, 
+    fullName: { 
       type: String,
       required: true,
     },
     email: {
       type: String,
       required: true,
-      unique: true,
+      unique: true, 
     },
     password: {
       type: String,
