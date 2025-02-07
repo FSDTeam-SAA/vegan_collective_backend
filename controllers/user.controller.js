@@ -41,14 +41,6 @@ const userSignup = async (req, res)=>{
            { expiresIn: '30d' }
          )
          
-         // send the verify email
-        // const mailOption = {
-        //   from: process.env.EMAIL_USER,
-        //   to: email,
-        //   subject: 'Verify your email___',
-        //   html: `<p>Please click the following link to verify your email:</p>
-        //  <a href="http://localhost:8001/api/v1/verify-email?token=${verifyToken}">Verify Email</a>`,
-        // }
         const mailOption = {
           from: process.env.EMAIL_USER,
           to: email,
@@ -131,7 +123,86 @@ const verifyEmail = async (req,res)=>{
     }
 }
 
+const loginUser = async (req, res) => {
+  const { email, password } = req.body
+
+  try {
+    const user = await User.findOne({ email })
+    if (!user) {
+      return res.status(404).json({
+        status: false,
+        message: 'User not found',
+      })
+    }
+
+    // Validate the password
+    const isPasswordValid = await bcrypt.compare(password, user.password)
+    if (!isPasswordValid) {
+      return res.status(401).json({
+        status: false,
+        message: 'Invalid password',
+      })
+    }
+
+    // Check if the email is verified
+    if (!user.verifyEmail) {
+      return res.status(401).json({
+        status: false,
+        message: 'Email not verified. Please verify your email to log in.',
+      })
+    }
+
+    // Generate a JWT token
+    const token = jwt.sign(
+      { userId: user._id },
+      process.env.JWT_SECRET || 'thisisasecret',
+      {
+        expiresIn: '30d',
+      }
+    )
+
+    // Set the token in a cookie
+    res.cookie('token', token, {
+      httpOnly: true, 
+      secure: process.env.NODE_ENV === 'production', 
+      sameSite: 'strict',
+      maxAge: 24 * 60 * 60 * 1000, 
+    })
+
+    // Respond with success message and user data
+    res.status(200).json({
+      status: true,
+      message: 'User logged in successfully',
+      user: {
+        _id: user._id,
+        fullName: user.fullName,
+        email: user.email,
+        accountType: user.accountType,
+        joinAs: user.joinAs,
+        image: user.image,
+      },
+    })
+  } catch (error) {
+    console.error('Error during login:', error)
+    res.status(500).json({
+      status: false,
+      message: 'Something went wrong',
+      error: error.message,
+    })
+  }
+}
+
+const logoutUser = (req, res) => {
+  res.clearCookie('token')
+  res.status(200).json({
+    status: true,
+    message: 'User logged out successfully',
+  })
+}
+
 module.exports = {
   userSignup,
   verifyEmail,
+  loginUser,
+  logoutUser,
 }
