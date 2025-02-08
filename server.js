@@ -31,9 +31,18 @@ const professionalInfo = require("./routes/professionalInfo.routes.js");
 const professionalPolicies = require("./routes/professionalPolicies.routes.js");
 const professionalServices = require("./routes/professionalServices.routes.js");
 const salesManagement = require("./routes/salesManagement.routes.js");
-const vendorManagement = require("./routes/vendorManagement.routes.js");
-const vendorVerification = require("./routes/vendorVerification.routes.js");
+const vendorManagement = require("./routes/founderVendorManagement.routes.js");
+const vendorVerification = require("./routes/founderVendorVerification.routes.js");
 const founderSupportandHelp = require("./routes/founderSupportandHelp.routes.js");
+const userBookingManagement = require("./routes/userBookingManagement.routes.js");
+const userWishlistManagement = require("./routes/userWishlistManagement.routes.js");
+const userProductOrderManagement = require("./routes/userProductOrderManagement.routes.js");
+const userVolunteerManagement = require("./routes/userVolunteerManagement.routes.js");
+const userSupportandHelp = require("./routes/userSupportandHelp.routes.js");
+const organizationFundraisingManagement = require("./routes/organizationFundraisingManagement.routes.js");
+const organizationEventManagement = require("./routes/organizationEventManagement.routes.js");
+const organizationHelpAndSupport = require("./routes/organizationHelpAndSupport.routes.js");
+const organizationGoLive = require("./routes/organizationGoLive.routes.js");
 
 app.use("/api/v1", userRoute);
 app.use("/api/v1", reviewRoute);
@@ -58,6 +67,15 @@ app.use("/api/v1", salesManagement);
 app.use("/api/v1", vendorManagement);
 app.use("/api/v1", vendorVerification);
 app.use("/api/v1", founderSupportandHelp);
+app.use("/api/v1", userBookingManagement);
+app.use("/api/v1", userWishlistManagement);
+app.use("/api/v1", userProductOrderManagement);
+app.use("/api/v1", userSupportandHelp);
+app.use("/api/v1", userVolunteerManagement);
+app.use("/api/v1", organizationFundraisingManagement);
+app.use("/api/v1", organizationEventManagement);
+app.use("/api/v1", organizationHelpAndSupport);
+app.use("/api/v1", organizationGoLive);
 
 app.get("/api/v1/", (req, res) => {
   res.status(201).json({
@@ -68,5 +86,5 @@ app.get("/api/v1/", (req, res) => {
 
 app.listen(PORT, async () => {
   await dbConnection();
-  console.log(`server is running at http://localhost:${PORT}`);
+  console.log(`server is running at http://localhost:${PORT}/api/v1`);
 });

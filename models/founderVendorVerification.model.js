@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-const vendorVerificationSchema = new mongoose.Schema(
+const founderVendorVerificationSchema = new mongoose.Schema(
   {
     vendorID: {
       type: mongoose.Types.ObjectId,
@@ -28,5 +28,5 @@ const vendorVerificationSchema = new mongoose.Schema(
   }
 );
 
-const Vendorverification = mongoose.model("Vendorverification", vendorVerificationSchema);
-module.exports = Vendorverification;
+const Foundervendorverification = mongoose.model("Foundervendorverification", founderVendorVerificationSchema);
+module.exports = Foundervendorverification;
