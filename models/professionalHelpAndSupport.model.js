@@ -9,6 +9,7 @@ const professionalHelpAndSupportSchema = new mongoose.Schema(
     },
     slug:{
       type: String,
+      unique: true,
     },
     subject: {
       type: String,
@@ -21,6 +22,7 @@ const professionalHelpAndSupportSchema = new mongoose.Schema(
     status:{
       type: String,
       enum:["resolved","in progress","pending"],
+      default: "pending"
     }
   },
   {

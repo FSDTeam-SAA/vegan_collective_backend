@@ -20,7 +20,7 @@ const professionalClientInteractionSchema = new mongoose.Schema(
       type: Date,
     },
     time: {
-      type: Date,
+      type: String,
     },
     status:{
       type: String,
