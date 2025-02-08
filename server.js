@@ -43,8 +43,10 @@ const organizationFundraisingManagement = require("./routes/organizationFundrais
 const organizationEventManagement = require("./routes/organizationEventManagement.routes.js");
 const organizationHelpAndSupport = require("./routes/organizationHelpAndSupport.routes.js");
 const organizationGoLive = require("./routes/organizationGoLive.routes.js");
+const authRoutes = require('./routes/auth.Routes.js');
 
 app.use("/api/v1", userRoute);
+app.use("/api/v1", authRoutes);
 app.use("/api/v1", reviewRoute);
 app.use("/api/v1", customerCommunication);
 app.use("/api/v1", delivaryManagement);
