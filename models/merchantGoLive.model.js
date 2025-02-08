@@ -1,13 +1,13 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
 const merchantGoLiveSchema = new mongoose.Schema(
   {
     user: {
       type: mongoose.Types.ObjectId,
-      ref: 'Merchantinfo',
+      ref: "Merchantinfo",
       required: true,
     },
-    eventTitle:{
+    eventTitle: {
       type: String,
       requried: true,
     },
@@ -15,19 +15,19 @@ const merchantGoLiveSchema = new mongoose.Schema(
       type: String,
     },
     date: {
-      type: Date,
-      requried: true,
-    },
-    time:{
-      type: Date,
-      requried: true,
-    },
-    eventType:{
       type: String,
-      enum: ["paid event","free event"],
-      required: true
+      requried: true,
     },
-    price:{
+    time: {
+      type: String,
+      requried: true,
+    },
+    eventType: {
+      type: String,
+      enum: ["paid event", "free event"],
+      required: true,
+    },
+    price: {
       type: Number,
     },
   },
