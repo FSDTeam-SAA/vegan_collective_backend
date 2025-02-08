@@ -138,33 +138,6 @@ const updateProfessionalInfo = async (req, res) => {
 };
 
 // delete professional info
-// const deleteProfessionalInfo = async (req, res) => {
-//   try {
-//     const { id } = req.params;
-
-//     const professionalInfoFound = await Professionalinfo.findById(id);
-//     if (!professionalInfoFound) {
-//       return res
-//         .status(404)
-//         .json({ status: false, message: "no professional info exists" });
-//     }
-
-//     await Professionalinfo.findByIdAndDelete({ _id: id });
-
-//     return res.status(200).json({
-//       status: true,
-//       message: "professional info deleted successfully",
-//       data: null,
-//     });
-//   } catch (error) {
-//     return res.status(500).json({
-//       status: false,
-//       message: "internal server error",
-//       data: error.message,
-//     });
-//   }
-// };
-
 const deleteProfessionalInfo = async (req, res) => {
   try {
     const { id } = req.params;
@@ -174,10 +147,12 @@ const deleteProfessionalInfo = async (req, res) => {
         .status(404)
         .json({ status: false, message: "no professional info exist" });
     }
-    await Professionalinfo.findByIdAndDelete(id);
-    return res
-      .status(200)
-      .json({ status: true, message: "professional info deleted" });
+    await Professionalinfo.findByIdAndDelete({ _id: id });
+    return res.status(200).json({
+      status: true,
+      message: "professional info deleted successfuly",
+      data: null,
+    });
   } catch (error) {
     return res.status(500).json({
       status: false,

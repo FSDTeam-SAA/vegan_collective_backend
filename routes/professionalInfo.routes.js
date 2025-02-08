@@ -13,6 +13,12 @@ router
   .post(createProfessionalInfo)
   .get(getAllProfessionalInfo);
 
+// router
+//   .route("/professional-info/:id")
+//   .get(getSpecificProfessionalInfo)
+//   .put(updateProfessionalInfo)
+//   .delete(deleteProfessionalInfo);
+
 router
   .route("/professional-info/:id")
   .get(getSpecificProfessionalInfo)
