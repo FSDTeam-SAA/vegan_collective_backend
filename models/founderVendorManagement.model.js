@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-const vendorManagementSchema = new mongoose.Schema(
+const founderVendorManagementSchema = new mongoose.Schema(
   {
     vendorID: {
       type: mongoose.Types.ObjectId,
@@ -25,5 +25,5 @@ const vendorManagementSchema = new mongoose.Schema(
   }
 );
 
-const Vendormanagement = mongoose.model("Vendormanagement", vendorManagementSchema);
-module.exports = Vendormanagement;
+const Foundervendormanagement = mongoose.model("Foundervendormanagement", founderVendorManagementSchema);
+module.exports = Foundervendormanagement;

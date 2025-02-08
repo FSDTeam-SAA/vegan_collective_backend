@@ -1,51 +1,51 @@
 const User = require("../models/user.model");
 const bcrypt = require("bcrypt");
 const jwt = require('jsonwebtoken')
-const { sendEmail } = require("../utility/emailSender"); 
+const { sendEmail } = require("../utility/emailSender");
 
-const userSignup = async (req, res)=>{
-    const {
-        joinAs,
-        accountType,
-        fullName,
-        email,
-        password,
-        image,
-    } = req.body;
-    try {
-       
-        const existingUser = await User.findOne({ email });
-        if (existingUser) {
-            return res.status(400).json({
-              status: false,
-              message: 'User already exists',
-            })
-        }
+const userSignup = async (req, res) => {
+  const {
+    joinAs,
+    accountType,
+    fullName,
+    email,
+    password,
+    image,
+  } = req.body;
+  try {
 
-        // Hash the password
-        const hashPassword = await bcrypt.hash(password, 10) 
-         const user = await User.create({
-           joinAs,
-           accountType,
-           fullName,
-           email,
-           password : hashPassword,
-           image,
-           verifyEmail: false,
-         })
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({
+        status: false,
+        message: 'User already exists',
+      })
+    }
 
-         // generate a verify token
-         const verifyToken = jwt.sign(
-           { userId: user._id },
-           process.env.JWT_SECRETE || 'thisisasecret',
-           { expiresIn: '30d' }
-         )
-         
-        const mailOption = {
-          from: process.env.EMAIL_USER,
-          to: email,
-          subject: 'Verify Your Email - Vegan Collective',
-          html: `
+    // Hash the password
+    const hashPassword = await bcrypt.hash(password, 10)
+    const user = await User.create({
+      joinAs,
+      accountType,
+      fullName,
+      email,
+      password: hashPassword,
+      image,
+      verifyEmail: false,
+    })
+
+    // generate a verify token
+    const verifyToken = jwt.sign(
+      { userId: user._id },
+      process.env.JWT_SECRETE || 'thisisasecret',
+      { expiresIn: '30d' }
+    )
+
+    const mailOption = {
+      from: process.env.EMAIL_USER,
+      to: email,
+      subject: 'Verify Your Email - Vegan Collective',
+      html: `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9f9f9;">
       <h1 style="color: #2c5282; text-align: center;">Welcome to Vegan Collective!</h1>
       <div style="background-color: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
@@ -69,58 +69,58 @@ const userSignup = async (req, res)=>{
       </div>
     </div>
   `,
-        }
-
-         await sendEmail(mailOption)
-
-        res.status(201).json({
-            status: true,
-            message: "User created successfully. Please check your email to verify your account.",
-            user,
-        });
-    } catch (error) {
-        res.status(500).json({
-          status: false,
-          message: 'Something went wrong',
-          error: error.message,
-        })
     }
+
+    await sendEmail(mailOption)
+
+    res.status(201).json({
+      status: true,
+      message: "User created successfully. Please check your email to verify your account.",
+      user,
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: false,
+      message: 'Something went wrong',
+      error: error.message,
+    })
+  }
 }
 
-const verifyEmail = async (req,res)=>{
-    const { token } = req.query
+const verifyEmail = async (req, res) => {
+  const { token } = req.query
 
-    try {
-        // verify the token
-        const decoded = jwt.verify(
-          token,
-          process.env.JWT_SECRETE || 'thisisasecret'
-        )
-        const userId = decoded.userId
+  try {
+    // verify the token
+    const decoded = jwt.verify(
+      token,
+      process.env.JWT_SECRETE || 'thisisasecret'
+    )
+    const userId = decoded.userId
 
-        // update the verifyEmail 
-        const user = await User.findByIdAndUpdate(userId, {verifyEmail: true}, {new: true})
-        console.log(user)
-        if(!user){
-            return res.status(404).json({
-                status: false,
-                message: 'User not found',
-            })
+    // update the verifyEmail 
+    const user = await User.findByIdAndUpdate(userId, { verifyEmail: true }, { new: true })
+    console.log(user)
+    if (!user) {
+      return res.status(404).json({
+        status: false,
+        message: 'User not found',
+      })
 
-        }
-
-         res.redirect(
-           `${process.env.FONTEND_URL}/profile-setup?type=${user.accountType}`
-         )
-         console.log('this is the user', user.accountType)
-
-    } catch (error) {
-        res.status(500).json({
-            status: false,
-            message: 'Something went wrong',
-            error: error.message,
-        })
     }
+
+    res.redirect(
+      `${process.env.FONTEND_URL}/profile-setup?type=${user.accountType}`
+    )
+    console.log('this is the user', user.accountType)
+
+  } catch (error) {
+    res.status(500).json({
+      status: false,
+      message: 'Something went wrong',
+      error: error.message,
+    })
+  }
 }
 
 const loginUser = async (req, res) => {
@@ -163,10 +163,10 @@ const loginUser = async (req, res) => {
 
     // Set the token in a cookie
     res.cookie('token', token, {
-      httpOnly: true, 
-      secure: process.env.NODE_ENV === 'production', 
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
-      maxAge: 24 * 60 * 60 * 1000, 
+      maxAge: 24 * 60 * 60 * 1000,
     })
 
     // Respond with success message and user data
