@@ -17,9 +17,9 @@ exports.createReview = async (req, res) => {
         });
 
         await review.save();
-        res.status(201).json({ status: true, message: "Review created successfully.", review });
+        return res.status(201).json({ status: true, message: "Review created successfully.", data : review });
     } catch (error) {
-        res.status(500).json({ status: false, message: "Error creating review.", error: error.message });
+        return res.status(500).json({ status: false, message: "Error creating review.", error: error.message });
     }
 };
 
@@ -27,9 +27,9 @@ exports.createReview = async (req, res) => {
 exports.getAllReviews = async (req, res) => {
     try {
         const reviews = await Review.find().populate('user', 'username email'); // Populate user details
-        res.status(200).json({ status: true, reviews });
+        return res.status(200).json({ status: true, data: reviews });
     } catch (error) {
-        res.status(500).json({ status: false, message: "Error fetching reviews.", error: error.message });
+        return res.status(500).json({ status: false, message: "Error fetching reviews.", error: error.message });
     }
 };
 
@@ -40,9 +40,9 @@ exports.getReviewById = async (req, res) => {
         if (!review) {
             return res.status(404).json({ status: false, message: "Review not found." });
         }
-        res.status(200).json({ status: true, review });
+        return res.status(200).json({ status: true, data: review });
     } catch (error) {
-        res.status(500).json({ status: false, message: "Error fetching review.", error: error.message });
+        return res.status(500).json({ status: false, message: "Error fetching review.", error: error.message });
     }
 };
 
@@ -59,9 +59,9 @@ exports.updateReview = async (req, res) => {
         if (!review) {
             return res.status(404).json({ status: false, message: "Review not found." });
         }
-        res.status(200).json({ status: true, message: "Review updated successfully.", review });
+        return res.status(200).json({ status: true, message: "Review updated successfully.", data: review });
     } catch (error) {
-        res.status(500).json({ status: false, message: "Error updating review.", error: error.message });
+        return res.status(500).json({ status: false, message: "Error updating review.", error: error.message });
     }
 };
 
@@ -72,8 +72,8 @@ exports.deleteReview = async (req, res) => {
         if (!review) {
             return res.status(404).json({ status: false, message: "Review not found." });
         }
-        res.status(200).json({ status: true, message: "Review deleted successfully." });
+        return res.status(200).json({ status: true, message: "Review deleted successfully." });
     } catch (error) {
-        res.status(500).json({ status: false, message: "Error deleting review.", error: error.message });
+        return res.status(500).json({ status: false, message: "Error deleting review.", error: error.message });
     }
 };

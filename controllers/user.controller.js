@@ -73,13 +73,13 @@ const userSignup = async (req, res) => {
 
     await sendEmail(mailOption)
 
-    res.status(201).json({
+    return res.status(201).json({
       status: true,
       message: "User created successfully. Please check your email to verify your account.",
-      user,
+      data: user,
     });
   } catch (error) {
-    res.status(500).json({
+    return res.status(500).json({
       status: false,
       message: 'Something went wrong',
       error: error.message,
@@ -115,7 +115,7 @@ const verifyEmail = async (req, res) => {
     console.log('this is the user', user.accountType)
 
   } catch (error) {
-    res.status(500).json({
+    return res.status(500).json({
       status: false,
       message: 'Something went wrong',
       error: error.message,
@@ -170,7 +170,7 @@ const loginUser = async (req, res) => {
     })
 
     // Respond with success message and user data
-    res.status(200).json({
+    return res.status(200).json({
       status: true,
       message: 'User logged in successfully',
       user: {
@@ -184,7 +184,7 @@ const loginUser = async (req, res) => {
     })
   } catch (error) {
     console.error('Error during login:', error)
-    res.status(500).json({
+    return res.status(500).json({
       status: false,
       message: 'Something went wrong',
       error: error.message,
@@ -194,7 +194,7 @@ const loginUser = async (req, res) => {
 
 const logoutUser = (req, res) => {
   res.clearCookie('token')
-  res.status(200).json({
+  return res.status(200).json({
     status: true,
     message: 'User logged out successfully',
   })

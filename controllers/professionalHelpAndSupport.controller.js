@@ -55,14 +55,14 @@ exports.createTicket = async (req, res) => {
 
     await newTicket.save();
 
-    res.status(201).json({
+    return res.status(201).json({
       success: true,
       message: "Ticket created successfully.",
       data: newTicket,
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: "Internal server error.",
     });
@@ -77,14 +77,14 @@ exports.getAllTickets = async (req, res) => {
       select: "_id user organizationName verificationStatus" // Only necessary fields
     });
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       message: "Tickets retrieved successfully.",
       data: tickets,
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: "Internal server error.",
     });
@@ -116,14 +116,14 @@ exports.getTicketById = async (req, res) => {
       });
     }
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       message: "Ticket retrieved successfully.",
       data: ticket,
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: "Internal server error.",
     });
@@ -166,14 +166,14 @@ exports.updateTicketStatus = async (req, res) => {
       });
     }
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       message: "Ticket status updated successfully.",
       data: updatedTicket,
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: "Internal server error.",
     });
@@ -202,13 +202,13 @@ exports.deleteTicket = async (req, res) => {
       });
     }
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       message: "Ticket deleted successfully.",
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: "Internal server error.",
     });
