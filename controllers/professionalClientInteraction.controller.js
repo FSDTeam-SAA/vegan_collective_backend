@@ -8,13 +8,19 @@ exports.createInteraction = async (req, res) => {
 
         // Ensure required fields are present
         if (!client || !professionalID || !service) {
-            return res.status(400).json({ message: "Client, professionalID, and service are required." });
+            return res.status(400).json({ 
+                status: false,
+                message: "Client, professionalID, and service are required." 
+            });
         }
 
         // Validate professionalID exists in the database
         const professionalExists = await Professionalinfo.findById(professionalID);
         if (!professionalExists) {
-            return res.status(400).json({ message: "Invalid professionalID. Professional does not exist." });
+            return res.status(400).json({ 
+                status:false,
+                message: "Invalid professionalID. Professional does not exist." 
+            });
         }
 
         // Create the interaction
@@ -29,9 +35,16 @@ exports.createInteraction = async (req, res) => {
 
         // Save to the database
         const savedInteraction = await newInteraction.save();
-        res.status(201).json(savedInteraction);
+        return res.status(201).json({
+            status: true,
+            data: savedInteraction,
+        });
     } catch (error) {
-        res.status(500).json({ message: "Error creating interaction.", error: error.message });
+        return res.status(500).json({ 
+            status: false,
+            message: "Error creating interaction.", 
+            data: error.message 
+        });
     }
 };
 
@@ -42,9 +55,16 @@ exports.getAllInteractions = async (req, res) => {
             .populate('client', 'name email') // Populate client details
             .populate('professionalID', 'name specialty'); // Populate professional details
 
-        res.status(200).json(interactions);
+        return res.status(200).json({
+            status: true,
+            data: interactions
+        });
     } catch (error) {
-        res.status(500).json({ message: "Error fetching interactions.", error: error.message });
+        return res.status(500).json({ 
+            status: false,
+            message: "Error fetching interactions.", 
+            data: error.message 
+        });
     }
 };
 
@@ -57,12 +77,18 @@ exports.updateInteraction = async (req, res) => {
         // Fetch the existing interaction
         const existingInteraction = await Professionalclientinteraction.findById(id);
         if (!existingInteraction) {
-            return res.status(404).json({ message: "Interaction not found." });
+            return res.status(404).json({ 
+                status: false,
+                message: "Interaction not found." 
+            });
         }
 
         // Prevent modification of `client` and `professionalID`
         if (req.body.client || req.body.professionalID) {
-            return res.status(400).json({ message: "Client and professionalID cannot be modified." });
+            return res.status(400).json({ 
+                status: false,
+                message: "Client and professionalID cannot be modified." 
+            });
         }
 
         // Only allow updating `status`
@@ -72,9 +98,16 @@ exports.updateInteraction = async (req, res) => {
             { new: true }
         );
 
-        res.status(200).json(updatedInteraction);
+        return res.status(200).json({
+            status: true,
+            data: updatedInteraction
+        });
     } catch (error) {
-        res.status(500).json({ message: "Error updating interaction.", error: error.message });
+        return res.status(500).json({ 
+            status:false,
+            message: "Error updating interaction.", 
+            data: error.message 
+        });
     }
 };
 
@@ -85,11 +118,21 @@ exports.deleteInteraction = async (req, res) => {
 
         const deletedInteraction = await Professionalclientinteraction.findByIdAndDelete(id);
         if (!deletedInteraction) {
-            return res.status(404).json({ message: "Interaction not found." });
+            return res.status(404).json({ 
+                status: false,
+                message: "Interaction not found." 
+            });
         }
 
-        res.status(200).json({ message: "Interaction deleted successfully." });
+        return res.status(200).json({ 
+            status:true,
+            message: "Interaction deleted successfully." 
+        });
     } catch (error) {
-        res.status(500).json({ message: "Error deleting interaction.", error: error.message });
+        return res.status(500).json({ 
+            status:false,
+            message: "Error deleting interaction.", 
+            data: error.message 
+        });
     }
 };

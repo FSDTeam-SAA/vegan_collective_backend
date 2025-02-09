@@ -31,14 +31,14 @@ exports.createFAQ = async (req, res) => {
     });
 
     const savedFAQ = await newFAQ.save();
-    res.status(201).json({
+    return res.status(201).json({
       status: true,
       message: "FAQ created successfully",
       data: savedFAQ,
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({
+    return res.status(500).json({
       status: false,
       message: "Internal server error",
     });
@@ -49,14 +49,14 @@ exports.createFAQ = async (req, res) => {
 exports.getAllFAQs = async (req, res) => {
   try {
     const faqs = await Professionalfaq.find().populate('professionalID');
-    res.status(200).json({
+    return res.status(200).json({
       status: true,
       message: "FAQs retrieved successfully",
       data: faqs,
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({
+    return res.status(500).json({
       status: false,
       message: "Internal server error",
     });
@@ -73,14 +73,14 @@ exports.getFAQById = async (req, res) => {
         message: "FAQ not found",
       });
     }
-    res.status(200).json({
+    return res.status(200).json({
       status: true,
       message: "FAQ retrieved successfully",
       data: faq,
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({
+    return res.status(500).json({
       status: false,
       message: "Internal server error",
     });
@@ -108,14 +108,14 @@ exports.updateFAQ = async (req, res) => {
       { new: true }
     );
 
-    res.status(200).json({
+    return res.status(200).json({
       status: true,
       message: "FAQ updated successfully",
       data: updatedFAQ,
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({
+    return res.status(500).json({
       status: false,
       message: "Internal server error",
     });
@@ -133,13 +133,13 @@ exports.deleteFAQ = async (req, res) => {
       });
     }
 
-    res.status(200).json({
+    return res.status(200).json({
       status: true,
       message: "FAQ deleted successfully",
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({
+    return res.status(500).json({
       status: false,
       message: "Internal server error",
     });

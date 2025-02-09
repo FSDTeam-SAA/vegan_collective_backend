@@ -6,9 +6,16 @@ const
 getProfessionalServices = async (req, res) => {
     try {
       const professionalServices = await ProfessionalServices.find().populate('user'); // Populate the `user` field
-      res.status(200).json(professionalServices);
+      return res.status(200).json({
+        status: true,
+        data: professionalServices
+      });
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch professional services", error });
+      return res.status(500).json({ 
+        status:false,
+        message: "Failed to fetch professional services", 
+        data:error 
+      });
     }
   };
 
@@ -18,11 +25,21 @@ getProfessionalServices = async (req, res) => {
     try {
       const professionalService = await ProfessionalServices.findById(id).populate('user'); // Populate the `user` field
       if (!professionalService) {
-        return res.status(404).json({ message: "Professional service not found" });
+        return res.status(404).json({ 
+          status:false,
+          message: "Professional service not found" 
+        });
       }
-      res.status(200).json(professionalService);
+      return res.status(200).json({
+        status: true,
+        data: professionalService
+      });
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch professional service", error });
+      return res.status(500).json({ 
+        status: false,
+        message: "Failed to fetch professional service", 
+        data: error 
+      });
     }
   };
 
@@ -51,9 +68,16 @@ getProfessionalServices = async (req, res) => {
         addVideo,
       });
       await newProfessionalService.save();
-      res.status(201).json(newProfessionalService);
+      return res.status(201).json({
+        status: true,
+        data: newProfessionalService
+      });
     } catch (error) {
-      res.status(500).json({ message: "Failed to create professional service", error });
+      return res.status(500).json({ 
+        status: false, 
+        message: "Failed to create professional service", 
+        data: error 
+      });
     }
   };    
 
@@ -88,11 +112,21 @@ getProfessionalServices = async (req, res) => {
         { new: true }
       );
       if (!updatedProfessionalService) {
-        return res.status(404).json({ message: "Professional service not found" });
+        return res.status(404).json({ 
+          status:false,
+          message: "Professional service not found" 
+        });
       }
-      res.status(200).json(updatedProfessionalService);
+      return res.status(200).json({
+        status:true,
+        data: updatedProfessionalService
+      });
     } catch (error) {
-      res.status(500).json({ message: "Failed to update professional service", error });
+      return res.status(500).json({ 
+        status:false,
+        message: "Failed to update professional service", 
+        data: error 
+      });
     }
   };
 
@@ -102,11 +136,21 @@ getProfessionalServices = async (req, res) => {
     try {
       const deletedProfessionalService = await ProfessionalServices.findByIdAndDelete(id);
       if (!deletedProfessionalService) {
-        return res.status(404).json({ message: "Professional service not found" });
+        return res.status(404).json({ 
+          status:false,
+          message: "Professional service not found" 
+        });
       }
-      res.status(200).json({ message: "Professional service deleted successfully" });
+      return res.status(200).json({ 
+        status: true,
+        message: "Professional service deleted successfully" 
+      });
     } catch (error) {
-      res.status(500).json({ message: "Failed to delete professional service", error });
+      return res.status(500).json({ 
+        status: false,
+        message: "Failed to delete professional service", 
+        data: error 
+      });
     }
   };    
 

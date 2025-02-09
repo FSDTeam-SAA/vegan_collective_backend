@@ -3,9 +3,16 @@ const Merchanthelpandsupport = require("../models/merchantHelpAndSupport.model")
 const getMerchantHelpAndSupports = async (req, res) => {
     try {
       const merchantHelpAndSupports = await Merchanthelpandsupport.find().populate('user'); // Populate the `user` field
-      res.status(200).json(merchantHelpAndSupports);
+      return res.status(200).json({
+        status: true,
+        data: merchantHelpAndSupports
+      });
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch merchant help and supports", error });
+      return res.status(500).json({ 
+        status: false,
+        message: "Failed to fetch merchant help and supports", 
+        data: error 
+      });
     }
   };
 
@@ -14,11 +21,21 @@ const getMerchantHelpAndSupports = async (req, res) => {
     try {
       const merchantHelpAndSupport = await Merchanthelpandsupport.findById(id).populate('user'); // Populate the `user` field
       if (!merchantHelpAndSupport) {
-        return res.status(404).json({ message: "Merchant help and support not found" });
+        return res.status(404).json({ 
+          status: false,
+          message: "Merchant help and support not found" 
+        });
       }
-      res.status(200).json(merchantHelpAndSupport);
+      return res.status(200).json({
+        status:true,
+        data: merchantHelpAndSupport
+      });
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch merchant help and support", error });
+      return res.status(500).json({ 
+        status: false,
+        message: "Failed to fetch merchant help and support", 
+        data: error 
+      });
     }
   };
 
@@ -39,9 +56,16 @@ const getMerchantHelpAndSupports = async (req, res) => {
         status,
       });
       await newMerchantHelpAndSupport.save();
-      res.status(201).json(newMerchantHelpAndSupport);
+      return res.status(201).json({
+        status:true,
+        data: newMerchantHelpAndSupport
+      });
     } catch (error) {
-      res.status(500).json({ message: "Failed to create merchant help and support", error });
+      return res.status(500).json({ 
+        status:false,
+        message: "Failed to create merchant help and support", 
+        data: error 
+      });
     }
   };
 
@@ -68,11 +92,21 @@ const getMerchantHelpAndSupports = async (req, res) => {
         { new: true }
       );
       if (!updatedMerchantHelpAndSupport) {
-        return res.status(404).json({ message: "Merchant help and support not found" });
+        return res.status(404).json({ 
+          status: false,
+          message: "Merchant help and support not found" 
+        });
       }
-      res.status(200).json(updatedMerchantHelpAndSupport);
+      return res.status(200).json({
+        status: true,
+        data: updatedMerchantHelpAndSupport
+      });
     } catch (error) {
-      res.status(500).json({ message: "Failed to update merchant help and support", error });
+      return res.status(500).json({ 
+        status: false,
+        message: "Failed to update merchant help and support", 
+        data: error 
+      });
     }
   };
 
@@ -82,11 +116,21 @@ const getMerchantHelpAndSupports = async (req, res) => {
     try {
       const deletedMerchantHelpAndSupport = await Merchanthelpandsupport.findByIdAndDelete(id);
       if (!deletedMerchantHelpAndSupport) {
-        return res.status(404).json({ message: "Merchant help and support not found" });
+        return res.status(404).json({ 
+          status: false,
+          message: "Merchant help and support not found" 
+        });
       }
-      res.status(200).json({ message: "Merchant help and support deleted successfully" });
+      return res.status(200).json({ 
+        stutus: true,
+        message: "Merchant help and support deleted successfully" 
+      });
     } catch (error) {
-      res.status(500).json({ message: "Failed to delete merchant help and support", error });
+      return res.status(500).json({ 
+        status:false,
+        message: "Failed to delete merchant help and support", 
+        data: error 
+      });
     }
   };
 

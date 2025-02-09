@@ -26,13 +26,13 @@ exports.createEvent = async (req, res) => {
 
     // Save the event to the database
     const savedEvent = await newEvent.save();
-    res.status(201).json({
+    return res.status(201).json({
       status: true,
       message: "Event created successfully",
       data: savedEvent,
     });
   } catch (error) {
-    res.status(500).json({
+    return res.status(500).json({
       status: false,
       message: error.message,
     });
@@ -44,13 +44,13 @@ exports.getAllEvents = async (req, res) => {
   try {
     // Fetch all events without populating the 'user' field
     const events = await Professionalgolive.find().exec();
-    res.status(200).json({
+    return res.status(200).json({
       status: true,
       message: "Events retrieved successfully",
       data: events,
     });
   } catch (error) {
-    res.status(500).json({
+    return res.status(500).json({
       status: false,
       message: error.message,
     });
@@ -70,13 +70,13 @@ exports.getEventById = async (req, res) => {
       });
     }
 
-    res.status(200).json({
+    return res.status(200).json({
       status: true,
       message: "Event retrieved successfully",
       data: event,
     });
   } catch (error) {
-    res.status(500).json({
+    return res.status(500).json({
       status: false,
       message: error.message,
     });
@@ -109,13 +109,13 @@ exports.updateEvent = async (req, res) => {
       });
     }
 
-    res.status(200).json({
+    return res.status(200).json({
       status: true,
       message: "Event updated successfully",
       data: updatedEvent,
     });
   } catch (error) {
-    res.status(500).json({
+    return res.status(500).json({
       status: false,
       message: error.message,
     });
@@ -135,12 +135,12 @@ exports.deleteEvent = async (req, res) => {
       });
     }
 
-    res.status(200).json({
+    return res.status(200).json({
       status: true,
       message: "Event deleted successfully",
     });
   } catch (error) {
-    res.status(500).json({
+    return res.status(500).json({
       status: false,
       message: error.message,
     });
