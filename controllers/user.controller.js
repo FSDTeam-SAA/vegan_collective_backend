@@ -177,9 +177,11 @@ const loginUser = async (req, res) => {
         _id: user._id,
         fullName: user.fullName,
         email: user.email,
+        token: token,
         accountType: user.accountType,
         joinAs: user.joinAs,
         image: user.image,
+
       },
     })
   } catch (error) {
