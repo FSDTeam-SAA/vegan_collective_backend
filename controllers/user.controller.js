@@ -107,6 +107,11 @@ const verifyEmail = async (req, res) => {
         message: 'User not found',
       })
 
+    } 
+    if ( user.joinAs=== "customer") {
+      return res.redirect(
+        `${process.env.FONTEND_URL}/onboarding/success?role=customer`
+      )
     }
 
     res.redirect(
