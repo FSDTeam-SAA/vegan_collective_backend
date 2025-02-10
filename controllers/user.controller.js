@@ -1,215 +1,172 @@
-const User = require("../models/vendor.model");
-const bcrypt = require("bcrypt");
-const jwt = require('jsonwebtoken')
-const { sendEmail } = require("../utility/emailSender");
+const User = require("../models/user.model");
+const jwt = require("jsonwebtoken");
+const bcrypt = require("bcryptjs");
+const { sendEmail } = require("../utility/emailSender"); // Assuming you have a utility for sending emails
 
-const userSignup = async (req, res) => {
-  const {
-    joinAs,
-    accountType,
-    fullName,
-    email,
-    password,
-    image,
-  } = req.body;
+// Register a new user
+exports.registerUser = async (req, res) => {
   try {
+    const { role, fullName, email, password, accountType } = req.body;
 
+    // Check if the user already exists
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({
         status: false,
-        message: 'User already exists',
-      })
+        message: "User with this email already exists.",
+      });
     }
 
     // Hash the password
-    const hashPassword = await bcrypt.hash(password, 10)
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Create the user
     const user = await User.create({
-      joinAs,
-      accountType,
+      role,
       fullName,
       email,
-      password: hashPassword,
-      image,
+      password: hashedPassword,
+      accountType,
       verifyEmail: false,
-    })
+    });
 
-    // generate a verify token
-    const verifyToken = jwt.sign(
-      { userId: user._id },
-      process.env.JWT_SECRETE || 'thisisasecret',
-      { expiresIn: '30d' }
-    )
+    // Generate verification token
+    const verifyToken = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
+      expiresIn: "1h",
+    });
+    console.log("this is the tokien___", verifyToken)
 
+    // Send verification email
     const mailOption = {
       from: process.env.EMAIL_USER,
       to: email,
-      subject: 'Verify Your Email - Vegan Collective',
+      subject: "Verify Your Email - Vegan Collective",
       html: `
-    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9f9f9;">
-      <h1 style="color: #2c5282; text-align: center;">Welcome to Vegan Collective!</h1>
-      <div style="background-color: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-        <p style="color: #4a5568; font-size: 16px; line-height: 1.6;">Thank you for joining us! Please verify your email address by clicking the button below:</p>
-        <div style="text-align: center; margin: 30px 0;">
-          <a href="http://localhost:8001/api/v1/verify-email?token=${verifyToken}" 
-             style="background-color: #48bb78; 
-                    color: white; 
-                    padding: 12px 30px; 
-                    text-decoration: none; 
-                    border-radius: 5px; 
-                    font-weight: bold;
-                    display: inline-block;
-                    text-transform: uppercase;
-                    letter-spacing: 1px;
-                    transition: background-color 0.3s ease;">
-            Verify Email
-          </a>
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9f9f9;">
+          <h1 style="color: #2c5282; text-align: center;">Welcome to Vegan Collective!</h1>
+          <div style="background-color: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+            <p style="color: #4a5568; font-size: 16px; line-height: 1.6;">Thank you for joining us! Please verify your email address by clicking the button below:</p>
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="${process.env.BACKEND_URL}/api/v1/verify-email?token=${verifyToken}" 
+                 style="background-color: #48bb78; 
+                        color: white; 
+                        padding: 12px 30px; 
+                        text-decoration: none; 
+                        border-radius: 5px; 
+                        font-weight: bold;
+                        display: inline-block;
+                        text-transform: uppercase;
+                        letter-spacing: 1px;
+                        transition: background-color 0.3s ease;">
+                Verify Email
+              </a>
+            </div>
+            <p style="color: #718096; font-size: 14px; text-align: center;">If you didn't create an account, please ignore this email.</p>
+          </div>
         </div>
-        <p style="color: #718096; font-size: 14px; text-align: center;">If you didn't create an account, please ignore this email.</p>
-      </div>
-    </div>
-  `,
-    }
+      `,
+    };
 
-    await sendEmail(mailOption)
+    await sendEmail(mailOption);
+
+    // Return the user object in the desired format
+    const responseUser = {
+      _id: user._id,
+      role: user.role,
+      fullName: user.fullName,
+      email: user.email,
+      password: user.password, // Note: Returning the hashed password is not recommended in production.
+      verifyEmail: user.verifyEmail,
+      merchanInfo: user.merchanInfo,
+      organizationInfo: user.organizationInfo,
+      professionalInfo: user.professionalInfo,
+    };
 
     return res.status(201).json({
       status: true,
       message: "User created successfully. Please check your email to verify your account.",
-      data: user,
+      data: responseUser,
     });
   } catch (error) {
     return res.status(500).json({
       status: false,
-      message: 'Something went wrong',
+      message: "Something went wrong",
       error: error.message,
-    })
+    });
   }
-}
+};
 
-const verifyEmail = async (req, res) => {
-  const { token } = req.query
-
+// Verify email
+exports.verifyEmail = async (req, res) => {
   try {
-    // verify the token
-    const decoded = jwt.verify(
-      token,
-      process.env.JWT_SECRETE || 'thisisasecret'
-    )
-    const userId = decoded.userId
+    const { token } = req.query;
 
-    // update the verifyEmail 
-    const user = await User.findByIdAndUpdate(userId, { verifyEmail: true }, { new: true })
-    console.log(user)
+    // Validate token presence
+    if (!token) {
+      return res.status(400).json({
+        status: false,
+        message: "Token is required.",
+      });
+    }
+
+    // Verify the token
+    let decoded;
+    try {
+      decoded = jwt.verify(token, process.env.JWT_SECRET);
+    } catch (err) {
+      return res.status(401).json({
+        status: false,
+        message: "Invalid or expired token.",
+      });
+    }
+
+    const userId = decoded.userId;
+
+    // Find the user and update their email verification status
+    const user = await User.findByIdAndUpdate(
+      userId,
+      { verifyEmail: true },
+      { new: true }
+    );
+
     if (!user) {
       return res.status(404).json({
         status: false,
-        message: 'User not found',
-      })
-
-    } 
-    if ( user.joinAs=== "customer") {
-      return res.redirect(
-        `${process.env.FONTEND_URL}/onboarding/success?role=customer`
-      )
+        message: "User not found.",
+      });
     }
 
-    res.redirect(
-      `${process.env.FONTEND_URL}/profile-setup?type=${user.accountType}`
-    )
-    console.log('this is the user', user.accountType)
+    // Ensure FRONTEND_URL is defined
+    const frontendUrl = process.env.FRONTEND_URL || "https://vegan-frontend.vercel.app";
 
-  } catch (error) {
-    return res.status(500).json({
-      status: false,
-      message: 'Something went wrong',
-      error: error.message,
-    })
-  }
-}
-
-const loginUser = async (req, res) => {
-  const { email, password } = req.body
-
-  try {
-    const user = await User.findOne({ email })
-    if (!user) {
-      return res.status(404).json({
-        status: false,
-        message: 'User not found',
-      })
+    // Redirect based on user role and account type
+    if (user.role === "user") {
+      return res.redirect(`${frontendUrl}/onboarding/success?role=customer`);
+    } else if (user.role === "vendor") {
+      return res.redirect(`${frontendUrl}/profile-setup?type=${user.accountType}`);
     }
 
-    // Validate the password
-    const isPasswordValid = await bcrypt.compare(password, user.password)
-    if (!isPasswordValid) {
-      return res.status(401).json({
-        status: false,
-        message: 'Invalid password',
-      })
-    }
-
-    // Check if the email is verified
-    if (!user.verifyEmail) {
-      return res.status(401).json({
-        status: false,
-        message: 'Email not verified. Please verify your email to log in.',
-      })
-    }
-
-    // Generate a JWT token
-    const token = jwt.sign(
-      { userId: user._id },
-      process.env.JWT_SECRET || 'thisisasecret',
-      {
-        expiresIn: '30d',
-      }
-    )
-
-    // Set the token in a cookie
-    res.cookie('token', token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: 24 * 60 * 60 * 1000,
-    })
-
-    // Respond with success message and user data
+    // Default response if no redirection matches
     return res.status(200).json({
       status: true,
-      message: 'User logged in successfully',
-      user: {
+      message: "Email verified successfully.",
+      data: {
         _id: user._id,
+        role: user.role,
         fullName: user.fullName,
         email: user.email,
-        token: token,
-        accountType: user.accountType,
-        joinAs: user.joinAs,
-        image: user.image,
-
+        verifyEmail: user.verifyEmail,
+        merchanInfo: user.merchanInfo,
+        organizationInfo: user.organizationInfo,
+        professionalInfo: user.professionalInfo,
       },
-    })
+    });
   } catch (error) {
-    console.error('Error during login:', error)
+    console.error("Error verifying email:", error);
     return res.status(500).json({
       status: false,
-      message: 'Something went wrong',
+      message: "An unexpected error occurred.",
       error: error.message,
-    })
+    });
   }
-}
-
-const logoutUser = (req, res) => {
-  res.clearCookie('token')
-  return res.status(200).json({
-    status: true,
-    message: 'User logged out successfully',
-  })
-}
-
-module.exports = {
-  userSignup,
-  verifyEmail,
-  loginUser,
-  logoutUser,
-}
+};
