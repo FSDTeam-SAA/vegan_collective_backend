@@ -1,31 +1,23 @@
 const mongoose = require('mongoose');
 
-const professionalGoLiveSchema = new mongoose.Schema(
+const goLiveSchema = new mongoose.Schema(
   {
-    user: {
-      type: mongoose.Types.ObjectId,
-      ref: 'Professionalinfo',
-      required: true,
-    },
     eventTitle:{
       type: String,
-      requried: true,
     },
     description: {
       type: String,
     },
     date: {
-      type: Date,
-      requried: true,
+      type: String,
     },
     time:{
-      type: Date,
+      type: String,
       requried: true,
     },
     eventType:{
       type: String,
       enum: ["paid event","free event"],
-      required: true
     },
     price:{
       type: Number,
@@ -36,5 +28,5 @@ const professionalGoLiveSchema = new mongoose.Schema(
   }
 );
 
-const Professionalgolive = mongoose.model("Professionalgolive", professionalGoLiveSchema);
-module.exports = Professionalgolive;
+const Golive = mongoose.model("Golive", goLiveSchema);
+module.exports = Golive;

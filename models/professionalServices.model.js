@@ -2,40 +2,126 @@ const mongoose = require('mongoose');
 
 const professionalServicesSchema = new mongoose.Schema(
   {
-    user: {
+    professionalID:{
       type: mongoose.Types.ObjectId,
-      ref: 'Professionalinfo',
-      required: true,
+      ref: "User",
     },
-    serviceName:{
+    QR:{
       type: String,
-      requried: true,
+    },
+    referNumber:{
+      type: Number,
+    },
+    serviceName: {
+      type: String,
     },
     metaDescription: {
       type: String,
     },
     serviceDescription: {
-      type: Date,
-      requried: true,
+      type: String,
     },
-    keywords:[
+    keyWords: [
       {
         type: String,
       }
     ],
-    paymentType:{
-      type: String,
-      required: true
-    },
+    paymentType:[
+      {
+        type: String,
+      }
+    ],
     price:{
-      type: Number,
+      type:Number,
     },
-    addImage:{
+    serviceImage: {
       type: String,
     },
-    addVideo:{
+    serviceVideo: {
       type: String,
     },
+    date:{
+      type: String,
+    },
+    time: {
+      type: String,
+    },
+    sessionType:{
+      type: String,
+    },
+    statusType:{
+      type: String,
+      enum:["confirmed","pending","cancelled"]
+    },
+    orderSlug:{
+      type: String,
+    },
+    FAQ:[
+      {
+        professionalServiceID: {
+          type: mongoose.Types.ObjectId,
+          ref: "FAQ",
+        },
+      }
+    ],
+    review:[
+      {
+        professionalServiceID: {
+          type: mongoose.Types.ObjectId,
+          ref: "Review",
+        },
+      }
+    ],
+    support:[
+      {
+        supportID: {
+          type: mongoose.Types.ObjectId,
+          ref: "Support",
+        }
+      }
+    ],
+    policy: [
+      {
+        beforeAppointment: {
+          type: String,
+        },
+        afterAppointment: {
+          type: String,
+        },
+        cancellationWindow: {
+          type: String,
+        },
+        noShowPolicy: {
+          type: String,
+        },
+      }
+    ],
+    aboutMe: {
+      type: String,
+    },
+    highlightedStatement: [
+      {
+        type: String,
+      }
+    ],
+    experience: [
+      {
+        type: String,
+      }
+    ],
+    certifications: [
+      {
+        type: String,
+      }
+    ],
+    goLive:[
+      {
+        goLive: {
+          type: mongoose.Types.ObjectId,
+          ref: "Golive",
+        }
+      }
+    ]
   },
   {
     timestamps: true,

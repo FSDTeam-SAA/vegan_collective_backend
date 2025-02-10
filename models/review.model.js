@@ -1,11 +1,10 @@
 const mongoose = require('mongoose');
 
 const reviewSchema = new mongoose.Schema(
-  {
-    user: {
+  { 
+    userID:{
       type: mongoose.Types.ObjectId,
-      ref: 'User',
-      required: true,
+      ref: "User",
     },
     rating: {
       type: Number,
@@ -13,7 +12,7 @@ const reviewSchema = new mongoose.Schema(
     },
     comment: {
       type: String,
-    }
+    },
   },
   {
     timestamps: true,

@@ -1,6 +1,7 @@
 const User = require('../models/user.model');
 const bcrypt = require('bcrypt');
 const nodemailer = require('nodemailer');
+
 require('dotenv').config();
 
 // Generate OTP and send it via email
@@ -10,7 +11,7 @@ exports.forgotPassword = async (req, res) => {
         // Find user by email
         const user = await User.findOne({ email });
         if (!user) {
-            return res.status(404).json({ 
+            return res.status(404).json({
                 status: false,
                 message: 'User not found'
             });
@@ -37,14 +38,14 @@ exports.forgotPassword = async (req, res) => {
             text: `Your OTP for password reset is: ${otp}`,
         };
         await transporter.sendMail(mailOptions);
-        res.status(200).json({ 
+        res.status(200).json({
             status: true,
             message: 'OTP sent to your email'
 
         });
     } catch (error) {
         console.error(error);
-        res.status(500).json({ 
+        res.status(500).json({
             status: false,
             message: 'Server error'
         });
@@ -57,25 +58,25 @@ exports.verifyOtp = async (req, res) => {
     try {
         const user = await User.findOne({ email });
         if (!user) {
-            return res.status(404).json({ 
+            return res.status(404).json({
                 status: false,
                 message: 'User not found'
             });
         }
         // Check if OTP matches and hasn't expired
         if (user.forgotPasswordOtp !== otp || Date.now() > user.forgotPasswordOtpExpires) {
-            return res.status(400).json({ 
+            return res.status(400).json({
                 status: false,
                 message: 'Invalid or expired OTP'
             });
         }
-        res.status(200).json({ 
+        res.status(200).json({
             status: true,
-            message: 'OTP verified successfully' 
-            });
+            message: 'OTP verified successfully'
+        });
     } catch (error) {
         console.error(error);
-        res.status(500).json({ 
+        res.status(500).json({
             status: false,
             message: 'Server error'
         });
@@ -89,7 +90,7 @@ exports.resetPassword = async (req, res) => {
     try {
         const user = await User.findOne({ email });
         if (!user) {
-            return res.status(404).json({ 
+            return res.status(404).json({
                 status: false,
                 message: 'User not found'
             });
@@ -105,16 +106,15 @@ exports.resetPassword = async (req, res) => {
         user.forgotPasswordOtpExpires = undefined;
         await user.save();
 
-        res.status(200).json({ 
+       return res.status(200).json({
             status: true,
-            message: 'Password reset successfully',
-            joinAs: user["joinAs"]
+            message: 'Password reset successfully'
         });
     } catch (error) {
         console.error(error);
-        res.status(500).json({ 
+        res.status(500).json({
             status: false,
-            message: 'Server error' 
+            message: 'Server error'
         });
     }
 };
