@@ -2,29 +2,27 @@ const mongoose = require('mongoose');
 
 const userSchema = new mongoose.Schema(
   {
-    joinAs: {
+    role: {
       type: String,
-      enum : ["customer", "vendor"],
-      required: true,
+      enum: ["user", "admin", "vendor"],
     },
-    accountType: {
-      type: String,
-      enum : ["merchant", "professional", "organization"],
-    
-    }, 
-    fullName: { 
+    fullName: {
       type: String,
       required: true,
     },
     email: {
       type: String,
       required: true,
-      unique: true, 
+      unique: true,
     },
     password: {
       type: String,
       required: true,
     },
+    accountType: {
+      type: String,
+      enum : ["merchant", "professional", "organization"],
+    }, 
     image: {
       type: String,
     },
@@ -41,6 +39,108 @@ const userSchema = new mongoose.Schema(
     refreshToken: {
       type: String,
     },
+    merchanInfo:[
+      {
+        businessName: {
+          type: String,
+          required: true,
+        },
+        address: {
+          type: String,
+        },
+        aboutUs: {
+          type: String,
+        },
+        websiteURL: {
+          type: String,
+        },
+        governmentIssuedID: {
+          type: String,
+          required: true,
+        },
+        businessLicense: {
+          type: String,
+          required: true,
+        },
+        photoWithID: {
+          type: String,
+          required: true,
+        },
+        verificationStatus: {
+          type: String,
+          enum: ["verified", "not verified"],
+          default: "not verified",
+        },
+      },
+    ],
+    organizationInfo:[
+      {
+        organizationName: {
+          type: String,
+          required: true,
+        },
+        address: {
+          type: String,
+        },
+        missionStatement: {
+          type: String,
+        },
+        aboutUs: {
+          type: String,
+        },
+        experienceAndCertifications: {
+          type: String,
+        },
+        websiteURL: {
+          type: String,
+        },
+        governmentIssuedID: {
+          type: String,
+          required: true,
+        },
+        charityRegistrationNumber: {
+          type: String,
+          required: true,
+        },
+        photoWithID: {
+          type: String,
+          required: true,
+        },
+        verificationStatus: {
+          type: String,
+          enum: ["verified", "not verified"],
+          default: "not verified",
+        },
+      }
+    ],
+    professionalInfo:[
+      {
+        designation:{
+          type: String,
+        },
+        businessName:{
+          type: String,
+        },
+        address: {
+          type: String,
+        },
+        websiteURL:{
+          type: String,
+        },
+        governmentIssuedID: {
+          type: String,
+          required: true,
+        },
+        professionalCertification: {
+          type: String,
+          required: true,
+        },
+        photoWithID: {
+          type: String,
+          required: true,
+        },
+      }
+    ],
   },
   {
     timestamps: true,
