@@ -1,5 +1,7 @@
-const User = require('../models/vendor.model');
+const User = require('../models/user.model');
+const bcrypt = require('bcrypt');
 const nodemailer = require('nodemailer');
+
 require('dotenv').config();
 
 // Generate OTP and send it via email
@@ -82,6 +84,7 @@ exports.verifyOtp = async (req, res) => {
 };
 
 // Reset Password
+// Reset Password
 exports.resetPassword = async (req, res) => {
     const { email, newPassword } = req.body;
     try {
@@ -92,12 +95,18 @@ exports.resetPassword = async (req, res) => {
                 message: 'User not found'
             });
         }
-        // Update the user's password
-        user.password = newPassword;
+
+        // Hash the new password before saving it
+        const saltRounds = 10; // You can adjust the number of salt rounds as needed
+        const hashedPassword = await bcrypt.hash(newPassword, saltRounds);
+
+        // Update the user's password with the hashed version
+        user.password = hashedPassword;
         user.forgotPasswordOtp = undefined;
         user.forgotPasswordOtpExpires = undefined;
         await user.save();
-        res.status(200).json({
+
+       return res.status(200).json({
             status: true,
             message: 'Password reset successfully'
         });
