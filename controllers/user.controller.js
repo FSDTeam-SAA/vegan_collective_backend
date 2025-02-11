@@ -1,7 +1,7 @@
 const User = require("../models/user.model");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
-const { sendEmail } = require("../utility/emailSender"); // Assuming you have a utility for sending emails
+const { sendEmail } = require("../utility/emailSender");
 
 // Register a new user
 exports.registerUser = async (req, res) => {
@@ -34,7 +34,6 @@ exports.registerUser = async (req, res) => {
     const verifyToken = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
       expiresIn: "1h",
     });
-    console.log("this is the tokien___", verifyToken)
 
     // Send verification email
     const mailOption = {
@@ -66,7 +65,6 @@ exports.registerUser = async (req, res) => {
         </div>
       `,
     };
-
     await sendEmail(mailOption);
 
     // Return the user object in the desired format
@@ -75,11 +73,7 @@ exports.registerUser = async (req, res) => {
       role: user.role,
       fullName: user.fullName,
       email: user.email,
-      password: user.password, // Note: Returning the hashed password is not recommended in production.
       verifyEmail: user.verifyEmail,
-      merchanInfo: user.merchanInfo,
-      organizationInfo: user.organizationInfo,
-      professionalInfo: user.professionalInfo,
     };
 
     return res.status(201).json({
@@ -136,10 +130,9 @@ exports.verifyEmail = async (req, res) => {
       });
     }
 
-    // Ensure FRONTEND_URL is defined
+    // Redirect based on user role and account type
     const frontendUrl = process.env.FRONTEND_URL || "https://vegan-frontend.vercel.app";
 
-    // Redirect based on user role and account type
     if (user.role === "user") {
       return res.redirect(`${frontendUrl}/onboarding/success?role=customer`);
     } else if (user.role === "vendor") {
@@ -156,9 +149,6 @@ exports.verifyEmail = async (req, res) => {
         fullName: user.fullName,
         email: user.email,
         verifyEmail: user.verifyEmail,
-        merchanInfo: user.merchanInfo,
-        organizationInfo: user.organizationInfo,
-        professionalInfo: user.professionalInfo,
       },
     });
   } catch (error) {
@@ -166,6 +156,85 @@ exports.verifyEmail = async (req, res) => {
     return res.status(500).json({
       status: false,
       message: "An unexpected error occurred.",
+      error: error.message,
+    });
+  }
+};
+
+// Login a user
+exports.loginUser = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    // Find the user by email
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(400).json({
+        status: false,
+        message: "Invalid email or password",
+      });
+    }
+
+    // Compare the password
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+      return res.status(400).json({
+        status: false,
+        message: "Invalid email or password",
+      });
+    }
+
+    // Ensure the user's email is verified
+    if (!user.verifyEmail) {
+      return res.status(403).json({
+        status: false,
+        message: "Please verify your email before logging in.",
+      });
+    }
+
+    // Generate JWT token
+    const token = jwt.sign(
+      { userId: user._id, email: user.email, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: "1h" }
+    );
+
+    // Return the token and user details
+    return res.status(200).json({
+      status: true,
+      message: "Login successful",
+      data: {
+        token,
+        user: {
+          _id: user._id,
+          role: user.role,
+          fullName: user.fullName,
+          email: user.email,
+        },
+      },
+    });
+  } catch (error) {
+    return res.status(500).json({
+      status: false,
+      message: "Something went wrong",
+      error: error.message,
+    });
+  }
+};
+
+// Logout a user
+exports.logoutUser = async (req, res) => {
+  try {
+    // For simplicity, we can just return a success message.
+    // In a real-world app, you might want to invalidate the token or use a blacklist.
+    return res.status(200).json({
+      status: true,
+      message: "Logout successful. Goodbye!",
+    });
+  } catch (error) {
+    return res.status(500).json({
+      status: false,
+      message: "Something went wrong",
       error: error.message,
     });
   }
