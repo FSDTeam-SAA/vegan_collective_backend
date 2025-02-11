@@ -14,7 +14,7 @@ const goLiveSchema = new mongoose.Schema(
     time:{
       type: String,
       requried: true,
-    },
+    },  
     eventType:{
       type: String,
       enum: ["paid event","free event"],
