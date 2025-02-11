@@ -13,7 +13,25 @@ app.use(cors({ origin: "*" }));
 
 const userRoute = require("./routes/user.routes.js");
 
+//routes for professional
+const professionalBooking = require("./routes/professionalBooking.route.js");
+const professionalEvent = require("./routes/professionalEvent.route.js");
+const professionalFAQ = require("./routes/professionalFAQ.route.js");
+const professionalGoLive = require("./routes/professionalGoLive.route.js");
+const professionalPolicies = require("./routes/professionalPolicies.route.js");
+const professionalReview = require("./routes/professionalReview.route.js");
+const professionalServices = require("./routes/professionalServices.route.js");
+
 app.use("/api/v1", userRoute);
+
+//endpoints for professional
+app.use("/api/v1", professionalBooking);
+app.use("/api/v1", professionalEvent);
+app.use("/api/v1", professionalFAQ);
+app.use("/api/v1", professionalGoLive);
+app.use("/api/v1", professionalPolicies);
+app.use("/api/v1", professionalReview);
+app.use("/api/v1", professionalServices);
 
 app.get("/api/v1/", (req, res) => {
   res.status(201).json({
