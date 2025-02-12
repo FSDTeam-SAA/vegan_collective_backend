@@ -23,5 +23,8 @@ router.post("/verify-otp", authController.verifyForgotPasswordOTP);
 // Forgot Password -  Change Password
 router.post("/change-password", authController.changePassword);
 
+// Get user profile
+router.get("/profile/:userId", userController.getUserProfile);
+
 
 module.exports = router;

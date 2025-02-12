@@ -12,50 +12,54 @@ const professionalServicesSchema = new mongoose.Schema(
     referNumber:{
       type: Number,
     },
-    serviceName: {
-      type: String,
-    },
-    metaDescription: {
-      type: String,
-    },
-    serviceDescription: {
-      type: String,
-    },
-    keyWords: [
+    services:[
       {
-        type: String,
+        serviceName: {
+          type: String,
+        },
+        metaDescription: {
+          type: String,
+        },
+        serviceDescription: {
+          type: String,
+        },
+        keyWords: [
+          {
+            type: String,
+          }
+        ],
+        paymentType:[
+          {
+            type: String,
+          }
+        ],
+        price:{
+          type:Number,
+        },
+        serviceImage: {
+          type: String,
+        },
+        serviceVideo: {
+          type: String,
+        },
+        date:{
+          type: String,
+        },
+        time: {
+          type: String,
+        },
+        sessionType:{
+          type: String,
+        },
+        statusType:{
+          type: String,
+          enum:["confirmed","pending","cancelled"]
+        },
+        orderSlug:{
+          type: String,
+        },
       }
     ],
-    paymentType:[
-      {
-        type: String,
-      }
-    ],
-    price:{
-      type:Number,
-    },
-    serviceImage: {
-      type: String,
-    },
-    serviceVideo: {
-      type: String,
-    },
-    date:{
-      type: String,
-    },
-    time: {
-      type: String,
-    },
-    sessionType:{
-      type: String,
-    },
-    statusType:{
-      type: String,
-      enum:["confirmed","pending","cancelled"]
-    },
-    orderSlug:{
-      type: String,
-    },
     FAQ:[
       {
         professionalServiceID: {

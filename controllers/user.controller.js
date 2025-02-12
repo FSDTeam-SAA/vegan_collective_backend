@@ -26,7 +26,7 @@ exports.registerUser = async (req, res) => {
       fullName,
       email,
       password: hashedPassword,
-      accountType,
+      accountType: role === "vendor" ? accountType : null, // Set accountType based on role
       verifyEmail: false,
     });
 
@@ -74,12 +74,14 @@ exports.registerUser = async (req, res) => {
       fullName: user.fullName,
       email: user.email,
       verifyEmail: user.verifyEmail,
+    
     };
 
     return res.status(201).json({
       status: true,
       message: "User created successfully. Please check your email to verify your account.",
       data: responseUser,
+      
     });
   } catch (error) {
     return res.status(500).json({
@@ -122,7 +124,6 @@ exports.verifyEmail = async (req, res) => {
       { verifyEmail: true },
       { new: true }
     );
-
     if (!user) {
       return res.status(404).json({
         status: false,
@@ -132,7 +133,6 @@ exports.verifyEmail = async (req, res) => {
 
     // Redirect based on user role and account type
     const frontendUrl = process.env.FRONTEND_URL || "https://vegan-frontend.vercel.app";
-
     if (user.role === "user") {
       return res.redirect(`${frontendUrl}/onboarding/success?role=customer`);
     } else if (user.role === "vendor") {
@@ -149,7 +149,7 @@ exports.verifyEmail = async (req, res) => {
         fullName: user.fullName,
         email: user.email,
         verifyEmail: user.verifyEmail,
-
+        accountType: user.accountType,
       },
     });
   } catch (error) {
@@ -209,9 +209,9 @@ exports.loginUser = async (req, res) => {
         user: {
           _id: user._id,
           role: user.role,
+          accountType: user.accountType,
           fullName: user.fullName,
           email: user.email,
-          accountType: user.accountType,
         },
       },
     });
@@ -232,6 +232,43 @@ exports.logoutUser = async (req, res) => {
     return res.status(200).json({
       status: true,
       message: "Logout successful. Goodbye!",
+    });
+  } catch (error) {
+    return res.status(500).json({
+      status: false,
+      message: "Something went wrong",
+      error: error.message,
+    });
+  }
+};
+// Get user profile
+exports.getUserProfile = async (req, res) => {
+  try {
+    const userId = req.params.userId; // Extract userId from route parameters
+    if (!userId) {
+      return res.status(400).json({
+        status: false,
+        message: "User ID is required",
+      });
+    }
+    // Find the user by ID
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({
+        status: false,
+        message: "User not found",
+      });
+    }
+    return res.status(200).json({
+      status: true,
+      message: "User profile retrieved successfully",
+      data: {
+        _id: user._id,
+        role: user.role,
+        fullName: user.fullName,
+        email: user.email,
+        accountType: user.accountType,
+      },
     });
   } catch (error) {
     return res.status(500).json({
