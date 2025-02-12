@@ -149,6 +149,7 @@ exports.verifyEmail = async (req, res) => {
         fullName: user.fullName,
         email: user.email,
         verifyEmail: user.verifyEmail,
+
       },
     });
   } catch (error) {
@@ -210,6 +211,7 @@ exports.loginUser = async (req, res) => {
           role: user.role,
           fullName: user.fullName,
           email: user.email,
+          accountType: user.accountType,
         },
       },
     });
