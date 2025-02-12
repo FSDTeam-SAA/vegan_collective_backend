@@ -6,7 +6,7 @@ const goLiveController = require('../controllers/professionalGoLive.controller')
 router.post('/create', goLiveController.createEvent);
 
 // Route to get all events (optionally filtered by userId)
-router.get('/', goLiveController.getAllEvents);
+router.get('/create', goLiveController.getAllEvents);
 
 // Route to get a single event by ID
 router.get('/:eventId', goLiveController.getEvent);
