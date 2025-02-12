@@ -50,6 +50,9 @@ const userSchema = new mongoose.Schema(
         aboutUs: {
           type: String,
         },
+        shortDescription:{
+          type: String,
+        },
         websiteURL: {
           type: String,
         },
