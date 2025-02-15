@@ -1,16 +1,46 @@
-const Professionalinfo = require("../models/professionalInfo.model");
+const mongoose = require("mongoose"); // Import mongoose
+const Professionalinfo = require("../models/professionalInfo.model"); // Import ProfessionalInfo model
+const User = require("../models/user.model");
 
 // Create a new professional info
 exports.createProfessionalInfo = async (req, res) => {
   try {
+    const { userID } = req.body;
+
+    // Validate if userID is a valid MongoDB ObjectId
+    if (!mongoose.Types.ObjectId.isValid(userID)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid userID format",
+      });
+    }
+
+    // Check if the user exists and has an account type of "professional"
+    const user = await User.findById(userID);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+    if (user.accountType !== "professional") {
+      return res.status(403).json({
+        success: false,
+        message: "This user is not a professional",
+      });
+    }
+
+    // Create the professional info entry
     const professionalInfo = new Professionalinfo(req.body);
     const savedInfo = await professionalInfo.save();
+
     res.status(201).json({
       success: true,
       message: "Professional info created successfully",
       data: savedInfo,
     });
   } catch (error) {
+    console.error("Error:", error.message);
     res.status(500).json({
       success: false,
       message: "Error creating professional info",
@@ -18,6 +48,7 @@ exports.createProfessionalInfo = async (req, res) => {
     });
   }
 };
+
 
 // Get all professional info
 exports.getAllProfessionalInfo = async (req, res) => {
