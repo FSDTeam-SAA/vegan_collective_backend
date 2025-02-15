@@ -96,24 +96,8 @@ const professionalServicesSchema = new mongoose.Schema(
         },
       }
     ],
-    aboutMe: {
-      type: String,
-    },
-    highlightedStatement: [
-      {
-        type: String,
-      }
-    ],
-    experience: [
-      {
-        type: String,
-      }
-    ],
-    certifications: [
-      {
-        type: String,
-      }
-    ],
+    
+   
     goLive:[
       {
         goLive: {
