@@ -5,6 +5,7 @@ const professionalInfoSchema = new mongoose.Schema(
     userID: {
       type: mongoose.Types.ObjectId,
       ref: 'User',
+      required: true,
     },
     fullName: {
       type: String,

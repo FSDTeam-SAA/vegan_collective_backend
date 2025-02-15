@@ -9,6 +9,8 @@ const PORT = process.env.PORT || 3001;
 
 app.use(cookieParser());
 app.use(express.json());
+
+
 app.use(cors({ origin: "*" }));
 
 const userRoute = require("./routes/user.routes.js");
