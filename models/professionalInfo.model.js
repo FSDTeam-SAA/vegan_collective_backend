@@ -15,22 +15,27 @@ const professionalInfoSchema = new mongoose.Schema(
       type: String,
     },
     aboutMe: {
-        type: String,
-      },
+      type: String,
+    },
     highlightedStatement: [
-        {
+      {
+        title: {
           type: String,
-        }
+        },
+        description: {
+          type: String,
+        },
+      },
     ],
     experience: [
-          {
-            type: String,
-          }
+      {
+        type: String,
+      },
     ],
     certifications: [
-          {
-            type: String,
-          }
+      {
+        type: String,
+      },
     ],
     websiteURL: {
       type: String,

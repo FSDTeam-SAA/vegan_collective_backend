@@ -22,6 +22,7 @@ const professionalPolicies = require("./routes/professionalPolicies.route.js");
 const professionalReview = require("./routes/professionalReview.route.js");
 const professionalServices = require("./routes/professionalServices.route.js");
 const support = require("./routes/support.route.js");
+const professionalInfo = require("./routes/professionalInfo.route.js");
 
 app.use("/api/v1", userRoute);
 
@@ -34,6 +35,7 @@ app.use("/api/v1", professionalPolicies);
 app.use("/api/v1", professionalReview);
 app.use("/api/v1", professionalServices);
 app.use("/api/v1", support);
+app.use("/api/v1", professionalInfo);
 
 app.get("/api/v1/", (req, res) => {
   res.status(201).json({
