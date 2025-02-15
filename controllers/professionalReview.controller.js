@@ -1,4 +1,4 @@
-const Review = require('../models/review.model');
+const Review = require('../models/professionalReview.model');
 const User = require('../models/user.model'); // Assuming you have a User model
 
 // Create a new review

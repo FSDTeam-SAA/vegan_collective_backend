@@ -1,8 +1,12 @@
 const mongoose = require('mongoose');
 
 const FAQSchema = new mongoose.Schema(
-  { 
-    question:{
+  {
+    ServiceId: {
+      type: mongoose.Types.ObjectId,
+      ref: 'Professionalservices',
+    },
+    question: {
       type: String,
     },
     answer: {
@@ -12,7 +16,7 @@ const FAQSchema = new mongoose.Schema(
   {
     timestamps: true,
   }
-);
+)
 
 const FAQ = mongoose.model("FAQ", FAQSchema);
 module.exports = FAQ;
