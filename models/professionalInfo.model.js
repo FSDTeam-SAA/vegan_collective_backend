@@ -2,6 +2,10 @@ const mongoose = require("mongoose");
 
 const professionalInfoSchema = new mongoose.Schema(
   {
+    userID: {
+      type: mongoose.Types.ObjectId,
+      ref: 'User',
+    },
     fullName: {
       type: String,
     },

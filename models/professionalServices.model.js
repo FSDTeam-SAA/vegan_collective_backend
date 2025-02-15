@@ -1,120 +1,56 @@
-const mongoose = require('mongoose');
+const mongoose = require('mongoose')
 
 const professionalServicesSchema = new mongoose.Schema(
   {
-    professionalID:{
+    userID: {
       type: mongoose.Types.ObjectId,
-      ref: "User",
+      ref: 'User',
     },
-    QR:{
+    QR: {
       type: String,
     },
-    referNumber:{
+    referNumber: {
       type: Number,
     },
-    services:[
+    serviceName: {
+      type: String,
+    },
+    metaDescription: {
+      type: String,
+    },
+    serviceDescription: {
+      type: String,
+    },
+    keyWords: [
       {
-        serviceName: {
-          type: String,
-        },
-        metaDescription: {
-          type: String,
-        },
-        serviceDescription: {
-          type: String,
-        },
-        keyWords: [
-          {
-            type: String,
-          }
-        ],
-        paymentType:[
-          {
-            type: String,
-          }
-        ],
-        price:{
-          type:Number,
-        },
-        serviceImage: {
-          type: String,
-        },
-        serviceVideo: {
-          type: String,
-        },
-        date:{
-          type: String,
-        },
-        time: {
-          type: String,
-        },
-        sessionType:{
-          type: String,
-        },
-        statusType:{
-          type: String,
-          enum:["confirmed","pending","cancelled"]
-        },
-        orderSlug:{
-          type: String,
-        },
-      }
+        type: String,
+      },
     ],
-    FAQ:[
+    paymentType: [
       {
-        professionalServiceID: {
-          type: mongoose.Types.ObjectId,
-          ref: "FAQ",
-        },
-      }
+        type: String,
+      },
     ],
-    review:[
-      {
-        professionalServiceID: {
-          type: mongoose.Types.ObjectId,
-          ref: "Review",
-        },
-      }
-    ],
-    support:[
-      {
-        supportID: {
-          type: mongoose.Types.ObjectId,
-          ref: "Support",
-        }
-      }
-    ],
-    policy: [
-      {
-        beforeAppointment: {
-          type: String,
-        },
-        afterAppointment: {
-          type: String,
-        },
-        cancellationWindow: {
-          type: String,
-        },
-        noShowPolicy: {
-          type: String,
-        },
-      }
-    ],
-    
-   
-    goLive:[
-      {
-        goLive: {
-          type: mongoose.Types.ObjectId,
-          ref: "Golive",
-        }
-      }
-    ]
-  },
+    price: {
+      type: Number,
+    },
+    serviceImage: {
+      type: String,
+    },
+    serviceVideo: {
+      type: String,
+    },
+    sessionType: {
+      type: String,
+    },
+    },
   {
     timestamps: true,
   }
-);
+)
 
-const Professionalservices = mongoose.model("Professionalservices", professionalServicesSchema);
-module.exports = Professionalservices;
+const Professionalservices = mongoose.model(
+  'Professionalservices',
+  professionalServicesSchema
+)
+module.exports = Professionalservices

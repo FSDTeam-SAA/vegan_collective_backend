@@ -115,34 +115,7 @@ const userSchema = new mongoose.Schema(
         },
       }
     ],
-    professionalInfo:[
-      {
-        designation:{
-          type: String,
-        },
-        businessName:{
-          type: String,
-        },
-        address: {
-          type: String,
-        },
-        websiteURL:{
-          type: String,
-        },
-        governmentIssuedID: {
-          type: String,
-          required: true,
-        },
-        professionalCertification: {
-          type: String,
-          required: true,
-        },
-        photoWithID: {
-          type: String,
-          required: true,
-        },
-      }
-    ],
+   
   },
   {
     timestamps: true,
