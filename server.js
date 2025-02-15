@@ -23,7 +23,9 @@ const professionalReview = require("./routes/professionalReview.route.js");
 const professionalServices = require("./routes/professionalServices.route.js");
 const support = require("./routes/support.route.js");
 const professionalInfo = require("./routes/professionalInfo.route.js");
-
+const merchantProducts = require("./routes/merchantProducts.route.js");
+const merchantPolicies = require("./routes/merchantPolicies.route.js");
+const merchantGoLive = require("./routes/merchantGoLive.route.js");
 app.use("/api/v1", userRoute);
 
 //endpoints for professional
@@ -36,6 +38,9 @@ app.use("/api/v1", professionalReview);
 app.use("/api/v1", professionalServices);
 app.use("/api/v1", support);
 app.use("/api/v1", professionalInfo);
+app.use("/api/v1", merchantProducts);
+app.use("/api/v1", merchantPolicies);
+app.use("/api/v1", merchantGoLive);
 
 app.get("/api/v1/", (req, res) => {
   res.status(201).json({
