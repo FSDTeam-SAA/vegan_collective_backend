@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const professionalServicesController = require('../controllers/professionalServices.controller'); 
+const professionalServicesController = require('../controllers/professionalServices.controller');
 
 // Create a new professional service
 router.post('/service', professionalServicesController.createProfessionalService);

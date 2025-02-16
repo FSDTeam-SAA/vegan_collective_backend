@@ -1,80 +1,110 @@
-const FAQ = require("../models/FAQ.model");
+const mongoose = require("mongoose");
+const professionalFAQ = require("../models/professionalFAQ.model"); // Adjust the path as needed
+const User = require("../models/user.model"); // Adjust the path as needed
 
 // Create a new FAQ
 exports.createFAQ = async (req, res) => {
   try {
-    const { question, answer } = req.body;
+    const { userID, question, answer } = req.body;
 
-    // Validate request body
-    if (!question || !answer) {
+    // Validate if userID is a valid MongoDB ObjectId
+    if (!mongoose.Types.ObjectId.isValid(userID)) {
       return res.status(400).json({
         success: false,
-        message: "Both 'question' and 'answer' fields are required.",
+        message: "Invalid userID format",
       });
     }
 
-    const newFAQ = new FAQ({ question, answer });
-    const savedFAQ = await newFAQ.save();
+    // Check if the user exists and has an account type of "professional"
+    const user = await User.findById(userID);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+    if (user.accountType !== "professional") {
+      return res.status(403).json({
+        success: false,
+        message: "This user is not a professional",
+      });
+    }
 
-    res.status(201).json({
+    // Create the FAQ entry
+    const newFAQ = new professionalFAQ({
+      userID,
+      question,
+      answer,
+    });
+
+    await newFAQ.save();
+
+    return res.status(201).json({
       success: true,
-      message: "FAQ created successfully.",
-      data: savedFAQ,
+      message: "FAQ created successfully",
+      data: newFAQ,
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
-      message: "Internal server error.",
-      error: error.message,
+      message: "Internal server error",
     });
   }
 };
 
-// Get all FAQs
+// Get all FAQs (no userID required)
 exports.getAllFAQs = async (req, res) => {
   try {
-    const faqs = await FAQ.find().sort({ createdAt: -1 });
+    // Fetch all FAQs from the database
+    const faqs = await professionalFAQ.find();
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
-      message: "FAQs retrieved successfully.",
+      message: "All FAQs retrieved successfully",
       data: faqs,
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
-      message: "Internal server error.",
-      error: error.message,
+      message: "Internal server error",
     });
   }
 };
 
-// Get a single FAQ by ID
-exports.getFAQById = async (req, res) => {
+// Get a specific FAQ by ID
+exports.getFAQByID = async (req, res) => {
   try {
     const { id } = req.params;
-    const faq = await FAQ.findById(id);
 
-    if (!faq) {
-      return res.status(404).json({
+    // Validate if FAQ ID is a valid MongoDB ObjectId
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
         success: false,
-        message: "FAQ not found.",
+        message: "Invalid FAQ ID format",
       });
     }
 
-    res.status(200).json({
+    // Find the FAQ entry
+    const faq = await professionalFAQ.findById(id);
+    if (!faq) {
+      return res.status(404).json({
+        success: false,
+        message: "FAQ not found",
+      });
+    }
+
+    return res.status(200).json({
       success: true,
-      message: "FAQ retrieved successfully.",
+      message: "FAQ retrieved successfully",
       data: faq,
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
-      message: "Internal server error.",
-      error: error.message,
+      message: "Internal server error",
     });
   }
 };
@@ -85,38 +115,39 @@ exports.updateFAQ = async (req, res) => {
     const { id } = req.params;
     const { question, answer } = req.body;
 
-    // Validate request body
-    if (!question && !answer) {
+    // Validate if FAQ ID is a valid MongoDB ObjectId
+    if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({
         success: false,
-        message: "At least one field ('question' or 'answer') must be provided.",
+        message: "Invalid FAQ ID format",
       });
     }
 
-    const updatedFAQ = await FAQ.findByIdAndUpdate(
-      id,
-      { question, answer },
-      { new: true, runValidators: true }
-    );
-
-    if (!updatedFAQ) {
+    // Find the FAQ entry
+    const faq = await professionalFAQ.findById(id);
+    if (!faq) {
       return res.status(404).json({
         success: false,
-        message: "FAQ not found.",
+        message: "FAQ not found",
       });
     }
 
-    res.status(200).json({
+    // Update the FAQ entry
+    faq.question = question || faq.question;
+    faq.answer = answer || faq.answer;
+
+    await faq.save();
+
+    return res.status(200).json({
       success: true,
-      message: "FAQ updated successfully.",
-      data: updatedFAQ,
+      message: "FAQ updated successfully",
+      data: faq,
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
-      message: "Internal server error.",
-      error: error.message,
+      message: "Internal server error",
     });
   }
 };
@@ -125,26 +156,33 @@ exports.updateFAQ = async (req, res) => {
 exports.deleteFAQ = async (req, res) => {
   try {
     const { id } = req.params;
-    const deletedFAQ = await FAQ.findByIdAndDelete(id);
 
-    if (!deletedFAQ) {
-      return res.status(404).json({
+    // Validate if FAQ ID is a valid MongoDB ObjectId
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
         success: false,
-        message: "FAQ not found.",
+        message: "Invalid FAQ ID format",
       });
     }
 
-    res.status(200).json({
+    // Find and delete the FAQ entry
+    const faq = await professionalFAQ.findByIdAndDelete(id);
+    if (!faq) {
+      return res.status(404).json({
+        success: false,
+        message: "FAQ not found",
+      });
+    }
+
+    return res.status(200).json({
       success: true,
-      message: "FAQ deleted successfully.",
-      data: deletedFAQ,
+      message: "FAQ deleted successfully",
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
-      message: "Internal server error.",
-      error: error.message,
+      message: "Internal server error",
     });
   }
 };

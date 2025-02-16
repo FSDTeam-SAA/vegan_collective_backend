@@ -2,9 +2,9 @@ const mongoose = require('mongoose');
 
 const goLiveSchema = new mongoose.Schema(
   {
-    ServiceId: {
-      type: mongoose.Types.ObjectId,
-      ref: 'Professionalservices',
+     userID: {
+         type: mongoose.Types.ObjectId,
+         ref: 'User',
     },
     eventTitle: {
       type: String,

@@ -1,117 +1,163 @@
-const Review = require('../models/professionalReview.model');
-const User = require('../models/user.model'); // Assuming you have a User model
+const Review = require('../models/professionalReview.model'); // Import the Review model
+const mongoose = require('mongoose'); // Import mongoose for the ObjectId validation
+const User = require('../models/user.model'); // Import the User model
 
 // Create a new review
 exports.createReview = async (req, res) => {
   try {
     const { userID, rating, comment } = req.body;
 
-    // Validate request body
-    if (!userID || !rating) {
-      return res.status(400).json({ message: "User ID and rating are required." });
+    // Check if the user exists and is of type "professional"
+    const user = await User.findById(userID);
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid user ID',
+      });
     }
 
-    // Check if rating is within the valid range
-    if (rating < 1 || rating > 5) {
-      return res.status(400).json({ message: "Rating must be between 1 and 5." });
-    }
-
-    // Check if the provided userID exists in the database
-    const userExists = await User.findById(userID);
-    if (!userExists) {
-      return res.status(400).json({ message: "Invalid User ID. User does not exist." });
+    if (user.accountType !== 'professional') {
+      return res.status(403).json({
+        success: false,
+        message: 'This user is not a professional',
+      });
     }
 
     // Create the review
-    const newReview = new Review({
+    const review = new Review({
       userID,
       rating,
       comment,
     });
 
-    // Save the review to the database
-    const savedReview = await newReview.save();
+    await review.save();
 
-    res.status(201).json(savedReview);
+    res.status(201).json({
+      success: true,
+      message: 'Review created successfully',
+      review,
+    });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error(error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error',
+    });
   }
 };
 
 // Get all reviews
 exports.getAllReviews = async (req, res) => {
   try {
-    const reviews = await Review.find().populate('userID', 'username email'); // Populate user details
-    res.status(200).json(reviews);
+    const reviews = await Review.find().populate('userID', 'name email accountType');
+
+    res.status(200).json({
+      success: true,
+      reviews,
+    });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error(error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error',
+    });
   }
 };
 
 // Get a single review by ID
 exports.getReviewById = async (req, res) => {
   try {
-    const review = await Review.findById(req.params.id).populate('userID', 'username email');
+    const review = await Review.findById(req.params.id).populate('userID', 'name email accountType');
+
     if (!review) {
-      return res.status(404).json({ message: "Review not found." });
+      return res.status(404).json({
+        success: false,
+        message: 'Review not found',
+      });
     }
-    res.status(200).json(review);
+
+    res.status(200).json({
+      success: true,
+      review,
+    });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error(error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error',
+    });
   }
 };
 
-// Update a review by ID
+// Update a review
 exports.updateReview = async (req, res) => {
   try {
     const { rating, comment } = req.body;
 
-    // Validate request body
-    if (!rating && !comment) {
-      return res.status(400).json({ message: "At least one field (rating or comment) is required for update." });
-    }
-
-    // Check if rating is within the valid range
-    if (rating && (rating < 1 || rating > 5)) {
-      return res.status(400).json({ message: "Rating must be between 1 and 5." });
-    }
-
-    // Check if the review exists
+    // Find the review by ID
     const review = await Review.findById(req.params.id);
     if (!review) {
-      return res.status(404).json({ message: "Review not found." });
+      return res.status(404).json({
+        success: false,
+        message: 'Review not found',
+      });
     }
 
-    // If userID is being updated, validate it
-    if (req.body.userID) {
-      const userExists = await User.findById(req.body.userID);
-      if (!userExists) {
-        return res.status(400).json({ message: "Invalid User ID. User does not exist." });
-      }
-    }
+    // Update the review fields if provided in the request body
+    if (rating !== undefined) review.rating = rating;
+    if (comment !== undefined) review.comment = comment;
 
-    // Update the review
-    const updatedReview = await Review.findByIdAndUpdate(
-      req.params.id,
-      { rating, comment, userID: req.body.userID },
-      { new: true, runValidators: true }
-    );
+    // Save the updated review
+    await review.save();
 
-    res.status(200).json(updatedReview);
+    res.status(200).json({
+      success: true,
+      message: 'Review updated successfully',
+      review,
+    });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error(error); // Log the error for debugging
+    res.status(500).json({
+      success: false,
+      message: 'Server error',
+    });
   }
 };
 
-// Delete a review by ID
+// Delete a review
 exports.deleteReview = async (req, res) => {
   try {
-    const review = await Review.findByIdAndDelete(req.params.id);
-    if (!review) {
-      return res.status(404).json({ message: "Review not found." });
+    const { id } = req.params; // Extract the ID from the request parameters
+
+    // Validate if the ID is a valid MongoDB ObjectId
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid review ID',
+      });
     }
-    res.status(200).json({ message: "Review deleted successfully." });
+
+    // Find the review by ID
+    const review = await Review.findById(id);
+    if (!review) {
+      return res.status(404).json({
+        success: false,
+        message: 'Review not found',
+      });
+    }
+
+    // Delete the review
+    await Review.findByIdAndDelete(id); // Use findByIdAndDelete for simplicity
+
+    res.status(200).json({
+      success: true,
+      message: 'Review deleted successfully',
+    });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error(error); // Log the error for debugging
+    res.status(500).json({
+      success: false,
+      message: 'Server error',
+    });
   }
 };

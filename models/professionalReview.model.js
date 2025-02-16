@@ -6,10 +6,6 @@ const reviewSchema = new mongoose.Schema(
       type: mongoose.Types.ObjectId,
       ref: 'User',
     },
-    serviceID: {
-      type: mongoose.Types.ObjectId,
-      ref: 'Professionalservices',
-    },
     rating: {
       type: Number,
       max: 5,

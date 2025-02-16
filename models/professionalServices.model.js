@@ -1,10 +1,10 @@
-const mongoose = require('mongoose')
+const mongoose = require("mongoose");
 
 const professionalServicesSchema = new mongoose.Schema(
   {
     userID: {
       type: mongoose.Types.ObjectId,
-      ref: 'User',
+      ref: "User",
     },
     QR: {
       type: String,
@@ -42,15 +42,21 @@ const professionalServicesSchema = new mongoose.Schema(
     },
     sessionType: {
       type: String,
+      enum: ["one on one", "group", "Webinar"],
+      required: true,
     },
-    },
+    isLiveStream: { 
+      type: Boolean, 
+      default: false
+     },
+  },
   {
     timestamps: true,
   }
-)
+);
 
 const Professionalservices = mongoose.model(
-  'Professionalservices',
+  "Professionalservices",
   professionalServicesSchema
-)
-module.exports = Professionalservices
+);
+module.exports = Professionalservices;
