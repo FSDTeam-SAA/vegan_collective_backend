@@ -3,6 +3,7 @@ const dbConnection = require("./dbConfig/dbConnection");
 const dotenv = require("dotenv").config();
 const cookieParser = require("cookie-parser");
 const cors = require("cors");
+const authenticateToken = require('./middleware/auth.middleware');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -16,6 +17,7 @@ app.use(cors({ origin: "*" }));
 const userRoute = require("./routes/user.routes.js");
 
 //routes for professional
+
 const professionalBooking = require("./routes/professionalBooking.route.js");
 const professionalEvent = require("./routes/professionalEvent.route.js");
 const professionalFAQ = require("./routes/professionalFAQ.route.js");

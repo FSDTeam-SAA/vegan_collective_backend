@@ -1,35 +1,38 @@
-const Golive = require('../models/professionalGoLive.model'); // Import the Golive model
-const ProfessionalService = require('../models/professionalServices.model'); // Import the Professionalservices model
+const mongoose = require('mongoose');
+const Golive = require('../models/professionalGoLive.model'); // Adjust the path as needed
+const User = require('../models/user.model'); // Adjust the path as needed
 
-// CREATE: Add a new event
-exports.addNewEvent = async (req, res) => {
+// Create a new GoLive event
+exports.createGoLiveEvent = async (req, res) => {
   try {
-    const { ServiceId, eventTitle, description, date, time, eventType, price } = req.body;
+    const { userID, eventTitle, description, date, time, eventType, price } = req.body;
 
-    // Validate ServiceId exists in the Professionalservices collection
-    const serviceExists = await ProfessionalService.findById(ServiceId);
-    if (!serviceExists) {
-      return res.status(400).json({ message: 'Invalid ServiceId. Service does not exist.' });
+    // Validate if userID is a valid MongoDB ObjectId
+    if (!mongoose.Types.ObjectId.isValid(userID)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid userID format",
+      });
     }
 
-    // Validate required fields
-    if (!eventTitle || !time) {
-      return res.status(400).json({ message: 'Event title and time are required fields.' });
+    // Check if the user exists and has an account type of "professional"
+    const user = await User.findById(userID);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+    if (user.accountType !== "professional") {
+      return res.status(403).json({
+        success: false,
+        message: "This user is not a professional",
+      });
     }
 
-    // Validate eventType enum
-    if (eventType && !['paid event', 'free event'].includes(eventType)) {
-      return res.status(400).json({ message: 'Invalid eventType. Must be "paid event" or "free event".' });
-    }
-
-    // If eventType is "paid event", price must be provided
-    if (eventType === 'paid event' && !price) {
-      return res.status(400).json({ message: 'Price is required for paid events.' });
-    }
-
-    // Create the new event
+    // Create the GoLive event
     const newEvent = new Golive({
-      ServiceId,
+      userID,
       eventTitle,
       description,
       date,
@@ -37,90 +40,150 @@ exports.addNewEvent = async (req, res) => {
       eventType,
       price,
     });
-
-    // Save the event to the database
-    await newEvent.save();
-
-    return res.status(201).json({ message: 'Event added successfully.', event: newEvent });
+    const savedEvent = await newEvent.save();
+    res.status(201).json({
+      success: true,
+      message: "GoLive event created successfully",
+      data: savedEvent,
+    });
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({ message: 'Internal server error.' });
+    res.status(500).json({
+      success: false,
+      message: "Server error",
+      error: error.message,
+    });
   }
 };
 
-// READ: Get all events
-exports.getAllEvents = async (req, res) => {
+// Get all GoLive events (publicly accessible)
+exports.getAllGoLiveEvents = async (req, res) => {
   try {
-    const events = await Golive.find().populate('ServiceId', 'name'); // Populate ServiceId with relevant fields
-    return res.status(200).json({ events });
+    // Fetch all GoLive events from the database
+    const events = await Golive.find();
+    res.status(200).json({
+      success: true,
+      message: "All GoLive events fetched successfully",
+      data: events,
+    });
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({ message: 'Internal server error.' });
+    res.status(500).json({
+      success: false,
+      message: "Server error",
+      error: error.message,
+    });
   }
 };
 
-// READ: Get a single event by ID
-exports.getEventById = async (req, res) => {
+// Get all GoLive events created by a specific user
+exports.getGoLiveEventsById = async (req, res) => {
   try {
     const { id } = req.params;
-    const event = await Golive.findById(id).populate('ServiceId', 'name');
 
+    // Validate if event ID is a valid MongoDB ObjectId
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid event ID format",
+      });
+    }
+
+    // Fetch GoLive event by ID
+    const event = await Golive.findById(id);
     if (!event) {
-      return res.status(404).json({ message: 'Event not found.' });
+      return res.status(404).json({
+        success: false,
+        message: "GoLive event not found",
+      });
     }
 
-    return res.status(200).json({ event });
+    res.status(200).json({
+      success: true,
+      message: "GoLive event fetched successfully",
+      data: event,
+    });
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({ message: 'Internal server error.' });
+    res.status(500).json({
+      success: false,
+      message: "Server error",
+      error: error.message,
+    });
   }
 };
-
-// UPDATE: Update an event by ID
-exports.updateEvent = async (req, res) => {
+// Update a GoLive event by ID
+exports.updateGoLiveEvent = async (req, res) => {
   try {
     const { id } = req.params;
-    const updates = req.body;
+    const { eventTitle, description, date, time, eventType, price } = req.body;
 
-    // Validate eventType enum if provided
-    if (updates.eventType && !['paid event', 'free event'].includes(updates.eventType)) {
-      return res.status(400).json({ message: 'Invalid eventType. Must be "paid event" or "free event".' });
-    }
-
-    // If eventType is updated to "paid event", ensure price is provided
-    if (updates.eventType === 'paid event' && !updates.price) {
-      return res.status(400).json({ message: 'Price is required for paid events.' });
+    // Validate if the event ID is a valid MongoDB ObjectId
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid event ID format",
+      });
     }
 
     // Find and update the event
-    const updatedEvent = await Golive.findByIdAndUpdate(id, updates, { new: true });
+    const updatedEvent = await Golive.findByIdAndUpdate(
+      id,
+      { eventTitle, description, date, time, eventType, price },
+      { new: true }
+    );
 
     if (!updatedEvent) {
-      return res.status(404).json({ message: 'Event not found.' });
+      return res.status(404).json({
+        success: false,
+        message: "GoLive event not found",
+      });
     }
 
-    return res.status(200).json({ message: 'Event updated successfully.', event: updatedEvent });
+    res.status(200).json({
+      success: true,
+      message: "GoLive event updated successfully",
+      data: updatedEvent,
+    });
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({ message: 'Internal server error.' });
+    res.status(500).json({
+      success: false,
+      message: "Server error",
+      error: error.message,
+    });
   }
 };
 
-// DELETE: Delete an event by ID
-exports.deleteEvent = async (req, res) => {
+// Delete a GoLive event by ID
+exports.deleteGoLiveEvent = async (req, res) => {
   try {
     const { id } = req.params;
+
+    // Validate if the event ID is a valid MongoDB ObjectId
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid event ID format",
+      });
+    }
 
     // Find and delete the event
     const deletedEvent = await Golive.findByIdAndDelete(id);
 
     if (!deletedEvent) {
-      return res.status(404).json({ message: 'Event not found.' });
+      return res.status(404).json({
+        success: false,
+        message: "GoLive event not found",
+      });
     }
 
-    return res.status(200).json({ message: 'Event deleted successfully.', event: deletedEvent });
+    res.status(200).json({
+      success: true,
+      message: "GoLive event deleted successfully",
+      data: deletedEvent,
+    });
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({ message: 'Internal server error.' });
+    res.status(500).json({
+      success: false,
+      message: "Server error",
+      error: error.message,
+    });
   }
 };

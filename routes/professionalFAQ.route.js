@@ -1,20 +1,20 @@
 const express = require("express");
 const router = express.Router();
-const FAQController = require("../controllers/professionalFAQ.controller");
+const professionalFAQController = require("../controllers/professionalFAQ.controller"); // Adjust the path as needed
 
 // Create a new FAQ
-router.post("/faq", FAQController.createFAQ);
+router.post("/faqs", professionalFAQController.createFAQ);
 
-// Get all FAQs
-router.get("/faq", FAQController.getAllFAQs);
+// Get all FAQs (no userID required)
+router.get("/faqs", professionalFAQController.getAllFAQs);
 
-// Get a single FAQ by ID
-router.get("/faq/:id", FAQController.getFAQById);
+// Get a specific FAQ by ID
+router.get("/faqs/:id", professionalFAQController.getFAQByID);
 
 // Update an FAQ by ID
-router.put("/faq/:id", FAQController.updateFAQ);
+router.put("/faqs/:id", professionalFAQController.updateFAQ);
 
 // Delete an FAQ by ID
-router.delete("/faq/:id", FAQController.deleteFAQ);
+router.delete("/faqs/:id", professionalFAQController.deleteFAQ);
 
 module.exports = router;

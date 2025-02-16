@@ -2,19 +2,20 @@ const express = require('express');
 const router = express.Router();
 const reviewController = require('../controllers/professionalReview.controller');
 
-// Route to create a new review
+
+// Create a new review (requires authentication)
 router.post('/reviews', reviewController.createReview);
 
-// Route to get all reviews
+// Get all reviews
 router.get('/reviews', reviewController.getAllReviews);
 
-// Route to get a single review by ID
+// Get a single review by ID
 router.get('/reviews/:id', reviewController.getReviewById);
 
-// Route to update a review by ID
-router.put('/reviews/:id', reviewController.updateReview);
+// Update a review by ID (requires authentication)
+router.put('/reviews/:id',reviewController.updateReview);
 
-// Route to delete a review by ID
+// Delete a review by ID (requires authentication)
 router.delete('/reviews/:id', reviewController.deleteReview);
 
 module.exports = router;
