@@ -10,14 +10,13 @@ const {
 const router = express.Router();
 
 // Create a new professional info
-router.post("/ProfessionalInfo", createProfessionalInfo);
+router.post("/professionalInfo", createProfessionalInfo);
 
-// Get all professional info
-router.get("/ProfessionalInfo", getAllProfessionalInfo);
+// Get all professional info with filtering, pagination, and sorting
+router.get("/professionalInfo", getAllProfessionalInfo);
 
 // Get a single professional info by ID
-
-router.get("/ProfessionalInfo/:id", getProfessionalInfoById);
+router.get("/professionalInfo/:id", getProfessionalInfoById);
 
 // Update professional info by ID
 router.put("/professionalInfo/:id", updateProfessionalInfo);
