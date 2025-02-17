@@ -1,16 +1,16 @@
 const mongoose = require('mongoose');
 const multer = require('multer');
 const path = require('path');
-const ProfessionalServices = require('../models/professionalServices.model'); // Adjust the path as needed
+const ProfessionalServices = require('../models/professionalServices.model');  // Adjust the path as needed
 const User = require('../models/user.model'); // Adjust the path as needed
 
 // Set up storage for uploaded files
 const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
+   destination: function (req, file, cb) {
     cb(null, 'uploads/'); // Folder where files will be stored
   },
   filename: function (req, file, cb) {
-    cb(null, Date.now() + '-' + file.originalname); // Unique file name
+    cb(null, Date.now() + '-' +  file.originalname); // Unique file name
   },
 });
 
@@ -28,7 +28,7 @@ const fileFilter = (req, file, cb) => {
 const upload = multer({
   storage: storage,
   fileFilter: fileFilter,
-  limits: { fileSize: 500 * 1024 * 1024 }, // Limit file size to 500MB
+  limits:  { fileSize: 500 * 1024 * 1024 }, // Limit file size to 500MB
 });
 
 // Middleware to handle Multer errors
@@ -38,7 +38,7 @@ const handleMulterErrors = (err, req, res, next) => {
     return res.status(400).json({
       success: false,
       message: `Multer error: ${err.message}`,
-    });
+    }); 
   } else if (err) {
     console.error("Other error:", err);
     return res.status(400).json({
@@ -142,7 +142,7 @@ exports.createProfessionalService = [
         message: "Server error while creating professional service",
       });
     }
-  },
+  }, 
 ];
 
 // Get all professional services with filtering
@@ -151,15 +151,8 @@ exports.getAllProfessionalServices = async (req, res) => {
     // Fetch all professional services from the database
     const allServices = await ProfessionalServices.find().populate('userID', 'name email accountType');
 
-    // Filter services based on session type and isLiveStream
-    const filteredServices = allServices.filter(service => {
-      if (service.sessionType === "ebinar") {
-        // Only include Webinar services that are live streams
-        return service.isLiveStream === true;
-      }
-      // Include "one on one" and "group" session types only if isLiveStream is false
-      return ["one on one", "group"].includes(service.sessionType) && service.isLiveStream === false;
-    });
+    // Filter services to include only those where isLiveStream is false
+    const filteredServices = allServices.filter(service => service.isLiveStream === false);
 
     return res.status(200).json({
       success: true,
@@ -331,6 +324,26 @@ exports.deleteProfessionalService = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Server error while deleting professional service",
+    });
+  }
+};
+
+// Get all live-streamed professional services
+exports.getAllLiveStreamServices = async (req, res) => {
+  try {
+    // Fetch all professional services where isLiveStream is true
+    const liveStreamServices = await ProfessionalServices.find({ isLiveStream: true }).populate('userID', 'name email accountType');
+
+    return res.status(200).json({
+      success: true,
+      message: "Live-streamed professional services retrieved successfully",
+      data: liveStreamServices,
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      success: false,
+      message: "Server error while retrieving live-streamed professional services",
     });
   }
 };

@@ -8,6 +8,9 @@ router.post('/service', professionalServicesController.createProfessionalService
 // Get all professional services
 router.get('/service', professionalServicesController.getAllProfessionalServices);
 
+// Get all live-streamed professional services
+router.get('/service/livestream', professionalServicesController.getAllLiveStreamServices);
+
 // Get a single professional service by ID
 router.get('/service/:id', professionalServicesController.getProfessionalServiceById);
 

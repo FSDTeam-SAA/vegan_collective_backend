@@ -259,15 +259,21 @@ exports.getUserProfile = async (req, res) => {
         message: "User not found",
       });
     }
+
+    //Generate JWT token
+    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: "1h" });
+
     return res.status(200).json({
       status: true,
       message: "User profile retrieved successfully",
+
       data: {
         _id: user._id,
         role: user.role,
         fullName: user.fullName,
         email: user.email,
         accountType: user.accountType,
+        token,
       },
     });
   } catch (error) {
