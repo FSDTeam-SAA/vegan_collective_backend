@@ -40,60 +40,105 @@ exports.createBooking = async (req, res) => {
 };
 
 
-// Get all bookings
+// Get all bookings with pagination
 exports.getAllBookings = async (req, res) => {
     try {
+        // Extract query parameters for pagination
+        const page = parseInt(req.query.page) || 1; // Default to page 1 if not provided
+        const limit = parseInt(req.query.limit) || 10; // Default to 10 items per page if not provided
+        const skip = (page - 1) * limit;
+
+        // Fetch total number of bookings for pagination metadata
+        const totalBookings = await Professionalservicebooking.countDocuments();
+
+        // Fetch paginated bookings with populated fields
         const bookings = await Professionalservicebooking.find()
             .populate({
                 path: 'userID',
-                model: 'User', // Ensure the model name matches exactly
-                select: 'fullName email role' // Include only specific fields from User
+                model: 'User',
+                select: 'fullName email role'
             })
             .populate({
                 path: 'professionalID',
-                model: 'Professionalinfo', // Ensure the model name matches exactly
-                select: 'professionalName contactDetails' // Include only specific fields from Professionalinfo
+                model: 'Professionalinfo',
+                select: 'professionalName contactDetails'
             })
             .populate({
                 path: 'bookingInfo.serviceID',
-                model: 'Professionalservices', // Fixed model name here
-                select: 'serviceName price sessionType' // Include only specific fields from Professionalservices
+                model: 'Professionalservices',
+                select: 'serviceName price sessionType'
             })
-            .select('userID professionalID bookingInfo payWith cardHolderName cardNumber expiryDate cvv'); // Limit fields in the main document
+            .select('userID professionalID bookingInfo payWith cardHolderName cardNumber expiryDate cvv status') // Include status
+            .skip(skip)
+            .limit(limit);
 
-        res.status(200).json({ message: "Bookings retrieved successfully", data: bookings });
+        // Calculate total pages
+        const totalPages = Math.ceil(totalBookings / limit);
+
+        // Return paginated response
+        res.status(200).json({
+            message: "Bookings retrieved successfully",
+            data: bookings.map(booking => ({
+                ...booking.toObject(),
+                status: booking.status // Explicitly include status in the response
+            })),
+            pagination: {
+                currentPage: page,
+                totalPages: totalPages,
+                totalRecords: totalBookings,
+                recordsPerPage: limit
+            }
+        });
     } catch (error) {
         res.status(500).json({ message: "Server error", error: error.message });
     }
 };
 
-// Get a single booking by ID
+// Get a single booking by ID and return the desired response structure
 exports.getBookingById = async (req, res) => {
     try {
         const { id } = req.params;
+
+        // Find the booking by ID and populate the necessary fields
         const booking = await Professionalservicebooking.findById(id)
             .populate({
-                path: 'userID',
-                model: 'User', // Ensure the model name matches exactly
-                select: 'fullName email role' // Include only specific fields from User
-            })
-            .populate({
-                path: 'professionalID',
-                model: 'Professionalinfo', // Ensure the model name matches exactly
-                select: 'professionalName contactDetails' // Include only specific fields from Professionalinfo
-            })
-            .populate({
                 path: 'bookingInfo.serviceID',
-                model: 'Professionalservices', // Fixed model name here
+                model: 'Professionalservices',
                 select: 'serviceName price sessionType' // Include only specific fields from Professionalservices
-            })
-            .select('userID professionalID bookingInfo payWith cardHolderName cardNumber expiryDate cvv'); // Limit fields in the main document
+            });
 
         if (!booking) {
             return res.status(404).json({ message: "Booking not found" });
         }
 
-        res.status(200).json({ message: "Booking retrieved successfully", data: booking });
+        // Format the bookingInfo array
+        const formattedBookingInfo = booking.bookingInfo.map(info => ({
+            serviceID: {
+                _id: info.serviceID._id,
+                serviceName: info.serviceID.serviceName,
+                price: info.serviceID.price,
+                sessionType: info.serviceID.sessionType,
+            },
+            date: info.date, // Assuming 'date' is part of the bookingInfo schema
+            time: info.time, // Assuming 'time' is part of the bookingInfo schema
+            _id: info._id,   // Include the ID of the bookingInfo entry
+        }));
+
+        // Construct the final response object
+        const responseData = {
+            bookingInfo: formattedBookingInfo,
+            payWith: booking.payWith,
+            cardHolderName: booking.cardHolderName,
+            cardNumber: booking.cardNumber,
+            expiryDate: booking.expiryDate,
+            cvv: booking.cvv,
+            status: booking.status,
+        };
+
+        res.status(200).json({
+            message: "Booking retrieved successfully",
+            data: responseData, // Return the formatted response
+        });
     } catch (error) {
         res.status(500).json({ message: "Server error", error: error.message });
     }
@@ -103,13 +148,25 @@ exports.getBookingById = async (req, res) => {
 exports.updateBooking = async (req, res) => {
     try {
         const { id } = req.params;
-        const updatedBooking = await Professionalservicebooking.findByIdAndUpdate(id, req.body, { new: true });
+        const { status } = req.body; // Allow updating the status
+
+        const updatedBooking = await Professionalservicebooking.findByIdAndUpdate(
+            id,
+            { ...req.body, status }, // Update the status if provided
+            { new: true }
+        );
 
         if (!updatedBooking) {
             return res.status(404).json({ message: "Booking not found" });
         }
 
-        res.status(200).json({ message: "Booking updated successfully", data: updatedBooking });
+        res.status(200).json({ 
+            message: "Booking updated successfully", 
+            data: {
+                ...updatedBooking.toObject(),
+                status: updatedBooking.status // Include status in the response
+            }
+        });
     } catch (error) {
         res.status(500).json({ message: "Server error", error: error.message });
     }

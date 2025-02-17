@@ -35,10 +35,15 @@ const professionalServiceBookingSchema = new mongoose.Schema(
     },
     expiryDate:{
         type: String,
-    },
+    },     
     cvv:{
         type: String,
     },
+    status: {
+        type: String,
+        enum: ['pending', 'confirmed'],
+        default: 'pending',
+      },
   },
   {
     timestamps: true,

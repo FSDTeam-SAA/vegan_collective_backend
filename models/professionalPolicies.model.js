@@ -3,7 +3,7 @@ const mongoose = require('mongoose')
 const professionalPolicySchema = new mongoose.Schema({
   ServiceId: {
     type: mongoose.Types.ObjectId,
-    ref: 'Professionalservices',
+    ref: 'User',
   },
   beforeAppointment: {
     type: String,
