@@ -136,7 +136,7 @@ exports.verifyEmail = async (req, res) => {
     if (user.role === "user") {
       return res.redirect(`${frontendUrl}/onboarding/success?role=customer`);
     } else if (user.role === "vendor") {
-      return res.redirect(`${frontendUrl}/profile-setup?type=${user.accountType}`);
+      return res.redirect(`${frontendUrl}/profile-setup?type=${user.accountType}&userId=${user._id}`);
     }
 
     // Default response if no redirection matches
