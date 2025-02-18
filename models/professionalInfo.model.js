@@ -47,15 +47,15 @@ const professionalInfoSchema = new mongoose.Schema(
     },
     governmentIssuedID: {
       type: String,
-      required: true,
+      
     },
     professionalCertification: {
       type: String,
-      required: true,
+     
     },
     photoWithID: {
       type: String,
-      required: true,
+      
     },
   },
   {

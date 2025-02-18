@@ -70,6 +70,7 @@ exports.getAllProfessionalInfo = async (req, res) => {
         return res.status(400).json({
           success: false,
           message: "Invalid fullName. No matching records found.",
+          data: [],
         });
       }
       filter.fullName = { $regex: fullName, $options: "i" }; // Case-insensitive search

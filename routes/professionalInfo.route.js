@@ -6,11 +6,14 @@ const {
   updateProfessionalInfo,
   deleteProfessionalInfo,
 } = require("../controllers/professionalInfo.controller");
+const { uploadImages } = require("../utils/grobalupload.controller");
 
 const router = express.Router();
 
 // Create a new professional info
 router.post("/professionalInfo", createProfessionalInfo);
+// Upload images to Cloudinary and update Professionalinfo
+router.post("/professionalInfo/uploadImages", uploadImages);
 
 // Get all professional info with filtering, pagination, and sorting
 router.get("/professionalInfo", getAllProfessionalInfo);
