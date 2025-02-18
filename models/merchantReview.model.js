@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-const reviewSchema = new mongoose.Schema(
+const merchantReviewSchema = new mongoose.Schema(
   {
     userID: {
       type: mongoose.Types.ObjectId,
@@ -8,7 +8,7 @@ const reviewSchema = new mongoose.Schema(
     },
     merchantID: {
       type: mongoose.Types.ObjectId,
-      ref: 'Merchant',
+      ref: 'User',
     },
     rating: {
       type: Number,
@@ -23,5 +23,5 @@ const reviewSchema = new mongoose.Schema(
   }
 )
 
-const Review = mongoose.model("Review", reviewSchema);
-module.exports = Review;
+const Merchantreview = mongoose.model("Merchantreview", merchantReviewSchema);
+module.exports = Merchantreview;
