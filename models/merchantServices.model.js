@@ -6,26 +6,7 @@ const merchantServicesSchema = new mongoose.Schema(
       type: mongoose.Types.ObjectId,
       ref: "User",
     },
-    QR:{
-      type: String,
-    },
-    referNumber:{
-      type: Number,
-    },
-    serviceName: {
-      type: String,
-    },
-    metaDescription: {
-      type: String,
-    },
-    serviceDescription: {
-      type: String,
-    },
-    keyWords: [
-      {
-        type: String,
-      }
-    ],
+
     paymentType:[
       {
         type: String,

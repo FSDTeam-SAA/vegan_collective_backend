@@ -38,43 +38,7 @@ const userSchema = new mongoose.Schema(
     refreshToken: {
       type: String,
     },
-    merchanInfo:[
-      {
-        businessName: {
-          type: String,
-          required: true,
-        },
-        address: {
-          type: String,
-        },
-        aboutUs: {
-          type: String,
-        },
-        shortDescription:{
-          type: String,
-        },
-        websiteURL: {
-          type: String,
-        },
-        governmentIssuedID: {
-          type: String,
-          required: true,
-        },
-        businessLicense: {
-          type: String,
-          required: true,
-        },
-        photoWithID: {
-          type: String,
-          required: true,
-        },
-        verificationStatus: {
-          type: String,
-          enum: ["verified", "not verified"],
-          default: "not verified",
-        },
-      },
-    ],
+    
     organizationInfo:[
       {
         organizationName: {
