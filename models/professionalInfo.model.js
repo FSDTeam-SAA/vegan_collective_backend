@@ -19,7 +19,7 @@ const professionalInfoSchema = new mongoose.Schema(
     address: {
       type: String,
     },
-    aboutMe: {
+    about: {
       type: String,
     },
     highlightedStatement: [
