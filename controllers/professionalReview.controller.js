@@ -16,12 +16,12 @@ exports.createReview = async (req, res) => {
       });
     }
 
-    if (user.accountType !== 'professional') {
-      return res.status(403).json({
-        success: false,
-        message: 'This user is not a professional',
-      });
-    }
+    // if (user.accountType !== 'professional') {
+    //   return res.status(403).json({
+    //     success: false,
+    //     message: 'This user is not a professional',
+    //   });
+    // }
 
     // Create the review
     const review = new Review({
