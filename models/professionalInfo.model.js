@@ -7,6 +7,9 @@ const professionalInfoSchema = new mongoose.Schema(
       ref: 'User',
       required: true,
     },
+    profilePhoto: {
+      type: String,
+    },
     fullName: {
       type: String,
     },
