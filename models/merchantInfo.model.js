@@ -6,6 +6,12 @@ const merchantInfoSchema = new mongoose.Schema(
       type: mongoose.Types.ObjectId,
       ref: "User",
     },
+    profilePhoto: {
+      type: String,
+    },
+    fullName: {
+      type: String,
+    },
     businessName: {
       type: String,
     },
