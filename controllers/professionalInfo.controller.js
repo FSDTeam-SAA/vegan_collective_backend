@@ -1,50 +1,84 @@
 const mongoose = require("mongoose");
 const Professionalinfo = require("../models/professionalInfo.model");
 const User = require("../models/user.model");
+const multer = require("multer");
+const cloudinary = require("cloudinary").v2;
+const { CloudinaryStorage } = require("multer-storage-cloudinary");
 
-// Create a new professional info
-exports.createProfessionalInfo = async (req, res) => {
-  try {
-    const { userID } = req.body;
-    // Validate if userID is a valid MongoDB ObjectId
-    if (!mongoose.Types.ObjectId.isValid(userID)) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid userID format",
-      });
-    }
-    // Check if the user exists and has an account type of "professional"
-    const user = await User.findById(userID);
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: "User not found",
-      });
-    }
-    if (user.accountType !== "professional") {
-      return res.status(403).json({
-        success: false,
-        message: "This user is not a professional",
-      });
-    }
-    // Create the professional info entry
-    const professionalInfo = new Professionalinfo(req.body);
-    const savedInfo = await professionalInfo.save();
-    res.status(201).json({
-      success: true,
-      message: "Professional info created successfully",
-      data: savedInfo,
-    });
-  } catch (error) {
-    console.error("Error:", error.message);
-    res.status(500).json({
-      success: false,
-      message: "Error creating professional info",
-      error: error.message,
-    });
-  }
-};
+// Configure Cloudinary
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
 
+
+// Configure Multer to use Cloudinary as storage
+const storage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: "profile_photos", // Folder name in Cloudinary
+    allowedFormats: ["jpg", "jpeg", "png"], // Allowed file formats
+    public_id: (req, file) => `${Date.now()}-${file.originalname}`, // Unique filename
+  },
+});
+
+const upload = multer({ storage });
+
+// Create a new professional info with profile photo upload to Cloudinary
+exports.createProfessionalInfo = [
+  upload.single("profilePhoto"), // Middleware to handle file upload
+  async (req, res) => {
+    try {
+      const { userID } = req.body;
+
+      // Validate if userID is a valid MongoDB ObjectId
+      if (!mongoose.Types.ObjectId.isValid(userID)) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid userID format",
+        });
+      }
+
+      // Check if the user exists and has an account type of "professional"
+      const user = await User.findById(userID);
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          message: "User not found",
+        });
+      }
+      if (user.accountType !== "professional") {
+        return res.status(403).json({
+          success: false,
+          message: "This user is not a professional",
+        });
+      }
+
+      // Add the uploaded file's Cloudinary URL to the request body
+      if (req.file) {
+        req.body.profilePhoto = req.file.path; // Cloudinary URL
+      }
+
+      // Create the professional info entry
+      const professionalInfo = new Professionalinfo(req.body);
+      const savedInfo = await professionalInfo.save();
+
+      res.status(201).json({
+        success: true,
+        message: "Professional info created successfully",
+        data: savedInfo, // Return all data including the profile photo URL
+      });
+    } catch (error) {
+      console.error("Error:", error.message);
+      res.status(500).json({
+        success: false,
+        message: "Error creating professional info",
+        error: error.message,
+      });
+    }
+  },
+];
 
 // Get all professional info with filtering, pagination, and sorting
 exports.getAllProfessionalInfo = async (req, res) => {
@@ -165,26 +199,61 @@ exports.getProfessionalInfoById = async (req, res) => {
   }
 };
 
-// Update professional info by ID
+// Update professional info by ID (Handles form-data)
 exports.updateProfessionalInfo = async (req, res) => {
   try {
-    const { id } = req.params;
-    const updatedInfo = await Professionalinfo.findByIdAndUpdate(id, req.body, {
-      new: true,
-      runValidators: true,
-    });
-    if (!updatedInfo) {
-      return res.status(404).json({
-        success: false,
-        message: "Professional info not found",
+    // Use multer middleware to handle file upload
+    upload.single("profilePhoto")(req, res, async (err) => {
+      if (err) {
+        return res.status(400).json({
+          success: false,
+          message: err.message || "Error uploading profile photo",
+        });
+      }
+
+      const { id } = req.params;
+
+      // Validate if the ID is a valid MongoDB ObjectId
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid professional info ID format",
+        });
+      }
+
+      // Prepare the update object
+      const updateData = { ...req.body }; // Copy all text fields from req.body
+
+      // Add profile photo path if a new file was uploaded
+      if (req.file) {
+        updateData.profilePhoto = req.file.path; // Save the file path to the database
+      }
+
+      // Update the professional info entry
+      const updatedInfo = await Professionalinfo.findByIdAndUpdate(
+        id,
+        updateData,
+        {
+          new: true, // Return the updated document
+          runValidators: true, // Run schema validations
+        }
+      );
+
+      if (!updatedInfo) {
+        return res.status(404).json({
+          success: false,
+          message: "Professional info not found",
+        });
+      }
+
+      res.status(200).json({
+        success: true,
+        message: "Professional info updated successfully",
+        data: updatedInfo,
       });
-    }
-    res.status(200).json({
-      success: true,
-      message: "Professional info updated successfully",
-      data: updatedInfo,
     });
   } catch (error) {
+    console.error("Error:", error.message);
     res.status(500).json({
       success: false,
       message: "Error updating professional info",
