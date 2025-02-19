@@ -26,33 +26,46 @@ const storage = new CloudinaryStorage({
 const upload = multer({ storage });
 
 // Create a new professional info with profile photo upload to Cloudinary
-exports.createProfessionalInfo = [
-  upload.single("profilePhoto"), // Middleware to handle file upload
-  async (req, res) => {
-    try {
-      const { userID } = req.body;
-
-      // Validate if userID is a valid MongoDB ObjectId
-      if (!mongoose.Types.ObjectId.isValid(userID)) {
-        return res.status(400).json({
-          success: false,
-          message: "Invalid userID format",
-        });
+exports.createProfessionalInfo = async (req, res) => {
+  try {
+    upload.single("profilePhoto")(req, res, async (err) => {
+      if (err) {
+        return res.status(500).json({ error: "Error uploading file to Cloudinary" });
       }
 
-      // Check if the user exists and has an account type of "professional"
-      const user = await User.findById(userID);
-      if (!user) {
-        return res.status(404).json({
-          success: false,
-          message: "User not found",
-        });
+      const {
+        userID,
+        fullName,
+        designation,
+        businessName,
+        address,
+        about,
+        highlightedStatement,
+        experience,
+        certifications,
+        websiteURL,
+        governmentIssuedID,
+        professionalCertification,
+        photoWithID,
+      } = req.body;
+
+      // Parse highlightedStatement if it's a string
+      let parsedHighlightedStatement = [];
+      if (highlightedStatement) {
+        try {
+          parsedHighlightedStatement = JSON.parse(highlightedStatement);
+        } catch (parseError) {
+          return res.status(400).json({
+            success: false,
+            message: "Invalid JSON format for highlightedStatement",
+          });
+        }
       }
-      if (user.accountType !== "professional") {
-        return res.status(403).json({
-          success: false,
-          message: "This user is not a professional",
-        });
+
+      // Validate if the user exists
+      const userExists = await User.findById(userID);
+      if (!userExists) {
+        return res.status(400).json({ error: "Invalid userID. User does not exist." });
       }
 
       // Check if the user already has professional info
@@ -64,30 +77,45 @@ exports.createProfessionalInfo = [
         });
       }
 
-      // Add the uploaded file's Cloudinary URL to the request body
-      if (req.file) {
-        req.body.profilePhoto = req.file.path; // Cloudinary URL
-      }
+      // Get profile photo URL from Cloudinary
+      const profilePhotoUrl = req.file ? req.file.path : null;
 
-      // Create the professional info entry
-      const professionalInfo = new Professionalinfo(req.body);
-      const savedInfo = await professionalInfo.save();
+      // Create a new professional info entry
+      const newProfessionalInfo = new Professionalinfo({
+        userID,
+        fullName,
+        profilePhoto: profilePhotoUrl,
+        designation,
+        businessName,
+        address,
+        about,
+        highlightedStatement: parsedHighlightedStatement,
+        experience,
+        certifications,
+        websiteURL,
+        governmentIssuedID,
+        professionalCertification,
+        photoWithID,
+      });
+
+      // Save the professional info to the database
+      const savedProfessionalInfo = await newProfessionalInfo.save();
 
       res.status(201).json({
         success: true,
         message: "Professional info created successfully",
-        data: savedInfo, // Return all data including the profile photo URL
+        data: savedProfessionalInfo,
       });
-    } catch (error) {
-      console.error("Error:", error.message);
-      res.status(500).json({
-        success: false,
-        message: "Error creating professional info",
-        error: error.message,
-      });
-    }
-  },
-];
+    });
+  } catch (error) {
+    console.error("Error:", error.message);
+    res.status(500).json({
+      success: false,
+      message: "Error creating professional info",
+      error: error.message,
+    });
+  }
+};
 
 // Get all professional info with filtering, pagination, and sorting
 exports.getAllProfessionalInfo = async (req, res) => {
@@ -211,7 +239,6 @@ exports.getProfessionalInfoById = async (req, res) => {
 // Update professional info by ID (Handles form-data)
 exports.updateProfessionalInfo = async (req, res) => {
   try {
-    // Use multer middleware to handle file upload
     upload.single("profilePhoto")(req, res, async (err) => {
       if (err) {
         return res.status(400).json({
@@ -219,7 +246,6 @@ exports.updateProfessionalInfo = async (req, res) => {
           message: err.message || "Error uploading profile photo",
         });
       }
-
       const { id } = req.params;
 
       // Validate if the ID is a valid MongoDB ObjectId
@@ -232,6 +258,18 @@ exports.updateProfessionalInfo = async (req, res) => {
 
       // Prepare the update object
       const updateData = { ...req.body }; // Copy all text fields from req.body
+
+      // Parse highlightedStatement if it's a string
+      if (updateData.highlightedStatement) {
+        try {
+          updateData.highlightedStatement = JSON.parse(updateData.highlightedStatement);
+        } catch (parseError) {
+          return res.status(400).json({
+            success: false,
+            message: "Invalid JSON format for highlightedStatement",
+          });
+        }
+      }
 
       // Add profile photo path if a new file was uploaded
       if (req.file) {
@@ -270,7 +308,6 @@ exports.updateProfessionalInfo = async (req, res) => {
     });
   }
 };
-
 // Delete professional info by ID
 exports.deleteProfessionalInfo = async (req, res) => {
   try {

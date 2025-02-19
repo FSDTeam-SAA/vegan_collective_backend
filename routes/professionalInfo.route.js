@@ -14,7 +14,7 @@ const router = express.Router();
 router.post("/professionalInfo", createProfessionalInfo);
 
 // Upload images to Cloudinary and update Professionalinfo
-router.post("/professionalInfo/uploadImages", uploadImages);
+router.put("/professionalInfo/uploadImages", uploadImages);
 
 // Get all professional info with filtering, pagination, and sorting
 router.get("/professionalInfo", getAllProfessionalInfo);
