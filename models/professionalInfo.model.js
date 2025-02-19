@@ -2,11 +2,8 @@ const mongoose = require("mongoose");
 
 const professionalInfoSchema = new mongoose.Schema(
   {
-    userID: {
-      type: mongoose.Types.ObjectId,
-      ref: 'User',
-      required: true,
-    },
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+
     profilePhoto: {
       type: String,
     },
@@ -25,16 +22,10 @@ const professionalInfoSchema = new mongoose.Schema(
     about: {
       type: String,
     },
-    highlightedStatement: [
-      {
-        title: {
-          type: String,
-        },
-        description: {
-          type: String,
-        },
-      },
-    ],
+   highlightedStatement: [{ 
+    title: { type: String },
+    description: { type: String }
+  }],
     experience: [
       {
         type: String,
