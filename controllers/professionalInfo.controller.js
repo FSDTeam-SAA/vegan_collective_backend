@@ -55,6 +55,15 @@ exports.createProfessionalInfo = [
         });
       }
 
+      // Check if the user already has professional info
+      const existingProfessionalInfo = await Professionalinfo.findOne({ userID });
+      if (existingProfessionalInfo) {
+        return res.status(400).json({
+          success: false,
+          message: "Professional info already exists for this user",
+        });
+      }
+
       // Add the uploaded file's Cloudinary URL to the request body
       if (req.file) {
         req.body.profilePhoto = req.file.path; // Cloudinary URL

@@ -1,13 +1,13 @@
 const express = require("express");
 const router = express.Router();
 const merchantInfoController = require("../controllers/merchantInfo.controller");
-const { uploadImages } = require("../utils/grobalupload.controller");
+const {  uploadMerchantImages} = require("../utils/grobalupload.controller");
 
 // Create a new merchant info
 router.post("/merchant", merchantInfoController.createMerchantInfo);
 
 // Upload images to Cloudinary and update merchantinfo
-router.post("/merchant/uploadImages", uploadImages);
+router.post("/merchant/uploadImages", uploadMerchantImages);
 
 // Get all merchant info with optional filters
 router.get("/merchant", merchantInfoController.getAllMerchantInfo);
