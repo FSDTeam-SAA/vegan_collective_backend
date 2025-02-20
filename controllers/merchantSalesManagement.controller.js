@@ -19,7 +19,7 @@ exports.createOrder = async (req, res) => {
     for (const item of orderedItem) {
       const product = await mongoose.model("MerchantProducts").findById(item.productID);
       if (!product) {
-        return res.status(404).json({ message: `Product with ID ${item.productID} not found.` });
+        return res.status(404).json({ success: false, message: `Product with ID ${item.productID} not found.` });
       }
       totalPrice += product.price * item.quantity;
     }
@@ -38,53 +38,79 @@ exports.createOrder = async (req, res) => {
     });
 
     await newOrder.save();
-    res.status(201).json(newOrder);
+    res.status(201).json({ success: true, data: newOrder });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ success: false, message: error.message });
   }
 };
+
 
 // Get all orders with pagination and filters
 exports.getAllOrders = async (req, res) => {
-  try {
-    const { page = 1, limit = 10, search, item, last30Days } = req.query;
+    try {
+        const { page = 1, limit = 10, search, item, last30Days } = req.query;
 
-    const query = {};
+        const query = {};
 
-    // Search by orderSlug or status
-    if (search) {
-      query.$or = [
-        { orderSlug: { $regex: search, $options: "i" } },
-        { status: { $regex: search, $options: "i" } },
-      ];
+        // Search by orderSlug or status
+        if (search) {
+            query.$or = [
+                { orderSlug: { $regex: search, $options: "i" } },
+                { status: { $regex: search, $options: "i" } },
+            ];
+        }
+
+        // Filter by specific item
+        if (item) {
+            try {
+                query["orderedItem.productID"] = new mongoose.Types.ObjectId(item);
+            } catch (error) {
+                return res.status(400).json({ success: false, message: "Invalid product ID format." });
+            }
+        }
+
+        // Filter by last 30 days
+        if (last30Days === "true") {
+            const thirtyDaysAgo = new Date();
+            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+            console.log("Thirty Days Ago:", thirtyDaysAgo);
+            query.createdAt = { $gte: thirtyDaysAgo };
+        }
+
+        // Log the final query
+        console.log("Final Query:", query);
+
+        // Pagination
+        const pageNumber = parseInt(page, 10);
+        const limitNumber = parseInt(limit, 10);
+        const skip = (pageNumber - 1) * limitNumber;
+
+        // Fetch orders with pagination
+        const orders = await Merchantsalesmanagement.find(query)
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(limitNumber)
+            .populate("merchantID", "name")
+            .populate("userID", "name email")
+            .populate("orderedItem.productID", "name price");
+
+        // Count total documents for pagination metadata
+        const totalOrders = await Merchantsalesmanagement.countDocuments(query);
+
+        res.status(200).json({
+            success: true,
+            data: orders,
+            pagination: {
+                currentPage: pageNumber,
+                totalPages: Math.ceil(totalOrders / limitNumber),
+                totalOrders,
+            },
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
     }
-
-    // Filter by specific item
-    if (item) {
-      query["orderedItem.productID"] = mongoose.Types.ObjectId(item);
-    }
-
-    // Filter by last 30 days
-    if (last30Days === "true") {
-      const thirtyDaysAgo = new Date();
-      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-      query.createdAt = { $gte: thirtyDaysAgo };
-    }
-
-    // Pagination
-    const options = {
-      page: parseInt(page, 10),
-      limit: parseInt(limit, 10),
-      sort: { createdAt: -1 },
-    };
-
-    const orders = await Merchantsalesmanagement.paginate(query, options);
-    res.status(200).json(orders);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
 };
-
+  
 // Get a single order by ID
 exports.getOrderById = async (req, res) => {
   try {
@@ -93,11 +119,11 @@ exports.getOrderById = async (req, res) => {
       .populate("userID", "name email")
       .populate("orderedItem.productID", "name price");
     if (!order) {
-      return res.status(404).json({ message: "Order not found." });
+      return res.status(404).json({ success: false, message: "Order not found." });
     }
-    res.status(200).json(order);
+    res.status(200).json({ success: true, data: order });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
@@ -111,11 +137,11 @@ exports.updateOrder = async (req, res) => {
       { new: true }
     );
     if (!updatedOrder) {
-      return res.status(404).json({ message: "Order not found." });
+      return res.status(404).json({ success: false, message: "Order not found." });
     }
-    res.status(200).json(updatedOrder);
+    res.status(200).json({ success: true, data: updatedOrder });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
@@ -124,10 +150,10 @@ exports.deleteOrder = async (req, res) => {
   try {
     const deletedOrder = await Merchantsalesmanagement.findByIdAndDelete(req.params.id);
     if (!deletedOrder) {
-      return res.status(404).json({ message: "Order not found." });
+      return res.status(404).json({ success: false, message: "Order not found." });
     }
-    res.status(200).json({ message: "Order deleted successfully." });
+    res.status(200).json({ success: true, message: "Order deleted successfully." });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ success: false, message: error.message });
   }
 };
