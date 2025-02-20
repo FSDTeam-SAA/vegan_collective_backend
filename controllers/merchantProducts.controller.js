@@ -39,9 +39,9 @@ exports.createProduct = async (req, res) => {
     });
 
     await newProduct.save();
-    res.status(201).json({ message: "Product created successfully", data: newProduct });
+    res.status(201).json({ message: "Product created successfully", data: newProduct,success:true });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: error.message ,success:false});
   }
 };
 
@@ -65,7 +65,7 @@ exports.getProductById = async (req, res) => {
 
     res.status(200).json(product);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: error.message,success:false });
   }
 };
 
@@ -93,9 +93,9 @@ exports.updateProduct = async (req, res) => {
 
     if (!updatedProduct) return res.status(404).json({ message: "Product not found" });
 
-    res.status(200).json({ message: "Product updated successfully", data: updatedProduct });
+    res.status(200).json({ message: "Product updated successfully", data: updatedProduct ,success:true});
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: error.message,success:false });
   }
 };
 
@@ -105,8 +105,8 @@ exports.deleteProduct = async (req, res) => {
     const product = await MerchantProducts.findByIdAndDelete(req.params.id);
     if (!product) return res.status(404).json({ message: "Product not found" });
 
-    res.status(200).json({ message: "Product deleted successfully" });
+    res.status(200).json({ message: "Product deleted successfully" ,success:true});
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: error.message,success:false });
   }
 };
