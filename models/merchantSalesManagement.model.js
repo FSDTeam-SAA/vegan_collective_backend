@@ -27,10 +27,10 @@ const merchantSalesManagementSchema = new mongoose.Schema(
     price:{
       type: Number,
     },
-    // status: {
-    //   type: String,
-    //   enum: ["fulfilled", "pending", "cancelled"],
-    // },
+    status: {
+      type: String,
+      enum: ["fulfilled", "pending", "cancelled"],
+    },
   },
   {
     timestamps: true,
