@@ -8,6 +8,9 @@ const organizationInfoSchema = new mongoose.Schema(
     organizationName: {
       type: String,
     },
+    profilePhoto: {
+      type: String,
+    },
     address: {
       type: String,
     },
@@ -35,15 +38,15 @@ const organizationInfoSchema = new mongoose.Schema(
     },
     governmentIssuedID: {
       type: String,
-      required: true,
+      
     },
     professionalCertification: {
       type: String,
-      required: true,
+      
     },
     photoWithID: {
       type: String,
-      required: true,
+     
     },
   },
   {
