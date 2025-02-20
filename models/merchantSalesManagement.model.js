@@ -37,8 +37,9 @@ const merchantSalesManagementSchema = new mongoose.Schema(
   }
 );
 
+
 const Merchantsalesmanagement = mongoose.model(
-  "Merchantsalesmanagement",
+  "Merchantsalesmanagement", 
   merchantSalesManagementSchema
 );
 module.exports = Merchantsalesmanagement;
