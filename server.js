@@ -40,6 +40,16 @@ const merchantGoLive = require("./routes/merchantGoLive.route.js");
 const merchantPolicies = require("./routes/merchantPolicies.route.js");
 
 
+//routes for organization
+const organizationInfo = require("./routes/organizationInfo.route.js");
+const organizationUpdateAndNews = require("./routes/organizationUpdateAndNews.route.js");
+const commentManipulation = require("./routes/commentManipulation.route.js");
+const organizationEventManagement = require("./routes/organizationEventManagement.route.js");
+const organizationEventBooking = require("./routes/organizationEventBooking.route.js");
+const organizationSupport = require("./routes/organizationSupport.route.js");
+const organizationGoLive = require("./routes/organizationGoLive.route.js");
+const organizationFundraisingManagement = require("./routes/organizationFundraisingManagement.route.js");
+
 //routes for users
 const userProductWishlist = require("./routes/userProductWishlist.route.js");
 
@@ -67,6 +77,17 @@ app.use("/api/v1", merchantSupport);
 app.use("/api/v1", merchantGoLive);
 
 app.use("/api/v1", merchantPolicies);
+
+
+//endpoints for organization
+app.use("/api/v1", organizationInfo);
+app.use("/api/v1", organizationUpdateAndNews);
+app.use("/api/v1", commentManipulation);
+app.use("/api/v1", organizationEventManagement);
+app.use("/api/v1", organizationEventBooking);
+app.use("/api/v1", organizationSupport);
+app.use("/api/v1", organizationGoLive);
+app.use("/api/v1", organizationFundraisingManagement);
 
 //endpoints for user
 app.use("/api/v1", userProductWishlist);
