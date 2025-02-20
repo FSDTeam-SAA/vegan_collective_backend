@@ -7,7 +7,7 @@ const {  uploadMerchantImages} = require("../utils/grobalupload.controller");
 router.post("/merchant", merchantInfoController.createMerchantInfo);
 
 // Upload images to Cloudinary and update merchantinfo
-router.post("/merchant/uploadImages", uploadMerchantImages);
+router.put("/merchant/uploadImages", uploadMerchantImages);
 
 // Get all merchant info with optional filters
 router.get("/merchant", merchantInfoController.getAllMerchantInfo);

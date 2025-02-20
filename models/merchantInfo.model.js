@@ -34,16 +34,10 @@ const merchantInfoSchema = new mongoose.Schema(
         },
       },
     ],
-    highlightedStatement: [
-      {
-        title: {
-          type: String,
-        },
-        description: {
-          type: String,
-        },
-      },
-    ],
+    highlightedStatement: [{ 
+      title: { type: String },
+      description: { type: String }
+    }],
     websiteURL: {
       type: String,
     },

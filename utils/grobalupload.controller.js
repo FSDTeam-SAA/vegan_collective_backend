@@ -66,7 +66,7 @@ exports.uploadImages = [
       }
 
       const professionalInfo = await Professionalinfo.findOneAndUpdate(
-        { userId: userID }, // ✅ Change userID to userId to match schema
+        { userId: userID }, // 
         { ...uploadedImages },
         { new: true, upsert: true }
       );
@@ -156,7 +156,7 @@ exports.uploadMerchantImages = [
 
       // Update merchant info
       const merchantInfo = await Merchantinfo.findOneAndUpdate(
-        { userID },
+        { userID: userID }, // Use userID here
         { ...uploadedImages },
         { new: true, upsert: true }
       );
