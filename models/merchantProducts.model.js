@@ -35,16 +35,13 @@ const merchantProductsSchema = new mongoose.Schema(
     },
     visibility: {
       type: Boolean,
-      enum: ["true", "false"],
+      default: true,
+        
     },
     stockStatus: {
       type: String,
       enum: ["in stock", "out of stock", "low stock"],
-    },
-    trackingNumber: {
-      type: String,
-      unique: true,
-    },
+    }
   },
   {
     timestamps: true,
