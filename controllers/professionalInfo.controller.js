@@ -1,39 +1,82 @@
 const mongoose = require("mongoose");
 const Professionalinfo = require("../models/professionalInfo.model");
 const User = require("../models/user.model");
+const upload = require("../utils/multerConfig");
 
-// Create a new professional info
+/**
+ * Create a new professional info entry with profile photo upload
+ */
 exports.createProfessionalInfo = async (req, res) => {
   try {
-    const { userID } = req.body;
-    // Validate if userID is a valid MongoDB ObjectId
-    if (!mongoose.Types.ObjectId.isValid(userID)) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid userID format",
+    upload.single("profilePhoto")(req, res, async (err) => {
+      if (err) {
+        return res.status(500).json({ error: "Error uploading file to Cloudinary" });
+      }
+
+      let { userID, fullName, designation, businessName, address, about, highlightedStatement, experience, certifications, websiteURL, governmentIssuedID, professionalCertification, photoWithID } = req.body;
+
+      console.log("Received userID:", userID);
+
+      // ✅ Validate userID format
+      if (!mongoose.Types.ObjectId.isValid(userID)) {
+        return res.status(400).json({ success: false, message: "Invalid userID format" });
+      }
+
+      // ✅ Ensure userID exists in the database
+      const userExists = await User.findById(userID);
+      if (!userExists) {
+        return res.status(404).json({ success: false, message: "User does not exist" });
+      }
+
+      // ✅ Check if professional info already exists
+      const existingProfessionalInfo = await Professionalinfo.findOne({ userId: userID });
+      if (existingProfessionalInfo) {
+        return res.status(400).json({
+          success: false,
+          message: "Professional info already exists for this user",
+        });
+      }
+
+      // ✅ Parse highlightedStatement safely
+      let parsedHighlightedStatement = [];
+      if (highlightedStatement) {
+        try {
+          parsedHighlightedStatement = JSON.parse(highlightedStatement);
+        } catch (parseError) {
+          return res.status(400).json({
+            success: false,
+            message: "Invalid JSON format for highlightedStatement",
+          });
+        }
+      }
+
+      const profilePhotoUrl = req.file ? req.file.path : null;
+
+      // ✅ Use correct `userId` field name
+      const newProfessionalInfo = new Professionalinfo({
+        userId: userID, // ✅ FIXED: Correct field name
+        fullName,
+        profilePhoto: profilePhotoUrl,
+        designation,
+        businessName,
+        address,
+        about,
+        highlightedStatement: parsedHighlightedStatement,
+        experience,
+        certifications,
+        websiteURL,
+        governmentIssuedID,
+        professionalCertification,
+        photoWithID,
       });
-    }
-    // Check if the user exists and has an account type of "professional"
-    const user = await User.findById(userID);
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: "User not found",
+
+      const savedProfessionalInfo = await newProfessionalInfo.save();
+
+      res.status(201).json({
+        success: true,
+        message: "Professional info created successfully",
+        data: savedProfessionalInfo,
       });
-    }
-    if (user.accountType !== "professional") {
-      return res.status(403).json({
-        success: false,
-        message: "This user is not a professional",
-      });
-    }
-    // Create the professional info entry
-    const professionalInfo = new Professionalinfo(req.body);
-    const savedInfo = await professionalInfo.save();
-    res.status(201).json({
-      success: true,
-      message: "Professional info created successfully",
-      data: savedInfo,
     });
   } catch (error) {
     console.error("Error:", error.message);
@@ -46,172 +89,144 @@ exports.createProfessionalInfo = async (req, res) => {
 };
 
 
-// Get all professional info with filtering, pagination, and sorting
+/**
+ * Get all professional info with filtering, pagination, and sorting
+ */
 exports.getAllProfessionalInfo = async (req, res) => {
   try {
-    // Extract query parameters
-    const { 
-      page = 1, 
-      limit = 6, 
-      sortBy = "fullName", 
-      order = "asc", 
-      fullName, 
-      designation, 
-      address 
-    } = req.query;
+    const { page = 1, limit = 6, sortBy = "fullName", order = "asc", fullName, designation, address } = req.query;
 
-    // Build the filter object based on query parameters
+    // Build filters
     const filter = {};
-
-    // Validate fullName against the database
-    if (fullName) {
-      const isValidFullName = await Professionalinfo.exists({ fullName: { $regex: fullName, $options: "i" } });
-      if (!isValidFullName) {
-        return res.status(400).json({
-          success: false,
-          message: "Invalid fullName. No matching records found.",
-        });
-      }
-      filter.fullName = { $regex: fullName, $options: "i" }; // Case-insensitive search
-    }
-
-    // Add other filters
+    if (fullName) filter.fullName = { $regex: fullName, $options: "i" };
     if (designation) filter.designation = { $regex: designation, $options: "i" };
     if (address) filter.address = { $regex: address, $options: "i" };
 
-    // Sorting logic
-    const sortOptions = {};
-    sortOptions[sortBy] = order === "asc" ? 1 : -1;
-
-    // Pagination logic
+    // Sorting and pagination
+    const sortOptions = { [sortBy]: order === "asc" ? 1 : -1 };
     const skip = (parseInt(page) - 1) * parseInt(limit);
 
-    // Query the database
     const professionalInfoList = await Professionalinfo.find(filter)
       .sort(sortOptions)
       .skip(skip)
       .limit(parseInt(limit));
 
-    // Count total documents for pagination metadata
     const totalDocuments = await Professionalinfo.countDocuments(filter);
     const totalPages = Math.ceil(totalDocuments / parseInt(limit));
 
-    // Fallback: If no data is found, return all professional info without filters
-    if (professionalInfoList.length === 0 && Object.keys(filter).length > 0) {
-      const allProfessionalInfo = await Professionalinfo.find()
-        .sort(sortOptions)
-        .skip(skip)
-        .limit(parseInt(limit));
-
-      const totalAllDocuments = await Professionalinfo.countDocuments();
-      const totalAllPages = Math.ceil(totalAllDocuments / parseInt(limit));
-
-      return res.status(200).json({
-        success: true,
-        message: " Showing all professional info.",
-        data: allProfessionalInfo,
-        pagination: {
-          currentPage: parseInt(page),
-          totalPages: totalAllPages,
-          totalItems: totalAllDocuments,
-          itemsPerPage: parseInt(limit),
-        },
-      });
-    }
-
-    // Send response
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       message: "Professional info retrieved successfully",
       data: professionalInfoList,
       pagination: {
         currentPage: parseInt(page),
-        totalPages: totalPages,
+        totalPages,
         totalItems: totalDocuments,
         itemsPerPage: parseInt(limit),
       },
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Error retrieving professional info",
-      error: error.message,
-    });
+    return res.status(500).json({ success: false, message: "Error retrieving professional info", error: error.message });
   }
 };
-// Get a single professional info by ID
+
+/**
+ * Get a single professional info entry by ID
+ */
 exports.getProfessionalInfoById = async (req, res) => {
   try {
     const { id } = req.params;
     const professionalInfo = await Professionalinfo.findById(id);
     if (!professionalInfo) {
-      return res.status(404).json({
-        success: false,
-        message: "Professional info not found",
-      });
+      return res.status(404).json({ success: false, message: "Professional info not found" });
     }
-    res.status(200).json({
-      success: true,
-      message: "Professional info retrieved successfully",
-      data: professionalInfo,
-    });
+    return res.status(200).json({ success: true, message: "Professional info retrieved successfully", data: professionalInfo });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Error retrieving professional info",
-      error: error.message,
-    });
+    return res.status(500).json({ success: false, message: "Error retrieving professional info", error: error.message });
   }
 };
 
+/**
+ * Update professional info by ID
+ */
 // Update professional info by ID
-exports.updateProfessionalInfo = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const updatedInfo = await Professionalinfo.findByIdAndUpdate(id, req.body, {
-      new: true,
-      runValidators: true,
-    });
-    if (!updatedInfo) {
-      return res.status(404).json({
+exports.updateProfessionalInfo = [
+  // Multer middleware for form-data file upload
+  upload.single("profilePhoto"), 
+  
+  async (req, res) => {
+    try {
+      const { id } = req.params;
+
+      // ✅ Validate ObjectId
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid professional info ID format",
+        });
+      }
+
+      // ✅ Prepare update data from form-data
+      const updateData = { ...req.body };
+
+      // ✅ Handle profile photo upload (if provided)
+      if (req.file) {
+        updateData.profilePhoto = req.file.buffer.toString("base64"); // Example: save as base64, change if saving to Cloudinary/local storage
+      }
+
+      // ✅ Handle highlightedStatement safely (must be an array of objects)
+      if (updateData.highlightedStatement) {
+        try {
+          updateData.highlightedStatement = JSON.parse(updateData.highlightedStatement);
+        } catch (error) {
+          return res.status(400).json({
+            success: false,
+            message: "Invalid JSON format for highlightedStatement",
+          });
+        }
+      }
+
+      // ✅ Update the professional info
+      const updatedInfo = await Professionalinfo.findByIdAndUpdate(id, updateData, {
+        new: true,
+        runValidators: true,
+      });
+
+      if (!updatedInfo) {
+        return res.status(404).json({
+          success: false,
+          message: "Professional info not found",
+        });
+      }
+
+      return res.status(200).json({
+        success: true,
+        message: "Professional info updated successfully",
+        data: updatedInfo,
+      });
+    } catch (error) {
+      console.error("Error updating professional info:", error);
+      return res.status(500).json({
         success: false,
-        message: "Professional info not found",
+        message: "Error updating professional info",
+        error: error.message,
       });
     }
-    res.status(200).json({
-      success: true,
-      message: "Professional info updated successfully",
-      data: updatedInfo,
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Error updating professional info",
-      error: error.message,
-    });
-  }
-};
+  },
+];
 
-// Delete professional info by ID
+/**
+ * Delete professional info by ID
+ */
 exports.deleteProfessionalInfo = async (req, res) => {
   try {
     const { id } = req.params;
     const deletedInfo = await Professionalinfo.findByIdAndDelete(id);
     if (!deletedInfo) {
-      return res.status(404).json({
-        success: false,
-        message: "Professional info not found",
-      });
+      return res.status(404).json({ success: false, message: "Professional info not found" });
     }
-    res.status(200).json({
-      success: true,
-      message: "Professional info deleted successfully",
-    });
+    return res.status(200).json({ success: true, message: "Professional info deleted successfully" });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Error deleting professional info",
-      error: error.message,
-    });
+    return res.status(500).json({ success: false, message: "Error deleting professional info", error: error.message });
   }
 };

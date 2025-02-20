@@ -1,9 +1,10 @@
 const mongoose = require('mongoose')
+const { use } = require('../routes/professionalPolicies.route')
 
 const professionalPolicySchema = new mongoose.Schema({
-  ServiceId: {
+  userID: {
     type: mongoose.Types.ObjectId,
-    ref: 'Professionalservices',
+    ref: 'User',
   },
   beforeAppointment: {
     type: String,

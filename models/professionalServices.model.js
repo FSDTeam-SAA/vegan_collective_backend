@@ -6,12 +6,7 @@ const professionalServicesSchema = new mongoose.Schema(
       type: mongoose.Types.ObjectId,
       ref: "User",
     },
-    QR: {
-      type: String,
-    },
-    referNumber: {
-      type: Number,
-    },
+  
     serviceName: {
       type: String,
     },
@@ -42,13 +37,19 @@ const professionalServicesSchema = new mongoose.Schema(
     },
     sessionType: {
       type: String,
-      enum: ["one on one", "group", "Webinar"],
+      enum: ["1-on-1 session", "Group session", "Webinar"],
       required: true,
     },
     isLiveStream: { 
       type: Boolean, 
       default: false
      },
+     visibility: {
+      type: Boolean, 
+      enum: ["true", "false"],
+      default: "true"
+    },
+    
   },
   {
     timestamps: true,

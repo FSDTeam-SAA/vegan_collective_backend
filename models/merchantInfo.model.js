@@ -1,9 +1,16 @@
 const mongoose = require("mongoose");
+
 const merchantInfoSchema = new mongoose.Schema(
   {
     userID: {
       type: mongoose.Types.ObjectId,
       ref: "User",
+    },
+    profilePhoto: {
+      type: String,
+    },
+    fullName: {
+      type: String,
     },
     businessName: {
       type: String,
@@ -42,15 +49,12 @@ const merchantInfoSchema = new mongoose.Schema(
     },
     governmentIssuedID: {
       type: String,
-      required: true,
     },
     professionalCertification: {
       type: String,
-      required: true,
     },
     photoWithID: {
       type: String,
-      required: true,
     },
   },
   {

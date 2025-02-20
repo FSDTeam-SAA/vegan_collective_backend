@@ -28,7 +28,7 @@ const fileFilter = (req, file, cb) => {
 const upload = multer({
   storage: storage,
   fileFilter: fileFilter,
-  limits:  { fileSize: 500 * 1024 * 1024 }, // Limit file size to 500MB
+  limits:  { fileSize: 5000 * 1024 * 1024 }, // Limit file size to 5000MB
 });
 
 // Middleware to handle Multer errors
@@ -103,10 +103,10 @@ exports.createProfessionalService = [
           message: "For Webinar session type, isLiveStream must be true",
         });
       }
-      if (["one on one", "group"].includes(sessionType) && isLiveStream !== 'false') {
+      if (["1-on-1 session", "Group session"].includes(sessionType) && isLiveStream !== 'false') {
         return res.status(400).json({
           success: false,
-          message: "For one on one or group session types, isLiveStream must be false",
+          message: "For 1-on-1 session or group session types, isLiveStream must be false",
         });
       }
 
@@ -126,7 +126,8 @@ exports.createProfessionalService = [
         sessionType: sessionType?.trim(),
         serviceImage,
         serviceVideo,
-        isLiveStream: isLiveStream === 'true', // Convert string to boolean
+        isLiveStream: isLiveStream === 'true',// Convert string to boolean
+        visibility: req.body.visibility
       });
 
       await newService.save();
@@ -262,10 +263,10 @@ exports.updateProfessionalService = [
           message: "For Webinar session type, isLiveStream must be true",
         });
       }
-      if (["one on one", "group"].includes(updateData.sessionType) && updateData.isLiveStream !== false) {
+      if (["1-on-1 session", "Group session"].includes(updateData.sessionType) && updateData.isLiveStream !== false) {
         return res.status(400).json({
           success: false,
-          message: "For one on one or group session types, isLiveStream must be false",
+          message: "For 1-on-1 session or group session types, isLiveStream must be false",
         });
       }
 
