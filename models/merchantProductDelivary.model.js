@@ -7,7 +7,7 @@ const merchantProductDelivarySchema = new mongoose.Schema(
       ref: "User",
     },
     orderDetail: {
-      type: mongoose.Types.ObjectId,   //Customer Name and Contact info will be coming from this
+      type: mongoose.Types.ObjectId,   //order id,Customer Name, orderdate , amont info will be coming from this
       ref: "Merchantsalesmanagement",
     },
     trackingNumber:{

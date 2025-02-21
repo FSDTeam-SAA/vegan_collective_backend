@@ -46,70 +46,78 @@ exports.createOrder = async (req, res) => {
 
 
 // Get all orders with pagination and filters
+// Get all orders with pagination and filters
 exports.getAllOrders = async (req, res) => {
-    try {
-        const { page = 1, limit = 10, search, item, last30Days } = req.query;
+  try {
+      const { page = 1, limit = 10, search, item, last30Days, last1Days } = req.query;
 
-        const query = {};
+      const query = {};
 
-        // Search by orderSlug or status
-        if (search) {
-            query.$or = [
-                { orderSlug: { $regex: search, $options: "i" } },
-                { status: { $regex: search, $options: "i" } },
-            ];
-        }
+      // Search by orderSlug or status
+      if (search) {
+          query.$or = [
+              { orderSlug: { $regex: search, $options: "i" } },
+              { status: { $regex: search, $options: "i" } },
+          ];
+      }
 
-        // Filter by specific item
-        if (item) {
-            try {
-                query["orderedItem.productID"] = new mongoose.Types.ObjectId(item);
-            } catch (error) {
-                return res.status(400).json({ success: false, message: "Invalid product ID format." });
-            }
-        }
+      // Filter by specific item
+      if (item) {
+          try {
+              query["orderedItem.productID"] = new mongoose.Types.ObjectId(item);
+          } catch (error) {
+              return res.status(400).json({ success: false, message: "Invalid product ID format." });
+          }
+      }
 
-        // Filter by last 30 days
-        if (last30Days === "true") {
-            const thirtyDaysAgo = new Date();
-            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-            console.log("Thirty Days Ago:", thirtyDaysAgo);
-            query.createdAt = { $gte: thirtyDaysAgo };
-        }
+      // Filter by last 30 days
+      if (last30Days === "true") {
+          const thirtyDaysAgo = new Date();
+          thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+          query.createdAt = { $gte: thirtyDaysAgo };
+      }
 
-        // Log the final query
-        console.log("Final Query:", query);
+      // Filter by last 1 day
+      if (last1Days === "true") {
+          const oneDayAgo = new Date();
+          oneDayAgo.setDate(oneDayAgo.getDate() - 1);
+          query.createdAt = { $gte: oneDayAgo };
+      }
 
-        // Pagination
-        const pageNumber = parseInt(page, 10);
-        const limitNumber = parseInt(limit, 10);
-        const skip = (pageNumber - 1) * limitNumber;
+      // Log the final query to debug
+      // console.log("Final Query:", query);
 
-        // Fetch orders with pagination
-        const orders = await Merchantsalesmanagement.find(query)
-            .sort({ createdAt: -1 })
-            .skip(skip)
-            .limit(limitNumber)
-            .populate("merchantID", "name")
-            .populate("userID", "name email")
-            .populate("orderedItem.productID", "name price");
+      // Pagination
+      const pageNumber = parseInt(page, 10);
+      const limitNumber = parseInt(limit, 10);
+      const skip = (pageNumber - 1) * limitNumber;
 
-        // Count total documents for pagination metadata
-        const totalOrders = await Merchantsalesmanagement.countDocuments(query);
+      // Fetch orders with pagination
+      const orders = await Merchantsalesmanagement.find(query)
+          .sort({ createdAt: -1 })
+          .skip(skip)
+          .limit(limitNumber)
+          .populate("merchantID", "name")
+          .populate("userID", "name email")
+          .populate("orderedItem.productID", "name price");
 
-        res.status(200).json({
-            success: true,
-            data: orders,
-            pagination: {
-                currentPage: pageNumber,
-                totalPages: Math.ceil(totalOrders / limitNumber),
-                totalOrders,
-            },
-        });
-    } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
-    }
+      // Count total documents for pagination metadata
+      const totalOrders = await Merchantsalesmanagement.countDocuments(query);
+
+      res.status(200).json({
+          success: true,
+          data: orders,
+          pagination: {
+              currentPage: pageNumber,
+              totalPages: Math.ceil(totalOrders / limitNumber),
+              totalOrders,
+          },
+      });
+  } catch (error) {
+      res.status(500).json({ success: false, message: error.message });
+  }
 };
+
   
 // Get a single order by ID
 exports.getOrderById = async (req, res) => {

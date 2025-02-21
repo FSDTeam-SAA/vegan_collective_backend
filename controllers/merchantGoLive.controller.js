@@ -1,0 +1,137 @@
+const Merchantgolive = require('../models/merchantGoLive.model');
+const mongoose = require('mongoose');
+
+// Create a new event
+exports.createEvent = async (req, res) => {
+    try {
+        let { merchantID, eventTitle, description, date, time, eventType, price } = req.body;
+
+        // Validate merchantID format
+        if (!mongoose.Types.ObjectId.isValid(merchantID)) {
+            return res.status(400).json({ message: 'Invalid merchant ID' });
+        }
+
+        // Remove price if eventType is "free event"
+        if (eventType === 'free event') {
+            price = undefined;
+        }
+
+        const newEvent = new Merchantgolive({
+            merchantID,
+            eventTitle,
+            description,
+            date,
+            time,
+            eventType,
+            price
+        });
+
+        await newEvent.save();
+        res.status(201).json({ message: 'Event created successfully', event: newEvent });
+    } catch (error) {
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+};
+
+// Get all events
+exports.getAllEvents = async (req, res) => {
+    try {
+        const events = await Merchantgolive.find();
+        res.status(200).json(events);
+    } catch (error) {
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+};
+
+// Get a single event by ID
+exports.getEventById = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return res.status(400).json({ message: 'Invalid event ID' });
+        }
+
+        const event = await Merchantgolive.findById(id);
+        if (!event) {
+            return res.status(404).json({ message: 'Event not found' });
+        }
+
+        res.status(200).json(event);
+    } catch (error) {
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+};
+
+// Update an event
+exports.updateEvent = async (req, res) => {
+    try {
+        const { id } = req.params;
+        let { eventTitle, description, date, time, eventType, price } = req.body;
+
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return res.status(400).json({ message: 'Invalid event ID' });
+        }
+
+        // Prepare the update object
+        let updateFields = { eventTitle, description, date, time, eventType };
+
+        // Explicitly remove the price field when eventType is "free event"
+        if (eventType === 'free event') {
+            updateFields.price = null; // This removes the field from the document
+        } else {
+            updateFields.price = price; // Keep price only if it's a "paid event"
+        }
+
+        const updatedEvent = await Merchantgolive.findByIdAndUpdate(
+            id,
+            { $set: updateFields },
+            { new: true }
+        );
+
+        if (!updatedEvent) {
+            return res.status(404).json({ message: 'Event not found' });
+        }
+
+        res.status(200).json({ message: 'Event updated successfully', event: updatedEvent });
+    } catch (error) {
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+};
+
+
+// Delete an event
+exports.deleteEvent = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return res.status(400).json({ message: 'Invalid event ID' });
+        }
+
+        const deletedEvent = await Merchantgolive.findByIdAndDelete(id);
+        if (!deletedEvent) {
+            return res.status(404).json({ message: 'Event not found' });
+        }
+
+        res.status(200).json({ message: 'Event deleted successfully' });
+    } catch (error) {
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+};
+
+// Get events by status (true/false)
+exports.getEventsByStatus = async (req, res) => {
+    try {
+        const { status } = req.params;
+
+        if (status !== 'true' && status !== 'false') {
+            return res.status(400).json({ message: 'Invalid status value, must be "true" or "false"' });
+        }
+
+        const events = await Merchantgolive.find({ status: status === 'true' });
+        res.status(200).json(events);
+    } catch (error) {
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+};
