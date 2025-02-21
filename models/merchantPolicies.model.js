@@ -1,9 +1,9 @@
 const mongoose = require('mongoose')
 
 const merchantPolicyDefinition = new mongoose.Schema({
-  ServiceId: {
+  merchantID: {
     type: mongoose.Types.ObjectId,
-    ref: 'Merchantservices',
+    ref: "User",
   },
   beforeAppointment: {
     type: String,
