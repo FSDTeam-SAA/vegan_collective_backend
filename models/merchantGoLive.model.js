@@ -5,11 +5,11 @@ const merchantGoLiveSchema = new mongoose.Schema(
     merchantID: {
       type: mongoose.Types.ObjectId,
       ref: 'User',
-      required: true,
+     
     },
     eventTitle: {
-      type: String,
-      required: true,
+      type: String
+     
     },
     description: {
       type: String,
