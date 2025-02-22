@@ -6,12 +6,10 @@ exports.createEvent = async (req, res) => {
     try {
         let { merchantID, eventTitle, description, date, time, eventType, price } = req.body;
 
-        // Validate merchantID format
         if (!mongoose.Types.ObjectId.isValid(merchantID)) {
             return res.status(400).json({ success: false, message: 'Invalid merchant ID' });
         }
 
-        // Remove price if eventType is "free event"
         if (eventType === 'free event') {
             price = undefined;
         }
@@ -29,24 +27,19 @@ exports.createEvent = async (req, res) => {
         await newEvent.save();
         res.status(201).json({ success: true, message: 'Event created successfully', event: newEvent });
     } catch (error) {
-        res.status(500).json({ success: false, message: 'Server error', error: error.message });
+        res.status(500).json({ success: false, message: 'Server error: Unable to create event', error: error.message });
     }
 };
-
 
 // Get all events with optional filters for type and merchantID
 exports.getAllEvents = async (req, res) => {
     const { type, merchantID } = req.query;
     try {
-        let filter = {}; // Default: No filter, fetch all events
+        let filter = {};
 
-        // Add merchantID filter if provided
         if (merchantID) {
             if (!mongoose.Types.ObjectId.isValid(merchantID)) {
-                return res.status(400).json({ 
-                    success: false, 
-                    message: 'Invalid merchant ID. Please provide a valid ID.' 
-                });
+                return res.status(400).json({ success: false, message: 'Invalid merchant ID' });
             }
             filter.merchantID = merchantID;
         }
@@ -54,93 +47,37 @@ exports.getAllEvents = async (req, res) => {
         let events = await Merchantgolive.find(filter);
         const currentDate = new Date();
 
-        // Filter events based on type
         if (type === 'upcoming') {
             events = events.filter(event => new Date(event.date) >= currentDate);
         } else if (type === 'past') {
             events = events.filter(event => new Date(event.date) < currentDate);
         }
 
-        if (events.length === 0) {
-            return res.status(200).json({
-                success: true,
-                message: `No ${type ? type : ''} events found.`,
-                events: []
-            });
-        }
-
-        // Modify event objects
-        const modifiedEvents = events.map(event => {
-            const eventDate = new Date(event.date);
-            return {
-                ...event.toObject(),
-                eventTitle: eventDate >= currentDate ? 'Upcoming Event' : 'Past Event'
-            };
-        });
-
-        res.status(200).json({ 
-            success: true, 
-            message: `Successfully retrieved ${modifiedEvents.length} event(s).`, 
-            events: modifiedEvents 
-        });
+        res.status(200).json({ success: true, message: 'Events fetched successfully', events });
     } catch (error) {
-        res.status(500).json({ 
-            success: false, 
-            message: 'An error occurred while fetching events. Please try again later.', 
-            error: error.message 
-        });
+        res.status(500).json({ success: false, message: 'Server error: Unable to fetch events', error: error.message });
     }
 };
 
-
 // Get a single event by ID
-
 exports.getEventById = async (req, res) => {
     try {
         const { id } = req.params;
 
-        // Validate ObjectId
         if (!mongoose.Types.ObjectId.isValid(id)) {
-            return res.status(400).json({ 
-                success: false, 
-                message: 'Invalid event ID. Please provide a valid ID.' 
-            });
+            return res.status(400).json({ success: false, message: 'Invalid event ID' });
         }
 
         const event = await Merchantgolive.findById(id);
         if (!event) {
-            return res.status(404).json({ 
-                success: false, 
-                message: 'No event found with the given ID.' 
-            });
+            return res.status(404).json({ success: false, message: 'Event not found' });
         }
 
-        // Determine eventTitle based on the event date
-        const currentDate = new Date();
-        const eventDate = new Date(event.date);
-        const eventTitle = eventDate >= currentDate ? 'Upcoming Event' : 'Past Event';
-
-        // Convert event to object and include eventTitle
-        const modifiedEvent = {
-            ...event.toObject(),
-            eventTitle
-        };
-
-        res.status(200).json({ 
-            success: true, 
-            message: 'Event retrieved successfully.', 
-            event: modifiedEvent 
-        });
+        res.status(200).json({ success: true, message: 'Event fetched successfully', event });
     } catch (error) {
-        res.status(500).json({ 
-            success: false, 
-            message: 'An error occurred while fetching the event. Please try again later.', 
-            error: error.message 
-        });
+        res.status(500).json({ success: false, message: 'Server error: Unable to fetch event', error: error.message });
     }
 };
-
-
 
 // Update an event
 exports.updateEvent = async (req, res) => {
@@ -152,14 +89,12 @@ exports.updateEvent = async (req, res) => {
             return res.status(400).json({ success: false, message: 'Invalid event ID' });
         }
 
-        // Prepare the update object
         let updateFields = { eventTitle, description, date, time, eventType };
 
-        // Explicitly remove the price field when eventType is "free event"
         if (eventType === 'free event') {
-            updateFields.price = null; // This removes the field from the document
+            updateFields.price = null;
         } else {
-            updateFields.price = price; // Keep price only if it's a "paid event"
+            updateFields.price = price;
         }
 
         const updatedEvent = await Merchantgolive.findByIdAndUpdate(
@@ -174,7 +109,7 @@ exports.updateEvent = async (req, res) => {
 
         res.status(200).json({ success: true, message: 'Event updated successfully', event: updatedEvent });
     } catch (error) {
-        res.status(500).json({ success: false, message: 'Server error', error: error.message });
+        res.status(500).json({ success: false, message: 'Server error: Unable to update event', error: error.message });
     }
 };
 
@@ -194,7 +129,7 @@ exports.deleteEvent = async (req, res) => {
 
         res.status(200).json({ success: true, message: 'Event deleted successfully' });
     } catch (error) {
-        res.status(500).json({ success: false, message: 'Server error', error: error.message });
+        res.status(500).json({ success: false, message: 'Server error: Unable to delete event', error: error.message });
     }
 };
 
@@ -208,8 +143,8 @@ exports.getEventsByStatus = async (req, res) => {
         }
 
         const events = await Merchantgolive.find({ status: status === 'true' });
-        res.status(200).json({ success: true, events });
+        res.status(200).json({ success: true, message: 'Events fetched successfully', events });
     } catch (error) {
-        res.status(500).json({ success: false, message: 'Server error', error: error.message });
+        res.status(500).json({ success: false, message: 'Server error: Unable to fetch events by status', error: error.message });
     }
 };

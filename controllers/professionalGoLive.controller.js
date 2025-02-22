@@ -2,188 +2,137 @@ const mongoose = require('mongoose');
 const Golive = require('../models/professionalGoLive.model'); // Adjust the path as needed
 const User = require('../models/user.model'); // Adjust the path as needed
 
-// Create a new GoLive event
-exports.createGoLiveEvent = async (req, res) => {
+// Create a new event
+exports.createEvent = async (req, res) => {
   try {
-    const { userID, eventTitle, description, date, time, eventType, price } = req.body;
+      let { professionalID, eventTitle, description, date, time, eventType, price } = req.body;
 
-    // Validate if userID is a valid MongoDB ObjectId
-    if (!mongoose.Types.ObjectId.isValid(userID)) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid userID format",
-      });
-    }
+      // Validate professionalID format
+      if (!mongoose.Types.ObjectId.isValid(professionalID)) {
+          return res.status(400).json({ success: false, message: 'Invalid professional ID' });
+      }
 
-    // Check if the user exists and has an account type of "professional"
-    const user = await User.findById(userID);
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: "User not found",
-      });
-    }
-    if (user.accountType !== "professional") {
-      return res.status(403).json({
-        success: false,
-        message: "This user is not a professional",
-      });
-    }
+      // Remove price if eventType is "free event"
+      if (eventType === 'free event') {
+          price = undefined;
+      }
 
-    // Create the GoLive event
-    const newEvent = new Golive({
-      userID,
-      eventTitle,
-      description,
-      date,
-      time,
-      eventType,
-      price,
-    });
-    const savedEvent = await newEvent.save();
-    res.status(201).json({
-      success: true,
-      message: "GoLive event created successfully",
-      data: savedEvent,
-    });
+      const newEvent = new ProfessionalGoLive({
+          professionalID,
+          eventTitle,
+          description,
+          date,
+          time,
+          eventType,
+          price
+      });
+
+      await newEvent.save();
+      res.status(201).json({ success: true, message: 'Event created successfully', event: newEvent });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Server error",
-      error: error.message,
-    });
+      res.status(500).json({ success: false, message: 'Server error', error: error.message });
   }
 };
 
-// Get all GoLive events (publicly accessible)
-exports.getAllGoLiveEvents = async (req, res) => {
+// Get all events with optional filters for type and professionalID
+exports.getAllEvents = async (req, res) => {
+  const { type, professionalID } = req.query;
   try {
-    // Fetch all GoLive events from the database
-    const events = await Golive.find();
-    res.status(200).json({
-      success: true,
-      message: "All GoLive events fetched successfully",
-      data: events,
-    });
+      let filter = {}; // Default: No filter, fetch all events
+
+      // Add professionalID filter if provided
+      if (professionalID) {
+          if (!mongoose.Types.ObjectId.isValid(professionalID)) {
+              return res.status(400).json({ success: false, message: 'Invalid professional ID' });
+          }
+          filter.professionalID = professionalID;
+      }
+
+      let events = await ProfessionalGoLive.find(filter);
+      const currentDate = new Date();
+
+      // Filter events based on type
+      if (type === 'upcoming') {
+          events = events.filter(event => new Date(event.date) >= currentDate);
+      } else if (type === 'past') {
+          events = events.filter(event => new Date(event.date) < currentDate);
+      }
+
+      if (events.length === 0) {
+          return res.status(200).json({ success: true, message: `No ${type ? type : ''} events found.`, events: [] });
+      }
+
+      res.status(200).json({ success: true, message: `Successfully retrieved ${events.length} event(s).`, events });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Server error",
-      error: error.message,
-    });
+      res.status(500).json({ success: false, message: 'Server error', error: error.message });
   }
 };
 
-// Get all GoLive events created by a specific user
-exports.getGoLiveEventsById = async (req, res) => {
+// Get a single event by ID
+exports.getEventById = async (req, res) => {
   try {
-    const { id } = req.params;
+      const { id } = req.params;
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+          return res.status(400).json({ success: false, message: 'Invalid event ID' });
+      }
 
-    // Validate if event ID is a valid MongoDB ObjectId
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid event ID format",
-      });
-    }
+      const event = await ProfessionalGoLive.findById(id);
+      if (!event) {
+          return res.status(404).json({ success: false, message: 'No event found with the given ID' });
+      }
 
-    // Fetch GoLive event by ID
-    const event = await Golive.findById(id);
-    if (!event) {
-      return res.status(404).json({
-        success: false,
-        message: "GoLive event not found",
-      });
-    }
-
-    res.status(200).json({
-      success: true,
-      message: "GoLive event fetched successfully",
-      data: event,
-    });
+      res.status(200).json({ success: true, message: 'Event retrieved successfully', event });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Server error",
-      error: error.message,
-    });
-  }
-};
-// Update a GoLive event by ID
-exports.updateGoLiveEvent = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { eventTitle, description, date, time, eventType, price } = req.body;
-
-    // Validate if the event ID is a valid MongoDB ObjectId
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid event ID format",
-      });
-    }
-
-    // Find and update the event
-    const updatedEvent = await Golive.findByIdAndUpdate(
-      id,
-      { eventTitle, description, date, time, eventType, price },
-      { new: true }
-    );
-
-    if (!updatedEvent) {
-      return res.status(404).json({
-        success: false,
-        message: "GoLive event not found",
-      });
-    }
-
-    res.status(200).json({
-      success: true,
-      message: "GoLive event updated successfully",
-      data: updatedEvent,
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Server error",
-      error: error.message,
-    });
+      res.status(500).json({ success: false, message: 'Server error', error: error.message });
   }
 };
 
-// Delete a GoLive event by ID
-exports.deleteGoLiveEvent = async (req, res) => {
+// Update an event
+exports.updateEvent = async (req, res) => {
   try {
-    const { id } = req.params;
+      const { id } = req.params;
+      let { eventTitle, description, date, time, eventType, price } = req.body;
 
-    // Validate if the event ID is a valid MongoDB ObjectId
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid event ID format",
-      });
-    }
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+          return res.status(400).json({ success: false, message: 'Invalid event ID' });
+      }
 
-    // Find and delete the event
-    const deletedEvent = await Golive.findByIdAndDelete(id);
+      let updateFields = { eventTitle, description, date, time, eventType };
 
-    if (!deletedEvent) {
-      return res.status(404).json({
-        success: false,
-        message: "GoLive event not found",
-      });
-    }
+      if (eventType === 'free event') {
+          updateFields.price = null;
+      } else {
+          updateFields.price = price;
+      }
 
-    res.status(200).json({
-      success: true,
-      message: "GoLive event deleted successfully",
-      data: deletedEvent,
-    });
+      const updatedEvent = await ProfessionalGoLive.findByIdAndUpdate(id, { $set: updateFields }, { new: true });
+
+      if (!updatedEvent) {
+          return res.status(404).json({ success: false, message: 'Event not found' });
+      }
+
+      res.status(200).json({ success: true, message: 'Event updated successfully', event: updatedEvent });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Server error",
-      error: error.message,
-    });
+      res.status(500).json({ success: false, message: 'Server error', error: error.message });
+  }
+};
+
+// Delete an event
+exports.deleteEvent = async (req, res) => {
+  try {
+      const { id } = req.params;
+
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+          return res.status(400).json({ success: false, message: 'Invalid event ID' });
+      }
+
+      const deletedEvent = await ProfessionalGoLive.findByIdAndDelete(id);
+      if (!deletedEvent) {
+          return res.status(404).json({ success: false, message: 'Event not found' });
+      }
+
+      res.status(200).json({ success: true, message: 'Event deleted successfully' });
+  } catch (error) {
+      res.status(500).json({ success: false, message: 'Server error', error: error.message });
   }
 };
