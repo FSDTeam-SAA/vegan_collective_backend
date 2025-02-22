@@ -34,10 +34,21 @@ exports.createEvent = async (req, res) => {
 };
 
 // Get all events
+// Get all events with optional filters for type and merchantID
 exports.getAllEvents = async (req, res) => {
-    const { type } = req.query;
+    const { type, merchantID } = req.query;
     try {
-        let events = await Merchantgolive.find(); // Use let to allow reassigning
+        let filter = {}; // Default: No filter, fetch all events
+
+        // Add merchantID filter if provided
+        if (merchantID) {
+            if (!mongoose.Types.ObjectId.isValid(merchantID)) {
+                return res.status(400).json({ success: false, message: 'Invalid merchant ID' });
+            }
+            filter.merchantID = merchantID;
+        }
+
+        let events = await Merchantgolive.find(filter);
         const currentDate = new Date();
 
         // Filter events based on type
@@ -61,6 +72,7 @@ exports.getAllEvents = async (req, res) => {
         res.status(500).json({ success: false, message: 'Server error', error: error.message });
     }
 };
+
 
 // Get a single event by ID
 

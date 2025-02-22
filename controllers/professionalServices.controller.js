@@ -13,16 +13,7 @@ const uploadToCloudinary = async (file) => {
   }
 };
 
-// Normalize sessionType to match Mongoose schema
-// const normalizeSessionType = (sessionType) => {
-//   const sessionTypeMapping = {
-//     "1-on-1 session": "1-on-1 session",
-//     "group session": "Group session", // Match the schema's capital 'G'
-//     "webinar": "Webinar", // Match the schema's capital 'W'
-//   };
 
-//   return sessionTypeMapping[sessionType?.trim().toLowerCase()] || null;
-// };
 
 // Create a new service
 const createService = async (req, res) => {
@@ -50,14 +41,7 @@ const createService = async (req, res) => {
       serviceVideo = await uploadToCloudinary(req.files.serviceVideo[0]);
     }
 
-    // Normalize sessionType
-    // const normalizedSessionType = normalizeSessionType(sessionType);
-    // if (!normalizedSessionType) {
-    //   return res.status(400).json({
-    //     success: false,
-    //     message: "Invalid sessionType provided. Allowed values: '1-on-1 session', 'Group session', 'Webinar'.",
-    //   });
-    // }
+  
 
     // Validate isLiveStream based on sessionType
     if ((sessionType === "1-on-1 session" || sessionType === "Group session") && isLiveStream !== "false") {
@@ -223,6 +207,23 @@ const deleteService = async (req, res) => {
   }
 };
 
+// Get all services by userID
+const getUserServices = async (req, res) => {
+  try {
+    const { userID } = req.params;
+    const services = await Professionalservices.find({ userID });
+
+    if (!services.length) {
+      return res.status(404).json({ success: false, message: "No services found for this user." });
+    }
+
+    res.status(200).json({ success: true, services });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+
 module.exports = {
   createService,
   getAllServices,
@@ -230,4 +231,5 @@ module.exports = {
   getLiveServices,
   updateService,
   deleteService,
+  getUserServices
 };

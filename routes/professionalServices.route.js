@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const upload = require("../middleware/upload");
-const { createService, getAllServices, getOfflineServices, getLiveServices, updateService, deleteService } = require("../controllers/professionalServices.controller");
+const { createService, getAllServices, getOfflineServices, getLiveServices, updateService, deleteService,getUserServices } = require("../controllers/professionalServices.controller");
 
 // Route to create a new service
 router.post(
@@ -31,6 +31,9 @@ router.put(
   ]),
   updateService
 );
+
+router.get("/allservices/:userID", getUserServices);
+
 
 // Route to delete a service by ID
 router.delete("/deleteservice/:id", deleteService);
