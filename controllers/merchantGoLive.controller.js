@@ -33,7 +33,7 @@ exports.createEvent = async (req, res) => {
     }
 };
 
-// Get all events
+
 // Get all events with optional filters for type and merchantID
 exports.getAllEvents = async (req, res) => {
     const { type, merchantID } = req.query;
@@ -43,7 +43,10 @@ exports.getAllEvents = async (req, res) => {
         // Add merchantID filter if provided
         if (merchantID) {
             if (!mongoose.Types.ObjectId.isValid(merchantID)) {
-                return res.status(400).json({ success: false, message: 'Invalid merchant ID' });
+                return res.status(400).json({ 
+                    success: false, 
+                    message: 'Invalid merchant ID. Please provide a valid ID.' 
+                });
             }
             filter.merchantID = merchantID;
         }
@@ -58,18 +61,34 @@ exports.getAllEvents = async (req, res) => {
             events = events.filter(event => new Date(event.date) < currentDate);
         }
 
+        if (events.length === 0) {
+            return res.status(200).json({
+                success: true,
+                message: `No ${type ? type : ''} events found.`,
+                events: []
+            });
+        }
+
         // Modify event objects
         const modifiedEvents = events.map(event => {
             const eventDate = new Date(event.date);
             return {
                 ...event.toObject(),
-                eventTitle: eventDate >= currentDate ? 'upComingEvent' : 'pastEvent'
+                eventTitle: eventDate >= currentDate ? 'Upcoming Event' : 'Past Event'
             };
         });
 
-        res.status(200).json({ success: true, events: modifiedEvents });
+        res.status(200).json({ 
+            success: true, 
+            message: `Successfully retrieved ${modifiedEvents.length} event(s).`, 
+            events: modifiedEvents 
+        });
     } catch (error) {
-        res.status(500).json({ success: false, message: 'Server error', error: error.message });
+        res.status(500).json({ 
+            success: false, 
+            message: 'An error occurred while fetching events. Please try again later.', 
+            error: error.message 
+        });
     }
 };
 
@@ -82,18 +101,24 @@ exports.getEventById = async (req, res) => {
 
         // Validate ObjectId
         if (!mongoose.Types.ObjectId.isValid(id)) {
-            return res.status(400).json({ success: false, message: 'Invalid event ID' });
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Invalid event ID. Please provide a valid ID.' 
+            });
         }
 
         const event = await Merchantgolive.findById(id);
         if (!event) {
-            return res.status(404).json({ success: false, message: 'Event not found' });
+            return res.status(404).json({ 
+                success: false, 
+                message: 'No event found with the given ID.' 
+            });
         }
 
         // Determine eventTitle based on the event date
         const currentDate = new Date();
         const eventDate = new Date(event.date);
-        const eventTitle = eventDate >= currentDate ? 'upComingEvent' : 'pastEvent';
+        const eventTitle = eventDate >= currentDate ? 'Upcoming Event' : 'Past Event';
 
         // Convert event to object and include eventTitle
         const modifiedEvent = {
@@ -101,11 +126,20 @@ exports.getEventById = async (req, res) => {
             eventTitle
         };
 
-        res.status(200).json({ success: true, event: modifiedEvent });
+        res.status(200).json({ 
+            success: true, 
+            message: 'Event retrieved successfully.', 
+            event: modifiedEvent 
+        });
     } catch (error) {
-        res.status(500).json({ success: false, message: 'Server error', error: error.message });
+        res.status(500).json({ 
+            success: false, 
+            message: 'An error occurred while fetching the event. Please try again later.', 
+            error: error.message 
+        });
     }
 };
+
 
 
 // Update an event
