@@ -51,6 +51,11 @@ const professionalInfoSchema = new mongoose.Schema(
       type: String,
       
     },
+    isVerified:{
+      type: String,
+      enum:["approved","declined","pending"],
+      default:["pending"],
+    }
   },
   {
     timestamps: true,

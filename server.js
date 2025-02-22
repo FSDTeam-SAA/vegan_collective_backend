@@ -10,11 +10,14 @@ const PORT = process.env.PORT || 3001;
 
 app.use(cookieParser());
 app.use(express.json());
-
-
 app.use(cors({ origin: "*" }));
 
+//routes for user
 const userRoute = require("./routes/user.routes.js");
+
+//routes for founder
+const founderVendorManagement = require("./routes/founderVendorManagement.route.js");
+const founderVerificationManagement = require("./routes/founderVerificationManagement.route.js");
 
 //routes for professional
 const professionalBooking = require("./routes/professionalBooking.route.js");
@@ -91,6 +94,10 @@ app.use("/api/v1", organizationFundraisingManagement);
 
 //endpoints for user
 app.use("/api/v1", userProductWishlist);
+
+//endpoints for founder
+app.use("/api/v1", founderVendorManagement);
+app.use("/api/v1", founderVerificationManagement);
 
 
 
