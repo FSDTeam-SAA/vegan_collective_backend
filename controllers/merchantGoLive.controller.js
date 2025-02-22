@@ -35,9 +35,28 @@ exports.createEvent = async (req, res) => {
 
 // Get all events
 exports.getAllEvents = async (req, res) => {
+    const { type } = req.query;
     try {
-        const events = await Merchantgolive.find();
-        res.status(200).json({ success: true, events });
+        let events = await Merchantgolive.find(); // Use let to allow reassigning
+        const currentDate = new Date();
+
+        // Filter events based on type
+        if (type === 'upcoming') {
+            events = events.filter(event => new Date(event.date) >= currentDate);
+        } else if (type === 'past') {
+            events = events.filter(event => new Date(event.date) < currentDate);
+        }
+
+        // Modify event objects
+        const modifiedEvents = events.map(event => {
+            const eventDate = new Date(event.date);
+            return {
+                ...event.toObject(),
+                eventTitle: eventDate >= currentDate ? 'upComingEvent' : 'pastEvent'
+            };
+        });
+
+        res.status(200).json({ success: true, events: modifiedEvents });
     } catch (error) {
         res.status(500).json({ success: false, message: 'Server error', error: error.message });
     }
