@@ -23,6 +23,10 @@ const goLiveSchema = new mongoose.Schema(
       type: String,
       enum: ['paid event', 'free event'],
     },
+    eventStatus: {
+      type: String,
+      
+    },
     price: {
       type: Number,
       required: function () {
