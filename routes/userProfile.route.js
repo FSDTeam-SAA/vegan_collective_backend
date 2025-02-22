@@ -1,4 +1,7 @@
-const express = require('express')
-const router = express.Router()
+const express = require("express");
+const userProfile = require("../controllers/userProfile.controller");
+const router = express.Router();
 
-module.exports = router
+router.put("/user/profile/:id", userProfile);
+
+module.exports = router;

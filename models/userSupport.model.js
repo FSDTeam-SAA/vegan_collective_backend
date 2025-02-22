@@ -23,7 +23,8 @@ const userSupportSchema = new mongoose.Schema(
     },
     status:{
       type: String,
-      enum:["resolved","pending","in progress"]
+      enum:["resolved","pending","in progress"],
+      default: "pending",
     }
   },
   {
