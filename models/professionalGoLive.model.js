@@ -23,8 +23,11 @@ const goLiveSchema = new mongoose.Schema(
       type: String,
       enum: ['paid event', 'free event'],
     },
-    price: {
+    rice: {
       type: Number,
+      required: function () {
+        return this.eventType === 'paid event';
+      },
     },
   },
   {
