@@ -3,7 +3,7 @@ const dbConnection = require("./dbConfig/dbConnection");
 const dotenv = require("dotenv").config();
 const cookieParser = require("cookie-parser");
 const cors = require("cors");
-const authenticateToken = require('./middleware/auth.middleware');
+const authenticateToken = require("./middleware/auth.middleware");
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -41,7 +41,6 @@ const merchantSupport = require("./routes/merchantSupport.routes.js");
 const merchantGoLive = require("./routes/merchantGoLive.route.js");
 
 const merchantPolicies = require("./routes/merchantPolicies.route.js");
-
 
 //routes for organization
 const organizationInfo = require("./routes/organizationInfo.route.js");
@@ -83,7 +82,6 @@ app.use("/api/v1", merchantGoLive);
 
 app.use("/api/v1", merchantPolicies);
 
-
 //endpoints for organization
 app.use("/api/v1", organizationInfo);
 app.use("/api/v1", organizationUpdateAndNews);
@@ -104,10 +102,6 @@ app.use("/api/v1", userGoLive);
 //endpoints for founder
 app.use("/api/v1", founderVendorManagement);
 app.use("/api/v1", founderVerificationManagement);
-
-
-
-
 
 //global routes
 app.use("/api/v1", userRoute);

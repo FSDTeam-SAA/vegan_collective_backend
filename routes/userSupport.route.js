@@ -1,4 +1,7 @@
-const express = require('express')
-const router = express.Router()
+const express = require("express");
+const userCreateSupport = require("../controllers/userSupport.controller");
+const router = express.Router();
 
-module.exports = router
+router.post("/user/create-support", userCreateSupport);
+
+module.exports = router;
