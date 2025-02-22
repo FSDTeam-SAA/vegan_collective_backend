@@ -1,138 +1,122 @@
-const mongoose = require('mongoose');
-const Golive = require('../models/professionalGoLive.model'); // Adjust the path as needed
-const User = require('../models/user.model'); // Adjust the path as needed
+const Golive = require('../models/professionalGoLive.model');
 
+// Create a new event
 // Create a new event
 exports.createEvent = async (req, res) => {
   try {
-      let { professionalID, eventTitle, description, date, time, eventType, price } = req.body;
+    const { userID, eventTitle, description, date, time, eventType, price } = req.body;
+    
+    // Check if the event is paid and price is not provided
+    if (eventType === 'paid event' && !price) {
+      return res.status(400).json({ message: 'Price is required for paid events.' });
+    }
 
-      // Validate professionalID format
-      if (!mongoose.Types.ObjectId.isValid(professionalID)) {
-          return res.status(400).json({ success: false, message: 'Invalid professional ID' });
-      }
+    const newEvent = new Golive({
+      userID,
+      eventTitle,
+      description,
+      date,
+      time,
+      eventType,
+      price,
+    });
 
-      // Remove price if eventType is "free event"
-      if (eventType === 'free event') {
-          price = undefined;
-      }
-
-      const newEvent = new ProfessionalGoLive({
-          professionalID,
-          eventTitle,
-          description,
-          date,
-          time,
-          eventType,
-          price
-      });
-
-      await newEvent.save();
-      res.status(201).json({ success: true, message: 'Event created successfully', event: newEvent });
+    const savedEvent = await newEvent.save();
+    res.status(201).json(savedEvent);
   } catch (error) {
-      res.status(500).json({ success: false, message: 'Server error', error: error.message });
+    res.status(500).json({ message: error.message });
   }
 };
 
-// Get all events with optional filters for type and professionalID
-exports.getAllEvents = async (req, res) => {
-  const { type, professionalID } = req.query;
+// Get all events with filtering by type (upcoming/past) and professionalID
+exports.getEvents = async (req, res) => {
   try {
-      let filter = {}; // Default: No filter, fetch all events
+    const { type, professionalID } = req.query;
 
-      // Add professionalID filter if provided
-      if (professionalID) {
-          if (!mongoose.Types.ObjectId.isValid(professionalID)) {
-              return res.status(400).json({ success: false, message: 'Invalid professional ID' });
-          }
-          filter.professionalID = professionalID;
-      }
+    let query = {};
 
-      let events = await ProfessionalGoLive.find(filter);
-      const currentDate = new Date();
+    // Filter by professionalID if provided
+    if (professionalID) {
+      query.userID = professionalID; // Ensure this matches the ObjectId format in MongoDB
+    }
 
-      // Filter events based on type
-      if (type === 'upcoming') {
-          events = events.filter(event => new Date(event.date) >= currentDate);
-      } else if (type === 'past') {
-          events = events.filter(event => new Date(event.date) < currentDate);
-      }
+    // Get today's date in YYYY-MM-DD format
+    const today = new Date().toISOString().split('T')[0];
 
-      if (events.length === 0) {
-          return res.status(200).json({ success: true, message: `No ${type ? type : ''} events found.`, events: [] });
-      }
+    // Add logic to filter by event type (upcoming or past)
+    if (type === 'upcoming') {
+      query.date = { $gte: today }; // Events with date greater than or equal to today
+    } else if (type === 'past') {
+      query.date = { $lt: today }; // Events with date less than today
+    }
 
-      res.status(200).json({ success: true, message: `Successfully retrieved ${events.length} event(s).`, events });
+    // Fetch events from the database
+    const events = await Golive.find(query).populate('userID', 'name email'); // Populate user details
+
+    // Add event status (upcoming or past) to each event in the response
+    const formattedEvents = events.map(event => {
+      const eventStatus = event.date >= today ? 'upcoming' : 'past';
+      return { ...event._doc, eventStatus };
+    });
+
+    res.status(200).json(formattedEvents);
   } catch (error) {
-      res.status(500).json({ success: false, message: 'Server error', error: error.message });
+    res.status(500).json({ message: error.message });
   }
 };
 
 // Get a single event by ID
 exports.getEventById = async (req, res) => {
   try {
-      const { id } = req.params;
-      if (!mongoose.Types.ObjectId.isValid(id)) {
-          return res.status(400).json({ success: false, message: 'Invalid event ID' });
-      }
+    const event = await Golive.findById(req.params.id).populate('userID', 'name email');
+    if (!event) {
+      return res.status(404).json({ message: 'Event not found' });
+    }
 
-      const event = await ProfessionalGoLive.findById(id);
-      if (!event) {
-          return res.status(404).json({ success: false, message: 'No event found with the given ID' });
-      }
+    const today = new Date().toISOString().split('T')[0];
+    const eventStatus = event.date >= today ? 'upcoming' : 'past';
 
-      res.status(200).json({ success: true, message: 'Event retrieved successfully', event });
+    res.status(200).json({ ...event._doc, eventStatus });
   } catch (error) {
-      res.status(500).json({ success: false, message: 'Server error', error: error.message });
+    res.status(500).json({ message: error.message });
   }
 };
 
-// Update an event
+// Update an event by ID
 exports.updateEvent = async (req, res) => {
   try {
-      const { id } = req.params;
-      let { eventTitle, description, date, time, eventType, price } = req.body;
+    const { eventTitle, description, date, time, eventType, price } = req.body;
 
-      if (!mongoose.Types.ObjectId.isValid(id)) {
-          return res.status(400).json({ success: false, message: 'Invalid event ID' });
-      }
+    // Check if the event is paid and price is not provided
+    if (eventType === 'paid event' && !price) {
+      return res.status(400).json({ message: 'Price is required for paid events.' });
+    }
 
-      let updateFields = { eventTitle, description, date, time, eventType };
+    const updatedEvent = await Golive.findByIdAndUpdate(
+      req.params.id,
+      { eventTitle, description, date, time, eventType, price },
+      { new: true, runValidators: true }
+    );
 
-      if (eventType === 'free event') {
-          updateFields.price = null;
-      } else {
-          updateFields.price = price;
-      }
+    if (!updatedEvent) {
+      return res.status(404).json({ message: 'Event not found' });
+    }
 
-      const updatedEvent = await ProfessionalGoLive.findByIdAndUpdate(id, { $set: updateFields }, { new: true });
-
-      if (!updatedEvent) {
-          return res.status(404).json({ success: false, message: 'Event not found' });
-      }
-
-      res.status(200).json({ success: true, message: 'Event updated successfully', event: updatedEvent });
+    res.status(200).json(updatedEvent);
   } catch (error) {
-      res.status(500).json({ success: false, message: 'Server error', error: error.message });
+    res.status(500).json({ message: error.message });
   }
 };
 
-// Delete an event
+// Delete an event by ID
 exports.deleteEvent = async (req, res) => {
   try {
-      const { id } = req.params;
-
-      if (!mongoose.Types.ObjectId.isValid(id)) {
-          return res.status(400).json({ success: false, message: 'Invalid event ID' });
-      }
-
-      const deletedEvent = await ProfessionalGoLive.findByIdAndDelete(id);
-      if (!deletedEvent) {
-          return res.status(404).json({ success: false, message: 'Event not found' });
-      }
-
-      res.status(200).json({ success: true, message: 'Event deleted successfully' });
+    const deletedEvent = await Golive.findByIdAndDelete(req.params.id);
+    if (!deletedEvent) {
+      return res.status(404).json({ message: 'Event not found' });
+    }
+    res.status(200).json({ message: 'Event deleted successfully' });
   } catch (error) {
-      res.status(500).json({ success: false, message: 'Server error', error: error.message });
+    res.status(500).json({ message: error.message });
   }
 };

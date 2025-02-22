@@ -27,7 +27,7 @@ exports.createEvent = async (req, res) => {
         await newEvent.save();
         res.status(201).json({ success: true, message: 'Event created successfully', event: newEvent });
     } catch (error) {
-        res.status(500).json({ success: false, message: 'Server error: Unable to create event', error: error.message });
+        res.status(500).json({ success: false, message: 'Server error', error: error.message });
     }
 };
 
@@ -53,9 +53,9 @@ exports.getAllEvents = async (req, res) => {
             events = events.filter(event => new Date(event.date) < currentDate);
         }
 
-        res.status(200).json({ success: true, message: 'Events fetched successfully', events });
+        res.status(200).json({ success: true, events });
     } catch (error) {
-        res.status(500).json({ success: false, message: 'Server error: Unable to fetch events', error: error.message });
+        res.status(500).json({ success: false, message: 'Server error', error: error.message });
     }
 };
 
@@ -73,9 +73,9 @@ exports.getEventById = async (req, res) => {
             return res.status(404).json({ success: false, message: 'Event not found' });
         }
 
-        res.status(200).json({ success: true, message: 'Event fetched successfully', event });
+        res.status(200).json({ success: true, event });
     } catch (error) {
-        res.status(500).json({ success: false, message: 'Server error: Unable to fetch event', error: error.message });
+        res.status(500).json({ success: false, message: 'Server error', error: error.message });
     }
 };
 
@@ -109,7 +109,7 @@ exports.updateEvent = async (req, res) => {
 
         res.status(200).json({ success: true, message: 'Event updated successfully', event: updatedEvent });
     } catch (error) {
-        res.status(500).json({ success: false, message: 'Server error: Unable to update event', error: error.message });
+        res.status(500).json({ success: false, message: 'Server error', error: error.message });
     }
 };
 
@@ -129,7 +129,7 @@ exports.deleteEvent = async (req, res) => {
 
         res.status(200).json({ success: true, message: 'Event deleted successfully' });
     } catch (error) {
-        res.status(500).json({ success: false, message: 'Server error: Unable to delete event', error: error.message });
+        res.status(500).json({ success: false, message: 'Server error', error: error.message });
     }
 };
 
@@ -143,8 +143,8 @@ exports.getEventsByStatus = async (req, res) => {
         }
 
         const events = await Merchantgolive.find({ status: status === 'true' });
-        res.status(200).json({ success: true, message: 'Events fetched successfully', events });
+        res.status(200).json({ success: true, events });
     } catch (error) {
-        res.status(500).json({ success: false, message: 'Server error: Unable to fetch events by status', error: error.message });
+        res.status(500).json({ success: false, message: 'Server error', error: error.message });
     }
 };
