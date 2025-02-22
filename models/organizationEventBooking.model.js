@@ -6,27 +6,30 @@ const organizationEventBookingSchema = new mongoose.Schema(
       type: mongoose.Types.ObjectId,
       ref: "Organizationeventmanagement",
     },
-    attendeeDetail:[
+    attendeeDetail: [
       {
+        bookingID: {
+          type: String,
+        },
         fullName: {
-          type : String
+          type: String,
         },
         email: {
-          type : String
+          type: String,
         },
         phoneNumber: {
-          type : String
+          type: String,
         },
-        specialRequirement:{
-          type : String
+        specialRequirement: {
+          type: String,
         },
-        skillAndExperience:{
-          type : String
+        skillAndExperience: {
+          type: String,
         },
-        motivationalStatement:{
-          type : String
-        }
-      }
+        motivationalStatement: {
+          type: String,
+        },
+      },
     ],
   },
   {

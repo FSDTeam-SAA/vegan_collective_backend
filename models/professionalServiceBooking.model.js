@@ -10,6 +10,9 @@ const professionalServiceBookingSchema = new mongoose.Schema(
         type: mongoose.Types.ObjectId,
         ref: 'Professionalinfo',
     }, 
+    bookingID:{
+        type: String,
+    },
     bookingInfo:[
         {
             serviceID: {
