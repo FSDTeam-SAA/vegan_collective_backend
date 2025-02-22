@@ -15,7 +15,7 @@ const merchantProductDelivarySchema = new mongoose.Schema(
     },
     shipping:{
         type: String,
-        enum:["delivered", "shipped"],
+        enum:["delivered", "shipped","pending"],
     },
   },
   {

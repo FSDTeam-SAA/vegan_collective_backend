@@ -55,8 +55,10 @@ const organizationFundraisingManagement = require("./routes/organizationFundrais
 
 //routes for users
 const userProductWishlist = require("./routes/userProductWishlist.route.js");
-
-
+const userProfile = require("./routes/userProfile.route.js");
+const userPayment = require("./routes/userPayment.route.js");
+const userSupport = require("./routes/userSupport.route.js");
+const userGoLive = require("./routes/userGoLive.route.js");
 
 //endpoints for professional
 app.use("/api/v1", professionalBooking);
@@ -94,6 +96,10 @@ app.use("/api/v1", organizationFundraisingManagement);
 
 //endpoints for user
 app.use("/api/v1", userProductWishlist);
+app.use("/api/v1", userProfile);
+app.use("/api/v1", userPayment);
+app.use("/api/v1", userSupport);
+app.use("/api/v1", userGoLive);
 
 //endpoints for founder
 app.use("/api/v1", founderVendorManagement);
