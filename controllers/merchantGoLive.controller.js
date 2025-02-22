@@ -63,10 +63,12 @@ exports.getAllEvents = async (req, res) => {
 };
 
 // Get a single event by ID
+
 exports.getEventById = async (req, res) => {
     try {
         const { id } = req.params;
 
+        // Validate ObjectId
         if (!mongoose.Types.ObjectId.isValid(id)) {
             return res.status(400).json({ success: false, message: 'Invalid event ID' });
         }
@@ -76,11 +78,23 @@ exports.getEventById = async (req, res) => {
             return res.status(404).json({ success: false, message: 'Event not found' });
         }
 
-        res.status(200).json({ success: true, event });
+        // Determine eventTitle based on the event date
+        const currentDate = new Date();
+        const eventDate = new Date(event.date);
+        const eventTitle = eventDate >= currentDate ? 'upComingEvent' : 'pastEvent';
+
+        // Convert event to object and include eventTitle
+        const modifiedEvent = {
+            ...event.toObject(),
+            eventTitle
+        };
+
+        res.status(200).json({ success: true, event: modifiedEvent });
     } catch (error) {
         res.status(500).json({ success: false, message: 'Server error', error: error.message });
     }
 };
+
 
 // Update an event
 exports.updateEvent = async (req, res) => {
