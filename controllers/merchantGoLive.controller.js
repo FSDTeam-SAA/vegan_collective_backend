@@ -8,7 +8,7 @@ exports.createEvent = async (req, res) => {
 
         // Validate merchantID format
         if (!mongoose.Types.ObjectId.isValid(merchantID)) {
-            return res.status(400).json({ message: 'Invalid merchant ID' });
+            return res.status(400).json({ success: false, message: 'Invalid merchant ID' });
         }
 
         // Remove price if eventType is "free event"
@@ -27,9 +27,9 @@ exports.createEvent = async (req, res) => {
         });
 
         await newEvent.save();
-        res.status(201).json({ message: 'Event created successfully', event: newEvent });
+        res.status(201).json({ success: true, message: 'Event created successfully', event: newEvent });
     } catch (error) {
-        res.status(500).json({ message: 'Server error', error: error.message });
+        res.status(500).json({ success: false, message: 'Server error', error: error.message });
     }
 };
 
@@ -37,9 +37,9 @@ exports.createEvent = async (req, res) => {
 exports.getAllEvents = async (req, res) => {
     try {
         const events = await Merchantgolive.find();
-        res.status(200).json(events);
+        res.status(200).json({ success: true, events });
     } catch (error) {
-        res.status(500).json({ message: 'Server error', error: error.message });
+        res.status(500).json({ success: false, message: 'Server error', error: error.message });
     }
 };
 
@@ -49,17 +49,17 @@ exports.getEventById = async (req, res) => {
         const { id } = req.params;
 
         if (!mongoose.Types.ObjectId.isValid(id)) {
-            return res.status(400).json({ message: 'Invalid event ID' });
+            return res.status(400).json({ success: false, message: 'Invalid event ID' });
         }
 
         const event = await Merchantgolive.findById(id);
         if (!event) {
-            return res.status(404).json({ message: 'Event not found' });
+            return res.status(404).json({ success: false, message: 'Event not found' });
         }
 
-        res.status(200).json(event);
+        res.status(200).json({ success: true, event });
     } catch (error) {
-        res.status(500).json({ message: 'Server error', error: error.message });
+        res.status(500).json({ success: false, message: 'Server error', error: error.message });
     }
 };
 
@@ -70,7 +70,7 @@ exports.updateEvent = async (req, res) => {
         let { eventTitle, description, date, time, eventType, price } = req.body;
 
         if (!mongoose.Types.ObjectId.isValid(id)) {
-            return res.status(400).json({ message: 'Invalid event ID' });
+            return res.status(400).json({ success: false, message: 'Invalid event ID' });
         }
 
         // Prepare the update object
@@ -90,15 +90,14 @@ exports.updateEvent = async (req, res) => {
         );
 
         if (!updatedEvent) {
-            return res.status(404).json({ message: 'Event not found' });
+            return res.status(404).json({ success: false, message: 'Event not found' });
         }
 
-        res.status(200).json({ message: 'Event updated successfully', event: updatedEvent });
+        res.status(200).json({ success: true, message: 'Event updated successfully', event: updatedEvent });
     } catch (error) {
-        res.status(500).json({ message: 'Server error', error: error.message });
+        res.status(500).json({ success: false, message: 'Server error', error: error.message });
     }
 };
-
 
 // Delete an event
 exports.deleteEvent = async (req, res) => {
@@ -106,17 +105,17 @@ exports.deleteEvent = async (req, res) => {
         const { id } = req.params;
 
         if (!mongoose.Types.ObjectId.isValid(id)) {
-            return res.status(400).json({ message: 'Invalid event ID' });
+            return res.status(400).json({ success: false, message: 'Invalid event ID' });
         }
 
         const deletedEvent = await Merchantgolive.findByIdAndDelete(id);
         if (!deletedEvent) {
-            return res.status(404).json({ message: 'Event not found' });
+            return res.status(404).json({ success: false, message: 'Event not found' });
         }
 
-        res.status(200).json({ message: 'Event deleted successfully' });
+        res.status(200).json({ success: true, message: 'Event deleted successfully' });
     } catch (error) {
-        res.status(500).json({ message: 'Server error', error: error.message });
+        res.status(500).json({ success: false, message: 'Server error', error: error.message });
     }
 };
 
@@ -126,12 +125,12 @@ exports.getEventsByStatus = async (req, res) => {
         const { status } = req.params;
 
         if (status !== 'true' && status !== 'false') {
-            return res.status(400).json({ message: 'Invalid status value, must be "true" or "false"' });
+            return res.status(400).json({ success: false, message: 'Invalid status value, must be "true" or "false"' });
         }
 
         const events = await Merchantgolive.find({ status: status === 'true' });
-        res.status(200).json(events);
+        res.status(200).json({ success: true, events });
     } catch (error) {
-        res.status(500).json({ message: 'Server error', error: error.message });
+        res.status(500).json({ success: false, message: 'Server error', error: error.message });
     }
 };
