@@ -48,10 +48,15 @@ const organizationInfoSchema = new mongoose.Schema(
       type: String,
      
     },
+    isVerified:{
+      type: String,
+      enum:["approved","declined","pending"],
+      default:["pending"],
+    }
   },
   {
     timestamps: true,
-  }
+  } 
 );
 
 const Organizationinfo = mongoose.model("Organizationinfo", organizationInfoSchema);

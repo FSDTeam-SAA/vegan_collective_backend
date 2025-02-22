@@ -50,6 +50,11 @@ const merchantInfoSchema = new mongoose.Schema(
     photoWithID: {
       type: String,
     },
+    isVerified:{
+      type: String,
+      enum:["approved","declined","pending"],
+      default:["pending"],
+    }
   },
   {
     timestamps: true,
