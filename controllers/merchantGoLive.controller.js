@@ -35,19 +35,40 @@ exports.createEvent = async (req, res) => {
 
 // Get all events
 exports.getAllEvents = async (req, res) => {
+    const { type } = req.query;
     try {
-        const events = await Merchantgolive.find();
-        res.status(200).json({ success: true, events });
+        let events = await Merchantgolive.find(); // Use let to allow reassigning
+        const currentDate = new Date();
+
+        // Filter events based on type
+        if (type === 'upcoming') {
+            events = events.filter(event => new Date(event.date) >= currentDate);
+        } else if (type === 'past') {
+            events = events.filter(event => new Date(event.date) < currentDate);
+        }
+
+        // Modify event objects
+        const modifiedEvents = events.map(event => {
+            const eventDate = new Date(event.date);
+            return {
+                ...event.toObject(),
+                eventTitle: eventDate >= currentDate ? 'upComingEvent' : 'pastEvent'
+            };
+        });
+
+        res.status(200).json({ success: true, events: modifiedEvents });
     } catch (error) {
         res.status(500).json({ success: false, message: 'Server error', error: error.message });
     }
 };
 
 // Get a single event by ID
+
 exports.getEventById = async (req, res) => {
     try {
         const { id } = req.params;
 
+        // Validate ObjectId
         if (!mongoose.Types.ObjectId.isValid(id)) {
             return res.status(400).json({ success: false, message: 'Invalid event ID' });
         }
@@ -57,11 +78,23 @@ exports.getEventById = async (req, res) => {
             return res.status(404).json({ success: false, message: 'Event not found' });
         }
 
-        res.status(200).json({ success: true, event });
+        // Determine eventTitle based on the event date
+        const currentDate = new Date();
+        const eventDate = new Date(event.date);
+        const eventTitle = eventDate >= currentDate ? 'upComingEvent' : 'pastEvent';
+
+        // Convert event to object and include eventTitle
+        const modifiedEvent = {
+            ...event.toObject(),
+            eventTitle
+        };
+
+        res.status(200).json({ success: true, event: modifiedEvent });
     } catch (error) {
         res.status(500).json({ success: false, message: 'Server error', error: error.message });
     }
 };
+
 
 // Update an event
 exports.updateEvent = async (req, res) => {
