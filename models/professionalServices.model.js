@@ -21,11 +21,11 @@ const professionalServicesSchema = new mongoose.Schema(
         type: String,
       },
     ],
-    paymentType: [
+    paymentType: 
       {
         type: String,
       },
-    ],
+    
     price: {
       type: Number,
     },

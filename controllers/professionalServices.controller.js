@@ -72,13 +72,21 @@ const createService = async (req, res) => {
       });
     }
 
+    // Ensure keywords is a valid array
+    const keywordsArray =
+      typeof keyWords === "string"
+        ? JSON.parse(keyWords) // If keywords is a stringified array, parse it
+        : Array.isArray(keyWords)
+        ? keyWords
+        : [];
+
     const newService = new Professionalservices({
       userID,
       serviceName,
       metaDescription,
       serviceDescription,
-      keyWords: keyWords ? keyWords.split(",") : [],
-      paymentType: paymentType ? paymentType.split(",") : [],
+      keyWords: keywordsArray,
+      paymentType,
       price,
       serviceImage,
       serviceVideo,
@@ -94,6 +102,7 @@ const createService = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
 
 // Get all services
 const getAllServices = async (req, res) => {
@@ -167,18 +176,13 @@ const updateService = async (req, res) => {
       });
     }
 
-    // Validate isLiveStream based on sessionType
-    if ((normalizedSessionType === "1-on-1 session" || normalizedSessionType === "Group session") && isLiveStream !== "false") {
-      return res.status(400).json({
-        success: false,
-        message: "For '1-on-1 session' or 'Group session', isLiveStream must be false.",
-      });
-    } else if (normalizedSessionType === "Webinar" && isLiveStream !== "true") {
-      return res.status(400).json({
-        success: false,
-        message: "For 'Webinar', isLiveStream must be true.",
-      });
-    }
+    // Ensure keywords is a valid array
+    const keywordsArray =
+      typeof keyWords === "string"
+        ? JSON.parse(keyWords)
+        : Array.isArray(keyWords)
+        ? keyWords
+        : [];
 
     const updatedService = await Professionalservices.findByIdAndUpdate(
       id,
@@ -187,8 +191,8 @@ const updateService = async (req, res) => {
         serviceName,
         metaDescription,
         serviceDescription,
-        keyWords: keyWords ? keyWords.split(",") : [],
-        paymentType: paymentType ? paymentType.split(",") : [],
+        keyWords: keywordsArray,
+        paymentType,
         price,
         serviceImage,
         serviceVideo,

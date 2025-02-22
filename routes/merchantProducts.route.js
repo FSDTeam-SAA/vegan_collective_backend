@@ -6,11 +6,15 @@ const merchantProductsController = require("../controllers/merchantProducts.cont
 // Create a new product (Image Upload Supported)
 router.post("/merchantProduct", upload.single("productImage"), merchantProductsController.createProduct);
 
-// Get all visible products
+// Get all products
 router.get("/merchantProduct", merchantProductsController.getAllProducts);
+
+// Get all visible products
+router.get("/merchantProductVisibilityTrue", merchantProductsController.getAllProductsVisibilityTrue);
 
 // Get a single product by ID
 router.get("/merchantProduct/:id", merchantProductsController.getProductById);
+
 
 // Update a product (Image Upload Supported)
 router.put("/merchantProduct/:id", upload.single("productImage"), merchantProductsController.updateProduct);

@@ -50,9 +50,56 @@ exports.createProduct = async (req, res) => {
 };
 
 
-// Get All Visible Products
+
 // Get All Products with Pagination, Search, and Sorting
 exports.getAllProducts = async (req, res) => {
+  try {
+    const { page = 1, limit = 10, search = "", sort = "asc", merchantID } = req.query;
+
+    const query = {  };
+
+    // Filter by merchantID if provided
+    if (merchantID) {
+      query.merchantID = merchantID;
+    }
+
+    // Search by product name (case-insensitive)
+    if (search) {
+      query.productName = { $regex: search, $options: "i" };
+    }
+
+    // Sorting logic (ascending or descending)
+    const sortOrder = sort === "desc" ? -1 : 1;
+
+    // Get paginated products
+    const products = await MerchantProducts.find(query)
+      .sort({ price: sortOrder })
+      .skip((page - 1) * limit)
+      .limit(Number(limit));
+
+    // Total items count
+    const totalItems = await MerchantProducts.countDocuments(query);
+    const totalPages = Math.ceil(totalItems / limit);
+
+    res.status(200).json({
+      success: true,
+      message: "Products fetched successfully",
+      data: products,
+      pagination: {
+        currentPage: Number(page),
+        totalPages,
+        totalItems,
+        itemsPerPage: Number(limit),
+      },
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+
+// Get All Products with visibility true with Pagination, Search, and Sorting
+exports.getAllProductsVisibilityTrue = async (req, res) => {
   try {
     const { page = 1, limit = 10, search = "", sort = "asc", merchantID } = req.query;
 
@@ -97,8 +144,6 @@ exports.getAllProducts = async (req, res) => {
   }
 };
 
-
-
 // Get Single Product by ID
 exports.getProductById = async (req, res) => {
   try {
@@ -109,6 +154,8 @@ exports.getProductById = async (req, res) => {
     res.status(500).json({ message: error.message, success: false });
   }
 };
+
+
 
 // Update Product
 exports.updateProduct = async (req, res) => {
