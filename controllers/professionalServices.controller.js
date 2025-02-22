@@ -14,15 +14,15 @@ const uploadToCloudinary = async (file) => {
 };
 
 // Normalize sessionType to match Mongoose schema
-const normalizeSessionType = (sessionType) => {
-  const sessionTypeMapping = {
-    "1-on-1 session": "1-on-1 session",
-    "group session": "Group session", // Match the schema's capital 'G'
-    "webinar": "Webinar", // Match the schema's capital 'W'
-  };
+// const normalizeSessionType = (sessionType) => {
+//   const sessionTypeMapping = {
+//     "1-on-1 session": "1-on-1 session",
+//     "group session": "Group session", // Match the schema's capital 'G'
+//     "webinar": "Webinar", // Match the schema's capital 'W'
+//   };
 
-  return sessionTypeMapping[sessionType?.trim().toLowerCase()] || null;
-};
+//   return sessionTypeMapping[sessionType?.trim().toLowerCase()] || null;
+// };
 
 // Create a new service
 const createService = async (req, res) => {
@@ -51,21 +51,21 @@ const createService = async (req, res) => {
     }
 
     // Normalize sessionType
-    const normalizedSessionType = normalizeSessionType(sessionType);
-    if (!normalizedSessionType) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid sessionType provided. Allowed values: '1-on-1 session', 'Group session', 'Webinar'.",
-      });
-    }
+    // const normalizedSessionType = normalizeSessionType(sessionType);
+    // if (!normalizedSessionType) {
+    //   return res.status(400).json({
+    //     success: false,
+    //     message: "Invalid sessionType provided. Allowed values: '1-on-1 session', 'Group session', 'Webinar'.",
+    //   });
+    // }
 
     // Validate isLiveStream based on sessionType
-    if ((normalizedSessionType === "1-on-1 session" || normalizedSessionType === "Group session") && isLiveStream !== "false") {
+    if ((sessionType === "1-on-1 session" || sessionType === "Group session") && isLiveStream !== "false") {
       return res.status(400).json({
         success: false,
         message: "For '1-on-1 session' or 'Group session', isLiveStream must be false.",
       });
-    } else if (normalizedSessionType === "Webinar" && isLiveStream !== "true") {
+    } else if (sessionType === "Webinar" && isLiveStream !== "true") {
       return res.status(400).json({
         success: false,
         message: "For 'Webinar', isLiveStream must be true.",
@@ -90,7 +90,7 @@ const createService = async (req, res) => {
       price,
       serviceImage,
       serviceVideo,
-      sessionType: normalizedSessionType,
+      sessionType: sessionType,
       isLiveStream: isLiveStream === "true",
       visibility,
     });
