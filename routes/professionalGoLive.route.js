@@ -1,20 +1,20 @@
 const express = require('express');
 const router = express.Router();
-const goliveController = require('../controllers/professionalGoLive.controller');
+const goliveController = require('../controllers/professionalGoLive.controller'); // Adjust the path as necessary
 
-// Create a new event
-router.post('/goLive', goliveController.createEvent);
+// Route to create a new live event
+router.post('/GoLive', goliveController.createLiveEvent);
 
-// Get all events (with optional filters for type and professionalID)
-router.get('/goLive', goliveController.getEvents);
+// Route to get live events based on status (upcoming or past) and userID
+router.get('/GoLive', goliveController.getLiveEvents);
 
-// Get a single event by ID
-router.get('/goLive/:id', goliveController.getEventById);
+// Route to get a single event by ID
+router.get('/GoLive/:id', goliveController.getEventById);
 
-// Update an event by ID
-router.put('/goLive/:id', goliveController.updateEvent);
+// Route to update all fields of an event by ID
+router.put('/GoLive/:id', goliveController.updateEvent);
 
-// Delete an event by ID
-router.delete('/goLive/:id', goliveController.deleteEvent);
+// Route to delete an event by ID
+router.delete('/GoLive/:id', goliveController.deleteEvent);
 
 module.exports = router;
