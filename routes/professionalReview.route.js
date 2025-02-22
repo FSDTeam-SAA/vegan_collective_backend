@@ -3,19 +3,22 @@ const router = express.Router();
 const reviewController = require('../controllers/professionalReview.controller');
 
 
-// Create a new review (requires authentication)
-router.post('/reviews', reviewController.createReview);
+// Create a new review
+router.post("/professionalReview", reviewController.createReview);
 
-// Get all reviews
-router.get('/reviews', reviewController.getAllReviews);
+// Get all reviews for a specific professional
+router.get("/professionalReview/:professionalID", reviewController.getReviewsByProfessional);
 
 // Get a single review by ID
-router.get('/reviews/:id', reviewController.getReviewById);
+router.get("/professionalReview/:reviewID", reviewController.getReviewById);
 
-// Update a review by ID (requires authentication)
-router.put('/reviews/:id',reviewController.updateReview);
+// Update a review
+router.put("/professionalReview/:reviewID", reviewController.updateReview);
 
-// Delete a review by ID (requires authentication)
-router.delete('/reviews/:id', reviewController.deleteReview);
+// Delete a review
+router.delete("/professionalReview/:reviewID", reviewController.deleteReview);
+
+// Get average rating for a professional
+router.get("/professionalReviewaverage/:professionalID", reviewController.getAverageRating);
 
 module.exports = router;
