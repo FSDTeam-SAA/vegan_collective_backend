@@ -44,5 +44,5 @@ const organizationEventManagementSchema = new mongoose.Schema(
 const Organizationeventmanagement = mongoose.model(
   "Organizationeventmanagement",
   organizationEventManagementSchema
-);
+);  
 module.exports = Organizationeventmanagement;

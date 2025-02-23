@@ -151,16 +151,7 @@ const updateService = async (req, res) => {
       serviceVideo = await uploadToCloudinary(req.files.serviceVideo[0]);
     }
 
-    // Normalize sessionType
-    // const normalizedSessionType = normalizeSessionType(sessionType);
-    // if (!normalizedSessionType) {
-    //   return res.status(400).json({
-    //     success: false,
-    //     message: "Invalid sessionType provided. Allowed values: '1-on-1 session', 'Group session', 'Webinar'.",
-    //   });
-    // }
-
-    // Ensure keywords is a valid array
+  
     const keywordsArray =
       typeof keyWords === "string"
         ? JSON.parse(keyWords)
