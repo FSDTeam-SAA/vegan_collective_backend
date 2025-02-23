@@ -1,4 +1,15 @@
-const express = require('express')
-const router = express.Router()
+const express = require("express");
+const router = express.Router();
+const { createOrganizationUpdate, getAllOrganizationUpdates, getOrganizationUpdateById } = require("../controllers/organizationUpdateAndNews.controller");
+const upload = require("../utils/multerConfig"); 
 
-module.exports = router
+// Route to create a new organization update (image upload + data store)
+router.post("/createOrganizationUpdate", upload.single("image"), createOrganizationUpdate);
+
+// Get all organization updates
+router.get("/createOrganizationUpdate",getAllOrganizationUpdates );
+
+// Get a specific organization update by ID
+router.get("/createOrganizationUpdate/:id", getOrganizationUpdateById);
+
+module.exports = router;

@@ -4,7 +4,7 @@ const commentManipulationSchema = new mongoose.Schema(
   {
     updateAndNewsID: {
       type: mongoose.Types.ObjectId,
-      ref: "Organizationupdateandnews",
+      ref: "Organizationupdateandnews", 
     },
     userID: {
       type: mongoose.Types.ObjectId,
@@ -13,14 +13,14 @@ const commentManipulationSchema = new mongoose.Schema(
     comment: {
       type: String,
     },
-    // likedBy:[
-    //   {
-    //     userIDWhoLiked:{
-    //       type: mongoose.Types.ObjectId,           //this will be hard to implement
-    //       ref: "User",
-    //     }
-    //   }
-    // ]
+    likedBy:[
+      {
+        userIDWhoLiked:{
+          type: mongoose.Types.ObjectId,           //this will be hard to implement
+          ref: "User",
+        }
+      }
+    ]
   },
   {
     timestamps: true,
