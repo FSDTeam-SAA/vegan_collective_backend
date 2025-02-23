@@ -10,7 +10,7 @@ const organizationEventManagementSchema = new mongoose.Schema(
       type: String,
     },
     description: {
-      type: Number,
+      type: String,
     },
     date: {
       type: String,
@@ -22,8 +22,13 @@ const organizationEventManagementSchema = new mongoose.Schema(
       type: String,
     },
     price: {
-        type: String,
-    },
+      type: String,
+      required: function () {
+        return this.eventType === "paid event"; // Price is required only for paid events
+      },
+      default: null, // Default value is null
+    }, // Default value is null
+  
     eventType: {
       type: String,
       enum:["paid event","free event", "volunteer event"]
@@ -34,7 +39,13 @@ const organizationEventManagementSchema = new mongoose.Schema(
     },
     capacity:{
       type: Number,
+    },
+    Attendees: {
+      type: Number,
+      ref:"Organizationeventbooking",
+      
     }
+    
   },
   {
     timestamps: true,

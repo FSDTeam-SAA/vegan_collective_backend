@@ -4,7 +4,7 @@ const organizationEventBookingSchema = new mongoose.Schema(
   {
     organizationEventID: {
       type: mongoose.Types.ObjectId,
-      ref: "Organizationeventmanagement",
+      ref: "Organizationeventmanagement",  //in the organizationeventmanagement model comes eventTitle, eventType,price,Attendees,date,time
     },
     attendeeDetail: [
       {
