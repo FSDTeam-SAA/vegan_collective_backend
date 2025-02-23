@@ -8,7 +8,7 @@ const organizationEventBookingSchema = new mongoose.Schema(
     },
     attendeeDetail: [
       {
-        bookingID: {
+        bookingSlug: {
           type: String,
         },
         fullName: {
