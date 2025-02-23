@@ -43,6 +43,7 @@ const organizationEventManagementSchema = new mongoose.Schema(
     Attendees: {
       type: Number,
       ref:"Organizationeventbooking",
+      default: 0,
       
     }
     

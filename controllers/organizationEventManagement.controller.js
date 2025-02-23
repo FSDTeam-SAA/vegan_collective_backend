@@ -3,54 +3,57 @@ const Organizationeventmanagement = require("../models/organizationEventManageme
 // Add a new event
 const addEvent = async (req, res) => {
   try {
-      const {
-          organizationID,
-          eventTitle,
-          description,
-          date,
-          time,
-          paymentType,
-          price,
-          eventType,
-          eventCategory,
-          capacity,
-      } = req.body;
+    const {
+      organizationID,
+      eventTitle,
+      description,
+      date,
+      time,
+      paymentType,
+      price,
+      eventType,
+      eventCategory,
+      capacity,
+    } = req.body;
 
-      // Ensure price is only removed for "free event"
-      const eventPrice = eventType === "free event" ? null : price;
+    // Set price to null ONLY for free events
+    const eventPrice = eventType === "free event" ? null : price;
 
-      // Create a new event
-      const newEvent = new Organizationeventmanagement({
-          organizationID,
-          eventTitle,
-          description,
-          date,
-          time,
-          paymentType,
-          price: eventPrice,
-          eventType,
-          eventCategory,
-          capacity,
-      });
+    // Create a new event
+    const newEvent = new Organizationeventmanagement({
+      organizationID,
+      eventTitle,
+      description,
+      date,
+      time,
+      paymentType,
+      price: eventPrice, // Use the adjusted price
+      eventType,
+      eventCategory,
+      capacity,
+    });
 
-      // Save the event to the database
-      await newEvent.save();
+    // Save the event to the database
+    const savedEvent = await newEvent.save();
 
-      // Send success response
-      res.status(201).json({
-          success: true,
-          message: "Event added successfully",
-          data: newEvent,
-      });
+    // Ensure Attendees field is included in the response
+    const eventData = savedEvent.toObject(); // Convert Mongoose document to plain object
+
+    // Send success response
+    res.status(201).json({
+      success: true,
+      message: "Event added successfully",
+      data: eventData,
+    });
   } catch (error) {
-      res.status(400).json({
-          success: false,
-          message: "Error adding event",
-          error: error.message,
-      });
+    // Handle errors
+    res.status(400).json({
+      success: false,
+      message: "Error adding event",
+      error: error.message,
+    });
   }
 };
-
 
 // Get all events with pagination, search, and filtering
 const getEvents = async (req, res) => {
