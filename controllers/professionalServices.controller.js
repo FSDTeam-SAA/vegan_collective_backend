@@ -152,13 +152,13 @@ const updateService = async (req, res) => {
     }
 
     // Normalize sessionType
-    const normalizedSessionType = normalizeSessionType(sessionType);
-    if (!normalizedSessionType) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid sessionType provided. Allowed values: '1-on-1 session', 'Group session', 'Webinar'.",
-      });
-    }
+    // const normalizedSessionType = normalizeSessionType(sessionType);
+    // if (!normalizedSessionType) {
+    //   return res.status(400).json({
+    //     success: false,
+    //     message: "Invalid sessionType provided. Allowed values: '1-on-1 session', 'Group session', 'Webinar'.",
+    //   });
+    // }
 
     // Ensure keywords is a valid array
     const keywordsArray =
@@ -180,7 +180,7 @@ const updateService = async (req, res) => {
         price,
         serviceImage,
         serviceVideo,
-        sessionType: normalizedSessionType,
+        sessionType,
         isLiveStream: isLiveStream === "true",
         visibility,
       },
