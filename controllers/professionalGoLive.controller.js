@@ -6,9 +6,8 @@ exports.createLiveEvent = async (req, res) => {
   try {
     const { userID, eventTitle, description, date, time, eventType, price } = req.body;
 
-    // Validate required fields for paid events
     if (eventType === 'paid event' && price === undefined) {
-      return res.status(400).json({ message: 'Price is required for paid events' });
+      return res.status(400).json({ success: false, message: 'Price is required for paid events' });
     }
 
     const newEvent = new Golive({
@@ -22,9 +21,9 @@ exports.createLiveEvent = async (req, res) => {
     });
 
     await newEvent.save();
-    res.status(201).json({ message: 'Event created successfully', event: newEvent });
+    res.status(201).json({ success: true, message: 'Event created successfully', event: newEvent });
   } catch (error) {
-    res.status(500).json({ message: 'Error creating event', error: error.message });
+    res.status(500).json({ success: false, message: 'Error creating event', error: error.message });
   }
 };
 
@@ -34,31 +33,29 @@ exports.getLiveEvents = async (req, res) => {
     const { type, userID } = req.query;
 
     if (!type || !userID) {
-      return res.status(400).json({ message: 'Type and userID are required' });
+      return res.status(400).json({ success: false, message: 'Type and userID are required' });
     }
 
-    const currentDate = new Date().toISOString().split('T')[0]; // Get current date in YYYY-MM-DD format
-
+    const currentDate = new Date().toISOString().split('T')[0];
     let query = { userID };
+    
     if (type === 'upcoming') {
       query.date = { $gte: currentDate };
     } else if (type === 'past') {
       query.date = { $lt: currentDate };
     } else {
-      return res.status(400).json({ message: 'Invalid type. Use "upcoming" or "past"' });
+      return res.status(400).json({ success: false, message: 'Invalid type. Use "upcoming" or "past"' });
     }
 
     const events = await Golive.find(query);
+    const eventsWithStatus = events.map(event => ({
+      ...event.toObject(),
+      eventStatus: event.date >= currentDate ? 'upcoming' : 'past'
+    }));
 
-    // Add eventStatus to each event
-    const eventsWithStatus = events.map(event => {
-      const eventStatus = event.date >= currentDate ? 'upcoming' : 'past';
-      return { ...event.toObject(), eventStatus };
-    });
-
-    res.status(200).json({ events: eventsWithStatus });
+    res.status(200).json({ success: true, message: 'Events fetched successfully', events: eventsWithStatus });
   } catch (error) {
-    res.status(500).json({ message: 'Error fetching events', error: error.message });
+    res.status(500).json({ success: false, message: 'Error fetching events', error: error.message });
   }
 };
 
@@ -68,20 +65,21 @@ exports.getEventById = async (req, res) => {
     const { id } = req.params;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({ message: 'Invalid event ID' });
+      return res.status(400).json({ success: false, message: 'Invalid event ID' });
     }
 
     const event = await Golive.findById(id);
 
     if (!event) {
-      return res.status(404).json({ message: 'Event not found' });
+      return res.status(404).json({ success: false, message: 'Event not found' });
     }
 
-    res.status(200).json({ event });
+    res.status(200).json({ success: true, message: 'Event fetched successfully', event });
   } catch (error) {
-    res.status(500).json({ message: 'Error fetching event', error: error.message });
+    res.status(500).json({ success: false, message: 'Error fetching event', error: error.message });
   }
 };
+
 
 // Update all fields of an event by ID
 exports.updateEvent = async (req, res) => {
@@ -90,12 +88,11 @@ exports.updateEvent = async (req, res) => {
     const { userID, eventTitle, description, date, time, eventType, price } = req.body;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({ message: 'Invalid event ID' });
+      return res.status(400).json({ success: false, message: 'Invalid event ID' });
     }
 
-    // Validate required fields for paid events
     if (eventType === 'paid event' && price === undefined) {
-      return res.status(400).json({ message: 'Price is required for paid events' });
+      return res.status(400).json({ success: false, message: 'Price is required for paid events' });
     }
 
     const updatedEvent = await Golive.findByIdAndUpdate(
@@ -109,16 +106,16 @@ exports.updateEvent = async (req, res) => {
         eventType,
         price: eventType === 'paid event' ? price : undefined,
       },
-      { new: true } // Return the updated document
+      { new: true }
     );
 
     if (!updatedEvent) {
-      return res.status(404).json({ message: 'Event not found' });
+      return res.status(404).json({ success: false, message: 'Event not found' });
     }
 
-    res.status(200).json({ message: 'Event updated successfully', event: updatedEvent });
+    res.status(200).json({ success: true, message: 'Event updated successfully', event: updatedEvent });
   } catch (error) {
-    res.status(500).json({ message: 'Error updating event', error: error.message });
+    res.status(500).json({ success: false, message: 'Error updating event', error: error.message });
   }
 };
 
@@ -128,17 +125,17 @@ exports.deleteEvent = async (req, res) => {
     const { id } = req.params;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({ message: 'Invalid event ID' });
+      return res.status(400).json({ success: false, message: 'Invalid event ID' });
     }
 
     const deletedEvent = await Golive.findByIdAndDelete(id);
 
     if (!deletedEvent) {
-      return res.status(404).json({ message: 'Event not found' });
+      return res.status(404).json({ success: false, message: 'Event not found' });
     }
 
-    res.status(200).json({ message: 'Event deleted successfully', event: deletedEvent });
+    res.status(200).json({ success: true, message: 'Event deleted successfully', event: deletedEvent });
   } catch (error) {
-    res.status(500).json({ message: 'Error deleting event', error: error.message });
+    res.status(500).json({ success: false, message: 'Error deleting event', error: error.message });
   }
 };
