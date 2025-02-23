@@ -83,7 +83,32 @@ const getAllBookings = async (req, res) => {
   }
 };
 
+//get by id
+const getBookingById = async (req, res) => {
+  try {
+    const booking = await Organizationeventbooking.findById(req.params.id);
+    if (!booking) {
+      return res.status(404).json({
+        success: false,
+        message: "Booking not found",
+      });
+    }
+    res.status(200).json({
+      success: true,
+      message: "Booking fetched successfully",
+      data: booking,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Error fetching booking",
+      error: error.message,
+    });
+  }
+};
+
 module.exports = {
   createBooking,
   getAllBookings,
+  getBookingById,
 };
