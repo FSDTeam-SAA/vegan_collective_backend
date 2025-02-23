@@ -12,6 +12,8 @@ app.use(cookieParser());
 app.use(express.json());
 app.use(cors({ origin: "*" }));
 
+
+
 //routes for user
 const userRoute = require("./routes/user.routes.js");
 
@@ -79,7 +81,6 @@ app.use("/api/v1", merchantSalesManagement);
 app.use("/api/v1", merchantCustomerManagement);
 app.use("/api/v1", merchantSupport);
 app.use("/api/v1", merchantGoLive);
-
 app.use("/api/v1", merchantPolicies);
 
 //endpoints for organization
@@ -105,6 +106,7 @@ app.use("/api/v1", founderVerificationManagement);
 
 //global routes
 app.use("/api/v1", userRoute);
+app.use('/api/v1', require('./routes/globalfind'));
 
 app.get("/api/v1/", (req, res) => {
   res.status(201).json({
