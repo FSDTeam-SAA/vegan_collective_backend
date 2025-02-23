@@ -13,14 +13,14 @@ const commentManipulationSchema = new mongoose.Schema(
     comment: {
       type: String,
     },
-    likedBy:[
-      {
-        userIDWhoLiked:{
-          type: mongoose.Types.ObjectId,
-          ref: "User",
-        }
-      }
-    ]
+    // likedBy:[
+    //   {
+    //     userIDWhoLiked:{
+    //       type: mongoose.Types.ObjectId,           //this will be hard to implement
+    //       ref: "User",
+    //     }
+    //   }
+    // ]
   },
   {
     timestamps: true,

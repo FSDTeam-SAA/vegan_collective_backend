@@ -28,7 +28,7 @@ const organizationEventManagementSchema = new mongoose.Schema(
       type: String,
       enum:["paid event","free event", "volunteer event"]
     },
-    location:{
+    eventCategory:{
       type: String,
       enum:["onsite","live"],
     },
