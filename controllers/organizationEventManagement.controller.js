@@ -58,7 +58,7 @@ const addEvent = async (req, res) => {
 // Get all events with pagination, search, and filtering
 const getEvents = async (req, res) => {
   try {
-    const { page = 1, limit = 10, search = "", eventType } = req.query;
+    const { page = 1, limit = 10, search = "", eventType, eventCategory = "all" } = req.query;
 
     // Build the query object
     const query = {};
@@ -67,6 +67,9 @@ const getEvents = async (req, res) => {
     }
     if (eventType) {
       query.eventType = eventType; // Filter by event type
+    }
+    if (eventCategory && eventCategory !== "all") {
+      query.eventCategory = eventCategory; // Filter by event category
     }
 
     // Fetch events with pagination
