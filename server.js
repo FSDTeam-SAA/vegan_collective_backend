@@ -5,6 +5,13 @@ const cookieParser = require("cookie-parser");
 const cors = require("cors");
 const authenticateToken = require("./middleware/auth.middleware");
 
+const zoomRoutes = require("./routes/zoomRoutes");
+
+require('dotenv').config();
+console.log('ZOOM_API_KEY:', process.env.ZOOM_API_KEY);
+console.log('ZOOM_API_SECRET:', process.env.ZOOM_API_SECRET);
+console.log('ZOOM_ACCOUNT_ID:', process.env.ZOOM_ACCOUNT_ID);
+
 const app = express();
 const PORT = process.env.PORT || 3001;
 
@@ -107,6 +114,7 @@ app.use("/api/v1", founderVerificationManagement);
 //global routes
 app.use("/api/v1", userRoute);
 app.use('/api/v1', require('./routes/globalfind'));
+app.use("/api/v1/auth/zoom", zoomRoutes);
 
 app.get("/api/v1/", (req, res) => {
   res.status(201).json({
