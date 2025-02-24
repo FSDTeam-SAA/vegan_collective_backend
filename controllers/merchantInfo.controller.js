@@ -13,7 +13,7 @@ exports.createMerchantInfo = async (req, res) => {
         return res.status(500).json({ error: "Error uploading file to Cloudinary" });
       }
 
-      let { userID, fullName, businessName, address, about, shortDescriptionOfStore, businessHours, highlightedStatement, websiteURL, governmentIssuedID, professionalCertification, photoWithID } = req.body;
+      let { userID, fullName, businessName, address, about, shortDescriptionOfStore, businessHours, highlightedStatement, websiteURL, governmentIssuedID, professionalCertification, photoWithID, isVerified } = req.body;
 
       if (!mongoose.Types.ObjectId.isValid(userID)) {
         return res.status(400).json({ success: false, message: "Invalid userID format" });
@@ -55,6 +55,7 @@ exports.createMerchantInfo = async (req, res) => {
         governmentIssuedID,
         professionalCertification,
         photoWithID,
+        isVerified,
       });
 
       const savedMerchantInfo = await newMerchantInfo.save();
