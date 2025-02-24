@@ -13,7 +13,7 @@ exports.createProfessionalInfo = async (req, res) => {
         return res.status(500).json({ error: "Error uploading file to Cloudinary" });
       }
 
-      let { userID, fullName, designation, businessName, address, about, highlightedStatement, experience, certifications, websiteURL, governmentIssuedID, professionalCertification, photoWithID } = req.body;
+      let { userID, fullName, designation, businessName, address, about, highlightedStatement, experience, certifications, websiteURL, governmentIssuedID, professionalCertification, photoWithID, isVerified } = req.body;
 
       console.log("Received userID:", userID);
 
@@ -68,6 +68,7 @@ exports.createProfessionalInfo = async (req, res) => {
         governmentIssuedID,
         professionalCertification,
         photoWithID,
+        isVerified,
       });
 
       const savedProfessionalInfo = await newProfessionalInfo.save();
@@ -146,13 +147,9 @@ exports.getProfessionalInfoById = async (req, res) => {
   }
 };
 
-/**
- * Update professional info by ID
- */
 // Update professional info by ID
 exports.updateProfessionalInfo = [
-  // Multer middleware for form-data file upload
-  upload.single("profilePhoto"), 
+  upload.single("profilePhoto"), // Multer middleware for file upload
   
   async (req, res) => {
     try {
@@ -166,24 +163,32 @@ exports.updateProfessionalInfo = [
         });
       }
 
-      // ✅ Prepare update data from form-data
+      console.log("Incoming request body:", req.body);
+      console.log("Uploaded file:", req.file);
+
+      // ✅ Prepare update data
       const updateData = { ...req.body };
 
       // ✅ Handle profile photo upload (if provided)
       if (req.file) {
-        updateData.profilePhoto = req.file.buffer.toString("base64"); // Example: save as base64, change if saving to Cloudinary/local storage
+        updateData.profilePhoto = req.file.path; // Use Cloudinary URL instead of buffer
       }
 
-      // ✅ Handle highlightedStatement safely (must be an array of objects)
-      if (updateData.highlightedStatement) {
+      // ✅ Function to safely parse JSON fields
+      const parseJSONField = (field) => {
         try {
-          updateData.highlightedStatement = JSON.parse(updateData.highlightedStatement);
-        } catch (error) {
-          return res.status(400).json({
-            success: false,
-            message: "Invalid JSON format for highlightedStatement",
-          });
+          return JSON.parse(field);
+        } catch {
+          return field; // Keep original value if parsing fails
         }
+      };
+
+      // ✅ Handle JSON fields safely
+      if (updateData.highlightedStatement) {
+        updateData.highlightedStatement = parseJSONField(updateData.highlightedStatement);
+      }
+      if (updateData.experience) {
+        updateData.experience = parseJSONField(updateData.experience);
       }
 
       // ✅ Update the professional info
@@ -214,6 +219,7 @@ exports.updateProfessionalInfo = [
     }
   },
 ];
+
 
 /**
  * Delete professional info by ID
