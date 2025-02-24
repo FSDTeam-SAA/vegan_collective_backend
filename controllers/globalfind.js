@@ -1,50 +1,44 @@
-const GlobalFind = require('../models/GlobalFind');
+const User = require('../models/user.model'); // Import User model
 
-const globalFind = async (req, res) => {
-  const { type, page = 1, limit = 10, search = '' } = req.query;
-
+exports.findByAccountTypeOrId = async (req, res) => {
   try {
-    // Build the query
-    const query = {};
-    if (type) query.type = type;
+    const { accountType, userID } = req.query; // Get query params
 
-    // Add search functionality
-    if (search) {
-      query.$or = [
-        { merchant_id: { $regex: search, $options: 'i' } },
-        { organization_id: { $regex: search, $options: 'i' } },
-        { professional_id: { $regex: search, $options: 'i' } },
-        { 'details.name': { $regex: search, $options: 'i' } },
-        { 'details.address': { $regex: search, $options: 'i' } },
-        // Add more fields to search if needed
-      ];
+    // Validate accountType
+    if (!accountType || !userID) {
+      return res.status(400).json({
+        success: false,
+        message: "Both accountType and userID are required in the query.",
+      });
     }
 
-    // Pagination
-    const skip = (page - 1) * limit;
+    if (!["merchant", "professional", "organization"].includes(accountType)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid accountType. Allowed values: merchant, professional, organization.",
+      });
+    }
 
-    // Fetch data
-    const results = await GlobalFind.find(query)
-      .skip(skip)
-      .limit(parseInt(limit));
+    // Find user by accountType and userID
+    const user = await User.findOne({ _id: userID, accountType });
 
-    // Count total documents for pagination
-    const total = await GlobalFind.countDocuments(query);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: `No user found with accountType: ${accountType} and userID: ${userID}`,
+      });
+    }
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
-      data: results,
-      pagination: {
-        page: parseInt(page),
-        limit: parseInt(limit),
-        total,
-        totalPages: Math.ceil(total / limit),
-      },
+      message: `User found with accountType: ${accountType} and userID: ${userID}`,
+      data: user,
     });
   } catch (error) {
-    console.error('Error querying database:', error);
-    res.status(500).json({ success: false, error: 'Internal server error' });
+    console.error("Error fetching user:", error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
   }
 };
-
-module.exports = { globalFind };
