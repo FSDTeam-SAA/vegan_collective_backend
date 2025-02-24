@@ -14,7 +14,7 @@ exports.createOrganizationInfo = async (req, res) => {
         return res.status(500).json({ error: "Error uploading file to Cloudinary" });
       }
 
-      let { userID, organizationName, address, missionStatement, about, shortDescriptionOfOrganization, experience, certifications, websiteURL, governmentIssuedID, professionalCertification, photoWithID, isVerified } = req.body;
+      let { userID, organizationName, address, missionStatement, about, shortDescriptionOfOrganization, experience, certifications, websiteURL, governmentIssuedID, professionalCertification, photoWithID,isVerified } = req.body;
 
       if (!mongoose.Types.ObjectId.isValid(userID)) {
         return res.status(400).json({ success: false, message: "Invalid userID format" });
@@ -56,7 +56,7 @@ exports.createOrganizationInfo = async (req, res) => {
         governmentIssuedID,
         professionalCertification,
         photoWithID,
-        isVerified: "pending",
+        isVerified,
       });
 
       const savedOrganizationInfo = await newOrganizationInfo.save();
