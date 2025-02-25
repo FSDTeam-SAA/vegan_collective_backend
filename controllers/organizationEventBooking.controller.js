@@ -93,19 +93,14 @@ const getBookingsByEventId = async (req, res) => {
       .populate("organizationEventID", "eventTitle eventType price Attendees date time")
       .exec();
 
-    // Extract only the desired fields
-    const filteredBookings = bookings.map((booking) => ({
-      attendeeDetail: booking.attendeeDetail,
-      createdAt: booking.createdAt,
-      updatedAt: booking.updatedAt,
-      __v: booking.__v,
-    }));
+    // Flatten all attendeeDetail arrays into a single array
+    const flattenedAttendeeDetails = bookings.flatMap((booking) => booking.attendeeDetail);
 
-    // Return empty array if no bookings found (instead of 404)
+    // Return the flattened array in the response
     res.status(200).json({
       success: true,
-      message: bookings.length > 0 ? "Bookings fetched successfully" : "No bookings found for this event",
-      data: filteredBookings, // This will be an empty array [] if no bookings exist
+      message: flattenedAttendeeDetails.length > 0 ? "Bookings fetched successfully" : "No bookings found for this event",
+      data: flattenedAttendeeDetails, // Single array of all attendeeDetails
     });
   } catch (error) {
     res.status(500).json({

@@ -1,10 +1,12 @@
-const express = require('express');
+// routes/dataRoutes.js
+const express = require("express");
 const router = express.Router();
-const founderVendonManagementController = require('../controllers/founderVendorManagement.controller');
+const fetchDataController = require("../controllers/founderVendorManagement.controller");
 
-// Routes
-router.get('/professionals', founderVendonManagementController.getProfessionalInfo);
-router.get('/merchants', founderVendonManagementController.getMerchantInfo);
-router.get('/organizations', founderVendonManagementController.getOrganizationInfo);
+// Route to fetch required data
+router.get("/fetch-data", fetchDataController.fetchRequiredData);
+
+// Route to fetch data where isVerified is "pending"
+router.get("/fetch-pending-data", fetchDataController.fetchPendingVerificationData);
 
 module.exports = router;
