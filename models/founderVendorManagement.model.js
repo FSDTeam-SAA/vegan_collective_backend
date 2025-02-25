@@ -2,19 +2,19 @@ const mongoose = require("mongoose");
 
 const founderVendonManagementSchema = new mongoose.Schema(
   {
-    merchants: [
+    merchant: [
       {
-        type: mongoose.Types.ObjectId,
+        type: mongoose.Types.ObjectId, 
         ref: "Merchantinfo",
       },
     ],
-    professionals: [
+    professional: [
       {
         type: mongoose.Types.ObjectId,
         ref: "Professionalinfo",
       },
     ],
-    organizations: [
+    organization: [
       {
         type: mongoose.Types.ObjectId,
         ref: "Organizationinfo",
