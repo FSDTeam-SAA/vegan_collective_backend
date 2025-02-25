@@ -9,4 +9,7 @@ router.get("/fetch-data", fetchDataController.fetchRequiredData);
 // Route to fetch data where isVerified is "pending"
 router.get("/fetch-pending-data", fetchDataController.fetchPendingVerificationData);
 
+// New route for updating verification status (using PUT)
+router.put('/update-verification-status', fetchDataController.updateVerificationStatus);
+
 module.exports = router;
