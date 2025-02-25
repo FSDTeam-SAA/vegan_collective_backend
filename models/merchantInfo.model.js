@@ -7,7 +7,7 @@ const merchantInfoSchema = new mongoose.Schema(
       ref: "User",
     },
     profilePhoto: {
-      type: String,
+      type: String, 
     },
     fullName: {
       type: String,
