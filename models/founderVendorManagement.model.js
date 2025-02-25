@@ -1,24 +1,33 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
-const vendorSchema = new mongoose.Schema({
-  businessName: {
-    type: String,
-    required: true,
+const founderVendonManagementSchema = new mongoose.Schema(
+  {
+    merchants: [
+      {
+        type: mongoose.Types.ObjectId,
+        ref: "Merchantinfo",
+      },
+    ],
+    professionals: [
+      {
+        type: mongoose.Types.ObjectId,
+        ref: "Professionalinfo",
+      },
+    ],
+    organizations: [
+      {
+        type: mongoose.Types.ObjectId,
+        ref: "Organizationinfo",
+      },
+    ],
   },
-  professionalInfo: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Professionalinfo',
-  },
-  merchantInfo: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Merchantinfo',
-  },
-  organizationInfo: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Organizationinfo',
-  },
-});
+  {
+    timestamps: true,
+  }
+);
 
-const Vendor = mongoose.model('Vendor', vendorSchema);
-
-module.exports = Vendor;
+const Foundervendonmanagement = mongoose.model(
+  "Foundervendonmanagement",
+  founderVendonManagementSchema
+);
+module.exports = Foundervendonmanagement;
