@@ -84,31 +84,33 @@ const getAllBookings = async (req, res) => {
 };
 
 //get by id
-const getBookingById = async (req, res) => {
+const getBookingsByEventId = async (req, res) => {
   try {
-    const booking = await Organizationeventbooking.findById(req.params.id);
-    if (!booking) {
-      return res.status(404).json({
-        success: false,
-        message: "Booking not found",
-      });
-    }
+    const { eventId } = req.params;
+
+    // Find bookings by event ID
+    const bookings = await Organizationeventbooking.find({ organizationEventID: eventId })
+      .populate("organizationEventID", "eventTitle eventType price Attendees date time") // Populate event details
+      .exec();
+
+    // Return empty array if no bookings found (instead of 404)
     res.status(200).json({
       success: true,
-      message: "Booking fetched successfully",
-      data: booking,
+      message: bookings.length > 0 ? "Bookings fetched successfully" : "No bookings found for this event",
+      data: bookings, // This will be an empty array [] if no bookings exist
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: "Error fetching booking",
+      message: "Error fetching bookings",
       error: error.message,
     });
   }
 };
 
+
 module.exports = {
   createBooking,
   getAllBookings,
-  getBookingById,
+  getBookingsByEventId, // Add the new function
 };
