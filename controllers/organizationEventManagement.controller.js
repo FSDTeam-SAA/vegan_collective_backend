@@ -253,6 +253,53 @@ const getAllEvents = async (req, res) => {
   }
 };  
 
+// Get all events by organizationID with pagination
+const getEventsByOrganization = async (req, res) => {
+  try {
+    const { organizationID } = req.params; // Extract organizationID from URL params
+    const { page = 1, limit = 10 } = req.query;
+
+    // Ensure organizationID is provided
+    if (!organizationID) {
+      return res.status(400).json({
+        success: false,
+        message: "organizationID is required",
+      });
+    }
+
+    // Fetch events associated with the given organizationID
+    const events = await Organizationeventmanagement.find({ organizationID })
+      .limit(limit * 1)
+      .skip((page - 1) * limit)
+      .exec();
+
+    // Count total documents for pagination
+    const totalItems = await Organizationeventmanagement.countDocuments({ organizationID });
+
+    // Calculate total pages
+    const totalPages = Math.ceil(totalItems / limit);
+
+    // Send response
+    res.status(200).json({
+      success: true,
+      message: "Events fetched successfully",
+      data: events,
+      pagination: {
+        currentPage: parseInt(page),
+        totalPages,
+        totalItems,
+        itemsPerPage: parseInt(limit),
+      },
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Error fetching events",
+      error: error.message,
+    });
+  }
+};
+
 module.exports = {
   addEvent,
   getEvents,
@@ -260,4 +307,7 @@ module.exports = {
   updateEvent,
   deleteEvent,
   getAllEvents,
+  getEventsByOrganization, // New function
 };
+
+
