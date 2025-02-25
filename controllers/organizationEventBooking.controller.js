@@ -90,14 +90,22 @@ const getBookingsByEventId = async (req, res) => {
 
     // Find bookings by event ID
     const bookings = await Organizationeventbooking.find({ organizationEventID: eventId })
-      .populate("organizationEventID", "eventTitle eventType price Attendees date time") // Populate event details
+      .populate("organizationEventID", "eventTitle eventType price Attendees date time")
       .exec();
+
+    // Extract only the desired fields
+    const filteredBookings = bookings.map((booking) => ({
+      attendeeDetail: booking.attendeeDetail,
+      createdAt: booking.createdAt,
+      updatedAt: booking.updatedAt,
+      __v: booking.__v,
+    }));
 
     // Return empty array if no bookings found (instead of 404)
     res.status(200).json({
       success: true,
       message: bookings.length > 0 ? "Bookings fetched successfully" : "No bookings found for this event",
-      data: bookings, // This will be an empty array [] if no bookings exist
+      data: filteredBookings, // This will be an empty array [] if no bookings exist
     });
   } catch (error) {
     res.status(500).json({
