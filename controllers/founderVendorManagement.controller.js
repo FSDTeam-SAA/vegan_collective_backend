@@ -3,7 +3,7 @@ const Professionalinfo = require('../models/professionalInfo.model'); // Assumin
 const Merchantinfo = require('../models/merchantInfo.model'); // Assuming you have this model
 const Organizationinfo = require('../models/organizationInfo.model'); // Assuming you have this model
 
-// Function to get professional info
+// Function to get professional info added
 exports.getProfessionalInfo = async (req, res) => {
     try {
         const founderManagement = await Foundervendonmanagement.findOne().populate('professional');
