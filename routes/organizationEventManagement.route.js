@@ -20,4 +20,7 @@ router.delete('/organizationevents/:id', eventController.deleteEvent);
 // get all events with pagination, search, and filtering
 router.get('/organizationevents', eventController.getAllEvents);
 
+// get events by organization
+router.get('/organizationeventsbyorganization/:organizationID', eventController.getEventsByOrganization);
+
 module.exports = router;
