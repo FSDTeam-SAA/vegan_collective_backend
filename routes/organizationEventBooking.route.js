@@ -5,7 +5,7 @@ const router = express.Router();
 const {
   createBooking,
   getAllBookings,
-  getBookingById,
+  getBookingsByEventId,
 } = require("../controllers/organizationEventBooking.controller");
 
 
@@ -13,6 +13,6 @@ router.post("/organizationbookings", createBooking);
 
 router.get("/organizationbookings", getAllBookings);
 
-router.get("/organizationbookings/:id", getBookingById);
+router.get("/bookings/event/:eventId", getBookingsByEventId);
 
 module.exports = router;
