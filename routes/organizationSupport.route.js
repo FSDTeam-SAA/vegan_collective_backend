@@ -9,7 +9,7 @@ router.post('/organizationsupport', organizationsupportController.createSupportT
 router.get('/organizationsupport', organizationsupportController.getAllSupportTickets);
 
 // Get all support tickets by organizationID
-router.get('/organizationsupport/organization/:organizationID', organizationsupportController.getSupportTicketByMerchantID);
+router.get('/organizationsupport/organization/:organizationID', organizationsupportController.getSupportTicketsByOrganizationID);
 
 // Get a single support ticket by ID
 router.get('/organizationsupport/:id', organizationsupportController.getSupportTicketById);
