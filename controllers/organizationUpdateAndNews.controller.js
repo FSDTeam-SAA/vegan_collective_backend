@@ -4,7 +4,7 @@ const upload = require("../utils/multerConfig");
 const createOrganizationUpdate = async (req, res) => {
     try {
       if (!req.file) {
-        return res.status(400).json({ error: "Image file is required" });
+        return res.status(400).json({ success: false, message: "Image file is required" });
       }
   
       const { title, shortDescription, statement, organizationID } = req.body;
@@ -25,12 +25,13 @@ const createOrganizationUpdate = async (req, res) => {
       await newUpdate.save();
   
       res.status(201).json({
+        success: true,
         message: "Organization update created successfully",
         data: newUpdate,
       });
     } catch (error) {
       console.error("Error creating organization update:", error);
-      res.status(500).json({ error: "Internal server error" });
+      res.status(500).json({ success: false, message: "Internal server error" });
     }
   };
 
@@ -38,10 +39,10 @@ const createOrganizationUpdate = async (req, res) => {
 const getAllOrganizationUpdates = async (req, res) => {
     try {
       const updates = await OrganizationUpdateAndNews.find().populate("organizationID", "name"); // Populate organization name
-      res.status(200).json(updates);
+      res.status(200).json({ success: true, message: "Organization updates fetched successfully", data: updates });
     } catch (error) {
       console.error("Error fetching organization updates:", error);
-      res.status(500).json({ error: "Internal server error" });
+      res.status(500).json({ success: false, message: "Internal server error" });
     }
   };
   
@@ -63,7 +64,7 @@ const getAllOrganizationUpdates = async (req, res) => {
             });
 
         if (!update) {
-            return res.status(404).json({ error: "Organization update not found" });
+            return res.status(404).json({ success: false, message: "Organization update not found" });
         }
 
         // Transform the comments array into the correct structure
@@ -75,15 +76,11 @@ const getAllOrganizationUpdates = async (req, res) => {
             })),
         };
 
-        res.status(200).json(transformedUpdate);
+        res.status(200).json({ success: true, message: "Organization update fetched successfully", data: transformedUpdate });
     } catch (error) {
         console.error("Error fetching organization update by ID:", error);
-        res.status(500).json({ error: "Internal server error" });
+        res.status(500).json({ success: false, message: "Internal server error" });
     }
 };
 
-
-  
-  
-
-module.exports = { createOrganizationUpdate,getAllOrganizationUpdates, getOrganizationUpdateById };
+module.exports = { createOrganizationUpdate, getAllOrganizationUpdates, getOrganizationUpdateById };
