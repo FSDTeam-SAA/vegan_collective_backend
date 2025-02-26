@@ -18,9 +18,9 @@ exports.createSupportTicket = async (req, res) => {
 
     // Validate user ID and check if the user exists and is professional
     const user = await User.findById(userID);
-    if (!user || user.accountType !== 'professional') {
-      return res.status(400).json({ success: false, message: 'Invalid user ID or account type is not professional' });
-    }
+    // if (!user || user.accountType !== 'professional') {
+    //   return res.status(400).json({ success: false, message: 'Invalid user ID or account type is not professional' });
+    // }
 
     // Generate ticketSlug
     const ticketSlug = await generateTicketSlug();
@@ -42,28 +42,51 @@ exports.createSupportTicket = async (req, res) => {
 };
 
 // Get all support tickets
+// Get all support tickets
 exports.getAllSupportTickets = async (req, res) => {
   try {
-    const tickets = await Support.find().populate('userID', 'name email accountType');
-    res.status(200).json({ success: true, message: 'Support tickets retrieved successfully', tickets });
+    // Fetch all tickets and exclude only the userID field
+    const tickets = await Support.find({}, { userID: 0 }) // Exclude only userID field
+      .sort({ createdAt: -1 }); // Optional: Sort by creation date (newest first)
+
+    res.status(200).json({
+      success: true,
+      message: 'Support tickets retrieved successfully',
+      tickets,
+    });
   } catch (error) {
-    res.status(500).json({ success: false, message: 'Server error', details: error.message });
+    res.status(500).json({
+      success: false,
+      message: 'Server error',
+      details: error.message,
+    });
   }
 };
 
 // Get support ticket by ID
+// Get support ticket by ID
 exports.getSupportTicketById = async (req, res) => {
   try {
     const { id } = req.params;
-    const ticket = await Support.findById(id).populate('userID', 'name email accountType');
+
+    // Fetch the ticket by ID and exclude _id and userID fields
+    const ticket = await Support.findById(id, { _id: 0, userID: 0 }); // Exclude _id and userID fields
 
     if (!ticket) {
       return res.status(404).json({ success: false, message: 'Support ticket not found' });
     }
 
-    res.status(200).json({ success: true, message: 'Support ticket retrieved successfully', ticket });
+    res.status(200).json({
+      success: true,
+      message: 'Support ticket retrieved successfully',
+      ticket,
+    });
   } catch (error) {
-    res.status(500).json({ success: false, message: 'Server error', details: error.message });
+    res.status(500).json({
+      success: false,
+      message: 'Server error',
+      details: error.message,
+    });
   }
 };
 
