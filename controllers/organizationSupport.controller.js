@@ -131,3 +131,32 @@ try {
   res.status(500).json({ success: false, message: error.message });
 }
 };
+
+// Get a single support ticket by merchantID
+exports.getSupportTicketByMerchantID = async (req, res) => {
+  try {
+    const { merchantID } = req.params; // Extract merchantID from request parameters
+
+    // Use projection to include only the desired fields
+    const ticket = await Organizationsupport.find(
+      { merchantID }, // Find the ticket by merchantID
+      {
+        _id: 0, // Exclude the _id field
+        organizationID: 0, // Exclude the organizationID field
+        __v: 0, // Exclude the __v field
+      }
+    );
+
+    if (!ticket) {
+      return res.status(404).json({ success: false, message: 'Support ticket not found for the given merchantID' });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Support ticket retrieved successfully',
+      data: ticket,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
