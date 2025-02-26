@@ -87,20 +87,48 @@ const getAllBookings = async (req, res) => {
 const getBookingsByEventId = async (req, res) => {
   try {
     const { eventId } = req.params;
+    const page = parseInt(req.query.page, 10) || 1; // Default to page 1 if not provided
+    const limit = parseInt(req.query.limit, 10) || 10; // Default to 10 items per page if not provided
 
-    // Find bookings by event ID
-    const bookings = await Organizationeventbooking.find({ organizationEventID: eventId })
+    // Calculate skip value for pagination
+    const skip = (page - 1) * limit;
+
+    // Find total bookings count for the event
+    const totalBookings = await Organizationeventbooking.countDocuments({ organizationEventID: eventId });
+
+    // Find bookings by event ID with pagination
+    const bookings = await Organizationeventbooking.find(
+      { organizationEventID: eventId },
+      { attendeeDetail: 1, createdAt: 1 } // Include only `attendeeDetail` and `createdAt`
+    )
       .populate("organizationEventID", "eventTitle eventType price Attendees date time")
+      .skip(skip)
+      .limit(limit)
       .exec();
 
-    // Flatten all attendeeDetail arrays into a single array
-    const flattenedAttendeeDetails = bookings.flatMap((booking) => booking.attendeeDetail);
+    // Flatten all attendeeDetail arrays into a single array and include `createdAt`
+    const flattenedAttendeeDetails = bookings.flatMap((booking) =>
+      booking.attendeeDetail.map((attendee) => ({
+        ...attendee.toObject(), // Convert Mongoose subdocument to plain object
+        createdAt: booking.createdAt, // Add `createdAt` from the booking
+      }))
+    );
 
-    // Return the flattened array in the response
+    // Calculate pagination metadata
+    const totalPages = Math.ceil(totalBookings / limit);
+    const metaPagination = {
+      currentPage: page,
+      totalPages: totalPages,
+      totalItems: totalBookings,
+      itemsPerPage: limit,
+    };
+
+    // Return the flattened array and pagination metadata in the response
     res.status(200).json({
       success: true,
       message: flattenedAttendeeDetails.length > 0 ? "Bookings fetched successfully" : "No bookings found for this event",
-      data: flattenedAttendeeDetails, // Single array of all attendeeDetails
+      data: flattenedAttendeeDetails, // Single array of all attendeeDetails with `createdAt`
+      pagination: metaPagination, // Pagination metadata
     });
   } catch (error) {
     res.status(500).json({
