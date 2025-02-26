@@ -11,6 +11,9 @@ router.get('/professionalsupport', supportController.getAllSupportTickets);
 // Get support ticket by ID
 router.get('/professionalsupport/:id', supportController.getSupportTicketById);
 
+//New route for getting tickets by professionalID
+router.get('/support-tickets/professional/:professionalID', supportController.getSupportTicketsByProfessionalID)
+
 // Update support ticket by ID
 router.put('/professionalsupport/:id', supportController.updateSupportTicket);
 
