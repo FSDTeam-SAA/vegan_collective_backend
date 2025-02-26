@@ -99,7 +99,6 @@ exports.getAllTickets = async (req, res) => {
   }
 };
 
-
 // Get a single support ticket by ID
 exports.getTicketById = async (req, res) => {
   try {
@@ -215,6 +214,60 @@ exports.deleteTicket = async (req, res) => {
         res.status(200).json({
             success: true,
             message: "Ticket deleted successfully",
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: error.message,
+        });
+    }
+};
+
+// Get all support tickets by merchantID
+exports.getTicketsByMerchantID = async (req, res) => {
+    try {
+        const { merchantID } = req.params;
+
+        // Validate merchantID
+        if (!mongoose.Types.ObjectId.isValid(merchantID)) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid merchantID",
+            });
+        }
+
+        // Check if the merchant exists
+        const userExists = await User.findById(merchantID);
+        if (!userExists) {
+            return res.status(404).json({
+                success: false,
+                message: "Merchant not found",
+            });
+        }
+
+        // Fetch tickets for the given merchantID and populate merchantID with specific fields
+        const tickets = await Merchantsupport.find({ merchantID })
+            .populate("merchantID", "name email") // Populate only 'name' and 'email' from the User model
+            .select("-__v -_id -createdAt -updatedAt") // Exclude unnecessary fields
+            .lean(); // Convert to plain JavaScript objects for better performance
+
+        // Transform the data to match the desired response format
+        const formattedTickets = tickets.map(ticket => ({
+            ticketSlug: ticket.ticketSlug,
+            subject: ticket.subject,
+            message: ticket.message,
+            status: ticket.status,
+            merchant: {
+                name: ticket.merchantID?.name || "Unknown",
+                email: ticket.merchantID?.email || "Unknown"
+            }
+        }));
+
+        // Send the response
+        res.status(200).json({
+            success: true,
+            message: "Tickets retrieved successfully for the merchant",
+            data: formattedTickets,
         });
     } catch (error) {
         res.status(500).json({
