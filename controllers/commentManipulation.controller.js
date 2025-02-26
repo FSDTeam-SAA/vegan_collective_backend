@@ -8,7 +8,10 @@ const createComment = async (req, res) => {
     const { updateAndNewsID, userID, comment } = req.body;
 
     if (!updateAndNewsID || !userID || !comment) {
-      return res.status(400).json({ error: "All fields are required" });
+      return res.status(400).json({
+        success: false,
+        message: "All fields are required",
+      });
     }
 
     // Create the new comment
@@ -29,16 +32,23 @@ const createComment = async (req, res) => {
     );
 
     if (!updatedUpdate) {
-      return res.status(404).json({ error: "Organization update not found" });
+      return res.status(404).json({
+        success: false,
+        message: "Organization update not found",
+      });
     }
 
     res.status(201).json({
+      success: true,
       message: "Comment added successfully",
       data: newComment,
     });
   } catch (error) {
     console.error("Error creating comment:", error);
-    res.status(500).json({ error: "Internal server error" });
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
   }
 };
 
@@ -51,10 +61,17 @@ const getCommentsByUpdateID = async (req, res) => {
       .populate("userID", "fullName") // Ensure "userID" is referencing the User model
       .sort({ createdAt: -1 }); // Sort by newest first
 
-    res.status(200).json(comments);
+    res.status(200).json({
+      success: true,
+      message: "Comments retrieved successfully",
+      data: comments,
+    });
   } catch (error) {
     console.error("Error fetching comments:", error);
-    res.status(500).json({ error: "Internal server error" });
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
   }
 };
 
@@ -66,13 +83,23 @@ const getCommentById = async (req, res) => {
     const comment = await CommentManipulation.findById(id).populate("userID", "name");
 
     if (!comment) {
-      return res.status(404).json({ error: "Comment not found" });
+      return res.status(404).json({
+        success: false,
+        message: "Comment not found",
+      });
     }
 
-    res.status(200).json(comment);
+    res.status(200).json({
+      success: true,
+      message: "Comment retrieved successfully",
+      data: comment,
+    });
   } catch (error) {
     console.error("Error fetching comment:", error);
-    res.status(500).json({ error: "Internal server error" });
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
   }
 };
 
