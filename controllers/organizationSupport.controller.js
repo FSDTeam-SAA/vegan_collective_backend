@@ -11,7 +11,6 @@ exports.createSupportTicket = async (req, res) => {
       .exec();
 
     let ticketNumber = 1; // Default ticket number if no tickets exist yet
-
     if (lastTicket && lastTicket.ticketSlug) {
       // Extract the number from the last ticket's ticketSlug and increment it
       const lastTicketNumber = parseInt(lastTicket.ticketSlug.split('-')[1], 10);
@@ -43,18 +42,24 @@ exports.createSupportTicket = async (req, res) => {
 };
 
 // Get all support tickets
-// Get all support tickets
 exports.getAllSupportTickets = async (req, res) => {
   try {
     // Use projection to include only the desired fields
     const tickets = await Organizationsupport.find(
       {}, // Empty filter to retrieve all documents
       {
-        _id: 0, // Exclude the _id field
-        organizationID: 0, // Exclude the organizationID field
-        __v: 0, // Exclude the __v field
+        ticketSlug: 1,
+        name: 1,
+        emailAddress: 1,
+        subject: 1,
+        message: 1,
+        status: 1,
+        createdAt: 1,
+        updatedAt: 1,
+        __v: 1,
+        _id: 1, // Exclude _id from the response
       }
-    ).populate('organizationID'); // Populate organizationID if needed elsewhere
+    );
 
     res.status(200).json({
       success: true,
@@ -65,7 +70,7 @@ exports.getAllSupportTickets = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
-// Get a single support ticket by ID
+
 // Get a single support ticket by ID
 exports.getSupportTicketById = async (req, res) => {
   try {
@@ -73,9 +78,16 @@ exports.getSupportTicketById = async (req, res) => {
     const ticket = await Organizationsupport.findById(
       req.params.id, // Find the ticket by its ID
       {
-        _id: 0, // Exclude the _id field
-        organizationID: 0, // Exclude the organizationID field
-        __v: 0, // Exclude the __v field
+        ticketSlug: 1,
+        name: 1,
+        emailAddress: 1,
+        subject: 1,
+        message: 1,
+        status: 1,
+        createdAt: 1,
+        updatedAt: 1,
+        __v: 1,
+        _id: 1,
       }
     );
 
@@ -95,66 +107,98 @@ exports.getSupportTicketById = async (req, res) => {
 
 // Update a support ticket by ID
 exports.updateSupportTicket = async (req, res) => {
-try {
-  const { organizationID, ticketSlug, name, emailAddress, subject, message, status } = req.body;
-  const updatedTicket = await Organizationsupport.findByIdAndUpdate(
-    req.params.id,
-    {
-      organizationID,
-      ticketSlug,
-      name,
-      emailAddress,
-      subject,
-      message,
-      status,
-    },
-    { new: true }
-  );
-  if (!updatedTicket) {
-    return res.status(404).json({ success: false, message: 'Support ticket not found' });
+  try {
+    const { organizationID, ticketSlug, name, emailAddress, subject, message, status } = req.body;
+
+    const updatedTicket = await Organizationsupport.findByIdAndUpdate(
+      req.params.id,
+      {
+        organizationID,
+        ticketSlug,
+        name,
+        emailAddress,
+        subject,
+        message,
+        status,
+      },
+      { new: true }
+    );
+
+    if (!updatedTicket) {
+      return res.status(404).json({ success: false, message: 'Support ticket not found' });
+    }
+
+    res.status(200).json({ success: true, message: 'Support ticket updated successfully', data: updatedTicket });
+  } catch (error) {
+    res.status(400).json({ success: false, message: error.message });
   }
-  res.status(200).json({ success: true, message: 'Support ticket updated successfully', data: updatedTicket });
-} catch (error) {
-  res.status(400).json({ success: false, message: error.message });
-}
 };
 
 // Delete a support ticket by ID
 exports.deleteSupportTicket = async (req, res) => {
-try {
-  const deletedTicket = await Organizationsupport.findByIdAndDelete(req.params.id);
-  if (!deletedTicket) {
-    return res.status(404).json({ success: false, message: 'Support ticket not found' });
-  }
-  res.status(200).json({ success: true, message: 'Support ticket deleted successfully' });
-} catch (error) {
-  res.status(500).json({ success: false, message: error.message });
-}
-};
-
-// Get a single support ticket by merchantID
-exports.getSupportTicketByMerchantID = async (req, res) => {
   try {
-    const { merchantID } = req.params; // Extract merchantID from request parameters
+    const deletedTicket = await Organizationsupport.findByIdAndDelete(req.params.id);
 
-    // Use projection to include only the desired fields
-    const ticket = await Organizationsupport.find(
-      { merchantID }, // Find the ticket by merchantID
-      {
-        _id: 0, // Exclude the _id field
-        organizationID: 0, // Exclude the organizationID field
-        __v: 0, // Exclude the __v field
-      }
-    );
-
-    if (!ticket) {
-      return res.status(404).json({ success: false, message: 'Support ticket not found for the given merchantID' });
+    if (!deletedTicket) {
+      return res.status(404).json({ success: false, message: 'Support ticket not found' });
     }
 
+    res.status(200).json({ success: true, message: 'Support ticket deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// Get support tickets by organizationID with pagination
+exports.getSupportTicketsByOrganizationID = async (req, res) => {
+  try {
+    const { organizationID } = req.params; // Extract organizationID from URL params
+    const page = parseInt(req.query.page, 10) || 1; // Default to page 1 if not provided
+    const limit = parseInt(req.query.limit, 10) || 10; // Default to 10 items per page if not provided
+
+    // Calculate skip value for pagination
+    const skip = (page - 1) * limit;
+
+    // Fetch total count of tickets for the given organizationID
+    const totalItems = await Organizationsupport.countDocuments({ organizationID });
+
+    // Fetch tickets with pagination and required fields
+    const tickets = await Organizationsupport.find(
+      { organizationID }, // Filter by organizationID
+      {
+        ticketSlug: 1,
+        name: 1,
+        emailAddress: 1,
+        subject: 1,
+        message: 1,
+        status: 1,
+        createdAt: 1,
+        updatedAt: 1,
+        __v: 1,
+        _id: 1,
+      }
+    )
+      .skip(skip) // Skip records based on pagination
+      .limit(limit) // Limit records per page
+      .exec();
+
+    // Calculate totalPages
+    const totalPages = Math.ceil(totalItems / limit);
+
+    // Prepare pagination metadata
+    const pagination = {
+      currentPage: page,
+      totalPages,
+      totalItems,
+      itemsPerPage: limit,
+    };
+
+    // Respond with tickets and pagination metadata
     res.status(200).json({
       success: true,
-      message: 'Support ticket retrieved successfully',
-      data: ticket,
+      message: 'Support tickets retrieved successfully',
+      data: tickets,
+      pagination,
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
