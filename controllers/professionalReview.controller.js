@@ -140,3 +140,40 @@ exports.getAverageRating = async (req, res) => {
     });
   }
 };
+
+// Controller to get all reviews
+exports.getAllReviews = async (req, res) => {
+  try {
+    // Fetch all reviews from the database and populate related fields
+    const reviews = await Review.find()
+      .select('rating comment professionalID') // Select only the required fields
+      .populate('userID', 'name email') // Populate user details if needed
+      // .populate('professionalID', 'name'); // Populate professional details
+
+    // If no reviews are found, return a 404 response
+    if (reviews.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "No reviews found.",
+      });
+    }
+
+    // Return the reviews as an array of objects with the desired structure
+    return res.status(200).json({
+      success: true,
+      message: "All reviews fetched successfully.",
+      data: reviews.map(review => ({
+        professionalID: review.professionalID?._id || null, // Include professionalID (_id)
+        // professionalName: review.professionalID?.name || null, // Include professional name
+        rating: review.rating,
+        comment: review.comment,
+      })), // Format the response to include only the required fields
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error while fetching reviews.",
+    });
+  }
+};
