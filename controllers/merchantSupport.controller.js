@@ -223,7 +223,7 @@ exports.deleteTicket = async (req, res) => {
     }
 };
 
-// Get all support tickets by merchantID
+// Get all support tickets by merchantID// Get all support tickets by merchantID
 exports.getTicketsByMerchantID = async (req, res) => {
     try {
         const { merchantID } = req.params;
@@ -248,19 +248,16 @@ exports.getTicketsByMerchantID = async (req, res) => {
         // Fetch tickets for the given merchantID and populate merchantID with specific fields
         const tickets = await Merchantsupport.find({ merchantID })
             .populate("merchantID", "name email") // Populate only 'name' and 'email' from the User model
-            .select("-__v -_id -createdAt -updatedAt") // Exclude unnecessary fields
             .lean(); // Convert to plain JavaScript objects for better performance
 
         // Transform the data to match the desired response format
         const formattedTickets = tickets.map(ticket => ({
+            _id: ticket._id, // Include _id
             ticketSlug: ticket.ticketSlug,
             subject: ticket.subject,
             message: ticket.message,
             status: ticket.status,
-            merchant: {
-                name: ticket.merchantID?.name || "Unknown",
-                email: ticket.merchantID?.email || "Unknown"
-            }
+            __v: ticket.__v, // Include __v
         }));
 
         // Send the response
