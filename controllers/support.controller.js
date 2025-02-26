@@ -19,7 +19,7 @@ exports.createSupportTicket = async (req, res) => {
     // Validate user ID and check if the user exists and is professional
     const user = await User.findById(userID);
     if (!user || user.accountType !== 'professional') {
-      return res.status(400).json({ error: 'Invalid user ID or account type is not professional' });
+      return res.status(400).json({ success: false, message: 'Invalid user ID or account type is not professional' });
     }
 
     // Generate ticketSlug
@@ -35,9 +35,9 @@ exports.createSupportTicket = async (req, res) => {
     });
 
     await newTicket.save();
-    res.status(201).json({ message: 'Support ticket created successfully', ticket: newTicket });
+    res.status(201).json({ success: true, message: 'Support ticket created successfully', ticket: newTicket });
   } catch (error) {
-    res.status(500).json({ error: 'Server error', details: error.message });
+    res.status(500).json({ success: false, message: 'Server error', details: error.message });
   }
 };
 
@@ -45,9 +45,9 @@ exports.createSupportTicket = async (req, res) => {
 exports.getAllSupportTickets = async (req, res) => {
   try {
     const tickets = await Support.find().populate('userID', 'name email accountType');
-    res.status(200).json({ tickets });
+    res.status(200).json({ success: true, message: 'Support tickets retrieved successfully', tickets });
   } catch (error) {
-    res.status(500).json({ error: 'Server error', details: error.message });
+    res.status(500).json({ success: false, message: 'Server error', details: error.message });
   }
 };
 
@@ -58,12 +58,12 @@ exports.getSupportTicketById = async (req, res) => {
     const ticket = await Support.findById(id).populate('userID', 'name email accountType');
 
     if (!ticket) {
-      return res.status(404).json({ error: 'Support ticket not found' });
+      return res.status(404).json({ success: false, message: 'Support ticket not found' });
     }
 
-    res.status(200).json({ ticket });
+    res.status(200).json({ success: true, message: 'Support ticket retrieved successfully', ticket });
   } catch (error) {
-    res.status(500).json({ error: 'Server error', details: error.message });
+    res.status(500).json({ success: false, message: 'Server error', details: error.message });
   }
 };
 
@@ -80,12 +80,12 @@ exports.updateSupportTicket = async (req, res) => {
     );
 
     if (!updatedTicket) {
-      return res.status(404).json({ error: 'Support ticket not found' });
+      return res.status(404).json({ success: false, message: 'Support ticket not found' });
     }
 
-    res.status(200).json({ message: 'Support ticket updated successfully', ticket: updatedTicket });
+    res.status(200).json({ success: true, message: 'Support ticket updated successfully', ticket: updatedTicket });
   } catch (error) {
-    res.status(500).json({ error: 'Server error', details: error.message });
+    res.status(500).json({ success: false, message: 'Server error', details: error.message });
   }
 };
 
@@ -96,11 +96,11 @@ exports.deleteSupportTicket = async (req, res) => {
     const deletedTicket = await Support.findByIdAndDelete(id);
 
     if (!deletedTicket) {
-      return res.status(404).json({ error: 'Support ticket not found' });
+      return res.status(404).json({ success: false, message: 'Support ticket not found' });
     }
 
-    res.status(200).json({ message: 'Support ticket deleted successfully' });
+    res.status(200).json({ success: true, message: 'Support ticket deleted successfully' });
   } catch (error) {
-    res.status(500).json({ error: 'Server error', details: error.message });
+    res.status(500).json({ success: false, message: 'Server error', details: error.message });
   }
 };
