@@ -1,73 +1,142 @@
-const Review = require('../models/professionalReview.model'); // Assuming you have a Review model
-const Professionalinfo = require('../models/professionalInfo.model'); // Assuming you have a Professionalinfo model
+const Review = require('../models/professionalReview.model'); // Import the Review model
 
-// Create a new review
-exports.createReview = async (req, res) => {
+// Controller to add a review
+exports.addReview = async (req, res) => {
   try {
     const { userID, professionalID, rating, comment } = req.body;
 
-    // Check if the user has already reviewed this professional
-    const existingReview = await Review.findOne({ userID, professionalID });
-    if (existingReview) {
-      return res.status(400).json({ success: false, message: 'You have already reviewed this professional.' });
+    // Validate required fields
+    if (!userID || !professionalID || !rating) {
+      return res.status(400).json({
+        success: false,
+        message: "All fields (userID, professionalID, rating) are required.",
+      });
     }
 
-    const review = new Review({
-      userID,
-      professionalID,
-      rating,
-      comment,
-    });
+    // Create a new review
+    const newReview = new Review({ userID, professionalID, rating, comment });
+    await newReview.save();
 
+    // Calculate the average rating for the professional
+    const reviews = await Review.find({ professionalID });
+    const totalRating = reviews.reduce((sum, review) => sum + review.rating, 0);
+    const averageRating = (totalRating / reviews.length).toFixed(2);
+
+    // Return response with the desired structure
+    return res.status(201).json({
+      success: true,
+      message: "Review added successfully.",
+      data: [
+        {
+          ...newReview.toObject(), // Spread the review object
+          averageRating, // Add the averageRating to the same object
+        },
+      ],
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error while adding review.",
+    });
+  }
+};
+
+// Controller to update a review
+exports.updateReview = async (req, res) => {
+  try {
+    const { reviewID } = req.params;
+    const { rating, comment } = req.body;
+
+    // Validate required fields
+    if (!reviewID) {
+      return res.status(400).json({
+        success: false,
+        message: "Review ID is required.",
+      });
+    }
+
+    // Find the review by ID
+    const review = await Review.findById(reviewID);
+    if (!review) {
+      return res.status(404).json({
+        success: false,
+        message: "Review not found.",
+      });
+    }
+
+    // Update the review fields
+    if (rating !== undefined) review.rating = rating;
+    if (comment !== undefined) review.comment = comment;
+
+    // Save the updated review
     await review.save();
 
-    // Update the professional's average rating
-    await updateProfessionalAverageRating(professionalID);
+    // Recalculate the average rating for the professional
+    const reviews = await Review.find({ professionalID: review.professionalID });
+    const totalRating = reviews.reduce((sum, rev) => sum + rev.rating, 0);
+    const averageRating = (totalRating / reviews.length).toFixed(2);
 
-    res.status(201).json({ success: true, message: 'Review created successfully.', data: review });
+    // Return the response in the desired structure
+    return res.status(200).json({
+      success: true,
+      message: "Review updated successfully.",
+      data: [
+        {
+          ...review.toObject(), // Spread the updated review object
+          averageRating, // Add the recalculated average rating
+        },
+      ],
+    });
   } catch (error) {
-    res.status(500).json({ success: false, message: 'Error creating review.', error: error.message });
+    console.error(error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error while updating review.",
+    });
   }
 };
 
-// Get all reviews for a professional
-exports.getReviewsByProfessional = async (req, res) => {
-  try {
-    const { professionalID } = req.params;
-
-    const reviews = await Review.find({ professionalID }).populate('userID', 'name'); // Assuming 'name' is a field in the User model
-
-    res.status(200).json({ success: true, message: 'Reviews fetched successfully.', data: reviews });
-  } catch (error) {
-    res.status(500).json({ success: false, message: 'Error fetching reviews.', error: error.message });
-  }
-};
-
-// Calculate and update the average rating for a professional
-const updateProfessionalAverageRating = async (professionalID) => {
-  try {
-    const reviews = await Review.find({ professionalID });
-    const totalRatings = reviews.reduce((sum, review) => sum + review.rating, 0);
-    const averageRating = totalRatings / reviews.length;
-
-    await Professionalinfo.findByIdAndUpdate(professionalID, { averageRating });
-  } catch (error) {
-    console.error('Error updating professional average rating:', error);
-  }
-};
-
-// Get the average rating of a professional
+// Controller to get the average rating of a professional
 exports.getAverageRating = async (req, res) => {
   try {
     const { professionalID } = req.params;
 
-    const professional = await Professionalinfo.findById(professionalID);
-    if (!professional) {
-      return res.status(404).json({ success: false, message: 'Professional not found.' });
+    // Validate professionalID
+    if (!professionalID) {
+      return res.status(400).json({
+        success: false,
+        message: "Professional ID is required.",
+      });
     }
 
-    res.status(200).json({ success: true, message: 'Average rating fetched successfully.', averageRating: professional.averageRating });
+    // Fetch all reviews for the professional
+    const reviews = await Review.find({ professionalID });
+
+    if (reviews.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "No reviews found for this professional.",
+      });
+    }
+
+    // Calculate the average rating
+    const totalRating = reviews.reduce((sum, review) => sum + review.rating, 0);
+    const averageRating = (totalRating / reviews.length).toFixed(2);
+
+    return res.status(200).json({
+      success: true,
+      message: "Average rating fetched successfully.",
+      data: {
+        professionalID,
+        averageRating,
+      },
+    });
   } catch (error) {
-    res.status(500).json({ success: false, message: 'Error fetching average rating.', error: error.message });
+    console.error(error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error while fetching average rating.",
+    });
   }
 };
