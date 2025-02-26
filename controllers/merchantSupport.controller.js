@@ -257,6 +257,7 @@ exports.getTicketsByMerchantID = async (req, res) => {
             subject: ticket.subject,
             message: ticket.message,
             status: ticket.status,
+            createdAt: ticket.createdAt, // Include createdAt
             __v: ticket.__v, // Include __v
         }));
 
