@@ -64,59 +64,93 @@ exports.createTicket = async (req, res) => {
 };
 
 // Get all support tickets
+// Get all support tickets
 exports.getAllTickets = async (req, res) => {
-    try {
-        const tickets = await Merchantsupport.find()
-            .populate("merchantID", "name email")
-            .select("-__v"); // Exclude MongoDB's internal field
+  try {
+      // Fetch tickets and populate merchantID with specific fields
+      const tickets = await Merchantsupport.find()
+          .populate("merchantID", "name email") // Populate only 'name' and 'email' from the User model
+          .select("-__v -_id -createdAt -updatedAt") // Exclude unnecessary fields
+          .lean(); // Convert to plain JavaScript objects for better performance
 
-        res.status(200).json({
-            success: true,
-            message: "Tickets retrieved successfully",
-            data: tickets,
-        });
-    } catch (error) {
-        res.status(500).json({
-            success: false,
-            message: error.message,
-        });
-    }
+      // Transform the data to match the desired response format
+      const formattedTickets = tickets.map(ticket => ({
+          ticketSlug: ticket.ticketSlug,
+          subject: ticket.subject,
+          message: ticket.message,
+          status: ticket.status,
+          merchant: {
+              name: ticket.merchantID?.name || "Unknown",
+              email: ticket.merchantID?.email || "Unknown"
+          }
+      }));
+
+      // Send the response
+      res.status(200).json({
+          success: true,
+          message: "Tickets retrieved successfully",
+          data: formattedTickets,
+      });
+  } catch (error) {
+      res.status(500).json({
+          success: false,
+          message: error.message,
+      });
+  }
 };
+
 
 // Get a single support ticket by ID
 exports.getTicketById = async (req, res) => {
-    try {
-        const { id } = req.params;
+  try {
+      const { id } = req.params;
 
-        if (!mongoose.Types.ObjectId.isValid(id)) {
-            return res.status(400).json({
-                success: false,
-                message: "Invalid ticket ID",
-            });
-        }
+      // Validate the ticket ID
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+          return res.status(400).json({
+              success: false,
+              message: "Invalid ticket ID",
+          });
+      }
 
-        const ticket = await Merchantsupport.findById(id)
-            .populate("merchantID", "name email")
-            .select("-__v");
+      // Fetch the ticket and populate merchantID with specific fields
+      const ticket = await Merchantsupport.findById(id)
+          .populate("merchantID", "name email") // Populate only 'name' and 'email' from the User model
+          .select("-__v -_id -createdAt -updatedAt") // Exclude unnecessary fields
+          .lean(); // Convert to plain JavaScript objects for better performance
 
-        if (!ticket) {
-            return res.status(404).json({
-                success: false,
-                message: "Ticket not found",
-            });
-        }
+      // Check if the ticket exists
+      if (!ticket) {
+          return res.status(404).json({
+              success: false,
+              message: "Ticket not found",
+          });
+      }
 
-        res.status(200).json({
-            success: true,
-            message: "Ticket retrieved successfully",
-            data: ticket,
-        });
-    } catch (error) {
-        res.status(500).json({
-            success: false,
-            message: error.message,
-        });
-    }
+      // Transform the data to match the desired response format
+      const formattedTicket = {
+          ticketSlug: ticket.ticketSlug,
+          subject: ticket.subject,
+          message: ticket.message,
+          status: ticket.status,
+          merchant: {
+              name: ticket.merchantID?.name || "Unknown",
+              email: ticket.merchantID?.email || "Unknown"
+          }
+      };
+
+      // Send the response
+      res.status(200).json({
+          success: true,
+          message: "Ticket retrieved successfully",
+          data: formattedTicket,
+      });
+  } catch (error) {
+      res.status(500).json({
+          success: false,
+          message: error.message,
+      });
+  }
 };
 
 // Update a support ticket
