@@ -5,8 +5,7 @@ const cloudinary = require("cloudinary").v2;
 exports.createProduct = async (req, res) => {
   try {
     const { merchantID, productName, description, metaDescription, price, stockQuantity, category, tags, visibility } = req.body;
-
-    if (!merchantID) return res.status(400).json({ message: "Merchant ID is required" });
+    if (!merchantID) return res.status(400).json({ success: false, message: "Merchant ID is required", data: [] });
 
     // Ensure tags is a valid array
     const tagsArray =
@@ -43,20 +42,19 @@ exports.createProduct = async (req, res) => {
     });
 
     await newProduct.save();
-    res.status(201).json({ message: "Product created successfully", data: newProduct, success: true });
+
+    // Ensure data is always an array of objects
+    res.status(201).json({ success: true, message: "Product created successfully", data: [newProduct] });
   } catch (error) {
-    res.status(500).json({ message: error.message, success: false });
+    res.status(500).json({ success: false, message: error.message, data: [] });
   }
 };
-
-
 
 // Get All Products with Pagination, Search, and Sorting
 exports.getAllProducts = async (req, res) => {
   try {
     const { page = 1, limit = 10, search = "", sort = "asc", merchantID } = req.query;
-
-    const query = {  };
+    const query = {};
 
     // Filter by merchantID if provided
     if (merchantID) {
@@ -81,10 +79,11 @@ exports.getAllProducts = async (req, res) => {
     const totalItems = await MerchantProducts.countDocuments(query);
     const totalPages = Math.ceil(totalItems / limit);
 
+    // Ensure data is always an array of objects
     res.status(200).json({
       success: true,
       message: "Products fetched successfully",
-      data: products,
+      data: products.map((product) => ({ ...product.toObject() })), // Ensure each item is an object
       pagination: {
         currentPage: Number(page),
         totalPages,
@@ -93,16 +92,14 @@ exports.getAllProducts = async (req, res) => {
       },
     });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ success: false, message: error.message, data: [] });
   }
 };
-
 
 // Get All Products with visibility true with Pagination, Search, and Sorting
 exports.getAllProductsVisibilityTrue = async (req, res) => {
   try {
     const { page = 1, limit = 10, search = "", sort = "asc", merchantID } = req.query;
-
     const query = { visibility: true };
 
     // Filter by merchantID if provided
@@ -128,10 +125,11 @@ exports.getAllProductsVisibilityTrue = async (req, res) => {
     const totalItems = await MerchantProducts.countDocuments(query);
     const totalPages = Math.ceil(totalItems / limit);
 
+    // Ensure data is always an array of objects
     res.status(200).json({
       success: true,
       message: "Products fetched successfully",
-      data: products,
+      data: products.map((product) => ({ ...product.toObject() })), // Ensure each item is an object
       pagination: {
         currentPage: Number(page),
         totalPages,
@@ -140,7 +138,7 @@ exports.getAllProductsVisibilityTrue = async (req, res) => {
       },
     });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ success: false, message: error.message, data: [] });
   }
 };
 
@@ -148,14 +146,14 @@ exports.getAllProductsVisibilityTrue = async (req, res) => {
 exports.getProductById = async (req, res) => {
   try {
     const product = await MerchantProducts.findById(req.params.id);
-    if (!product) return res.status(404).json({ message: "Product not found" });
-    res.status(200).json(product);
+    if (!product) return res.status(404).json({ success: false, message: "Product not found", data: [] });
+
+    // Ensure data is always an array of objects
+    res.status(200).json({ success: true, message: "Product fetched successfully", data: [{ ...product.toObject() }] });
   } catch (error) {
-    res.status(500).json({ message: error.message, success: false });
+    res.status(500).json({ success: false, message: error.message, data: [] });
   }
 };
-
-
 
 // Update Product
 exports.updateProduct = async (req, res) => {
@@ -185,23 +183,24 @@ exports.updateProduct = async (req, res) => {
     }
 
     const updatedProduct = await MerchantProducts.findByIdAndUpdate(req.params.id, updatedData, { new: true });
-    if (!updatedProduct) return res.status(404).json({ message: "Product not found" });
+    if (!updatedProduct) return res.status(404).json({ success: false, message: "Product not found", data: [] });
 
-    res.status(200).json({ message: "Product updated successfully", data: updatedProduct, success: true });
+    // Ensure data is always an array of objects
+    res.status(200).json({ success: true, message: "Product updated successfully", data: [{ ...updatedProduct.toObject() }] });
   } catch (error) {
-    res.status(500).json({ message: error.message, success: false });
+    res.status(500).json({ success: false, message: error.message, data: [] });
   }
 };
-
 
 // Delete Product
 exports.deleteProduct = async (req, res) => {
   try {
     const product = await MerchantProducts.findByIdAndDelete(req.params.id);
-    if (!product) return res.status(404).json({ message: "Product not found" });
+    if (!product) return res.status(404).json({ success: false, message: "Product not found", data: [] });
 
-    res.status(200).json({ message: "Product deleted successfully", success: true });
+    // Ensure data is always an array of objects
+    res.status(200).json({ success: true, message: "Product deleted successfully", data: [{ ...product.toObject() }] });
   } catch (error) {
-    res.status(500).json({ message: error.message, success: false });
+    res.status(500).json({ success: false, message: error.message, data: [] });
   }
 };
