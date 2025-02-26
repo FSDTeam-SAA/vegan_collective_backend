@@ -43,26 +43,54 @@ exports.createSupportTicket = async (req, res) => {
 };
 
 // Get all support tickets
+// Get all support tickets
 exports.getAllSupportTickets = async (req, res) => {
-try {
-  const tickets = await Organizationsupport.find().populate('organizationID');
-  res.status(200).json({ success: true, message: 'Support tickets retrieved successfully', data: tickets });
-} catch (error) {
-  res.status(500).json({ success: false, message: error.message });
-}
-};
+  try {
+    // Use projection to include only the desired fields
+    const tickets = await Organizationsupport.find(
+      {}, // Empty filter to retrieve all documents
+      {
+        _id: 0, // Exclude the _id field
+        organizationID: 0, // Exclude the organizationID field
+        __v: 0, // Exclude the __v field
+      }
+    ).populate('organizationID'); // Populate organizationID if needed elsewhere
 
+    res.status(200).json({
+      success: true,
+      message: 'Support tickets retrieved successfully',
+      data: tickets,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+// Get a single support ticket by ID
 // Get a single support ticket by ID
 exports.getSupportTicketById = async (req, res) => {
-try {
-  const ticket = await Organizationsupport.findById(req.params.id).populate('organizationID');
-  if (!ticket) {
-    return res.status(404).json({ success: false, message: 'Support ticket not found' });
+  try {
+    // Use projection to include only the desired fields
+    const ticket = await Organizationsupport.findById(
+      req.params.id, // Find the ticket by its ID
+      {
+        _id: 0, // Exclude the _id field
+        organizationID: 0, // Exclude the organizationID field
+        __v: 0, // Exclude the __v field
+      }
+    );
+
+    if (!ticket) {
+      return res.status(404).json({ success: false, message: 'Support ticket not found' });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Support ticket retrieved successfully',
+      data: ticket,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
   }
-  res.status(200).json({ success: true, message: 'Support ticket retrieved successfully', data: ticket });
-} catch (error) {
-  res.status(500).json({ success: false, message: error.message });
-}
 };
 
 // Update a support ticket by ID
