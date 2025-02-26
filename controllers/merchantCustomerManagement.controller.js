@@ -5,18 +5,27 @@ const mongoose = require('mongoose');
 exports.createCustomer = async (req, res) => {
   try {
     const { merchantID, email, whatsApp, messenger } = req.body;
+
     // Validate merchantID
     if (!mongoose.Types.ObjectId.isValid(merchantID)) {
       return res.status(400).json({ status: false, message: 'Invalid merchantID' });
     }
+
     const newCustomer = new MerchantCustomerManagement({
       merchantID,
       email,
       whatsApp,
       messenger,
     });
+
     await newCustomer.save();
-    res.status(201).json({ status: true, data: newCustomer });
+
+    // Wrap data in an array
+    res.status(201).json({ 
+      status: true, 
+      message: 'Customer created successfully', 
+      data: [newCustomer] // Ensure data is an array
+    });
   } catch (error) {
     res.status(500).json({ status: false, message: error.message });
   }
@@ -25,8 +34,17 @@ exports.createCustomer = async (req, res) => {
 // Get all customers
 exports.getAllCustomers = async (req, res) => {
   try {
-    const customers = await MerchantCustomerManagement.find().populate('merchantID', 'name email');
-    res.status(200).json({ status: true, data: customers });
+    // Fetch customers with only the desired fields
+    const customers = await MerchantCustomerManagement.find()
+  
+      .select('email whatsApp messenger createdAt updatedAt __v'); // Select specific fields
+
+    // Wrap data in an array (already an array, but ensuring consistency)
+    res.status(200).json({
+      status: true,
+      message: 'Customers fetched successfully',
+      data: customers, // Already an array
+    });
   } catch (error) {
     res.status(500).json({ status: false, message: error.message });
   }
@@ -36,14 +54,25 @@ exports.getAllCustomers = async (req, res) => {
 exports.getCustomerById = async (req, res) => {
   try {
     const { id } = req.params;
+
+    // Validate ID
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({ status: false, message: 'Invalid ID' });
     }
-    const customer = await MerchantCustomerManagement.findById(id).populate('merchantID', 'name email');
+
+
+    const customer = await MerchantCustomerManagement.findById(id);
+
     if (!customer) {
       return res.status(404).json({ status: false, message: 'Customer not found' });
     }
-    res.status(200).json({ status: true, data: customer });
+
+    // Wrap data in an array
+    res.status(200).json({ 
+      status: true, 
+      message: 'Customer fetched successfully', 
+      data: [customer] // Ensure data is an array
+    });
   } catch (error) {
     res.status(500).json({ status: false, message: error.message });
   }
@@ -54,21 +83,33 @@ exports.updateCustomer = async (req, res) => {
   try {
     const { id } = req.params;
     const { merchantID, email, whatsApp, messenger } = req.body;
+
+    // Validate ID
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({ status: false, message: 'Invalid ID' });
     }
+
+    // Validate merchantID
     if (merchantID && !mongoose.Types.ObjectId.isValid(merchantID)) {
       return res.status(400).json({ status: false, message: 'Invalid merchantID' });
     }
+
     const updatedCustomer = await MerchantCustomerManagement.findByIdAndUpdate(
       id,
-      { merchantID, email, whatsApp, messenger },
+      {  email, whatsApp, messenger },
       { new: true, runValidators: true }
     );
+
     if (!updatedCustomer) {
       return res.status(404).json({ status: false, message: 'Customer not found' });
     }
-    res.status(200).json({ status: true, data: updatedCustomer });
+
+    // Wrap data in an array
+    res.status(200).json({ 
+      status: true, 
+      message: 'Customer updated successfully', 
+      data: [updatedCustomer] // Ensure data is an array
+    });
   } catch (error) {
     res.status(500).json({ status: false, message: error.message });
   }
@@ -78,14 +119,24 @@ exports.updateCustomer = async (req, res) => {
 exports.deleteCustomer = async (req, res) => {
   try {
     const { id } = req.params;
+
+    // Validate ID
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({ status: false, message: 'Invalid ID' });
     }
+
     const deletedCustomer = await MerchantCustomerManagement.findByIdAndDelete(id);
+
     if (!deletedCustomer) {
       return res.status(404).json({ status: false, message: 'Customer not found' });
     }
-    res.status(200).json({ status: true, message: 'Customer deleted successfully' });
+
+    // No data to return for deletion, but still include an empty array for consistency
+    res.status(200).json({ 
+      status: true, 
+      message: 'Customer deleted successfully', 
+      data: [] // Empty array for consistency
+    });
   } catch (error) {
     res.status(500).json({ status: false, message: error.message });
   }
