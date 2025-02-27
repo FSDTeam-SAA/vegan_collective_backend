@@ -134,16 +134,35 @@ exports.getAllProfessionalInfo = async (req, res) => {
 /**
  * Get a single professional info entry by ID
  */
-exports.getProfessionalInfoById = async (req, res) => {
+/**
+ * Get a single professional info entry by professionalId
+ */
+exports.getProfessionalInfoByProfessionalId = async (req, res) => {
   try {
-    const { id } = req.params;
-    const professionalInfo = await Professionalinfo.findById(id);
+    const { professionalId } = req.params; // Extract professionalId from request params
+
+    // Query the database using the professionalId field
+    const professionalInfo = await Professionalinfo.findOne({ professionalId });
+
     if (!professionalInfo) {
-      return res.status(404).json({ success: false, message: "Professional info not found" });
+      return res.status(404).json({
+        success: false,
+        message: "Professional info not found",
+      });
     }
-    return res.status(200).json({ success: true, message: "Professional info retrieved successfully", data: professionalInfo });
+
+    return res.status(200).json({
+      success: true,
+      message: "Professional info retrieved successfully",
+      data: professionalInfo,
+    });
   } catch (error) {
-    return res.status(500).json({ success: false, message: "Error retrieving professional info", error: error.message });
+    console.error("Error retrieving professional info:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Error retrieving professional info",
+      error: error.message,
+    });
   }
 };
 
