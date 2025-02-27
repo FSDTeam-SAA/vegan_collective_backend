@@ -149,16 +149,35 @@ exports.getAllOrganizationInfo = async (req, res) => {
 /**
  * Get a single organization info entry by ID
  */
-exports.getOrganizationInfoById = async (req, res) => {
+/**
+ * Get a single organization info entry by organizationID
+ */
+exports.getOrganizationInfoByOrganizationID = async (req, res) => {
   try {
-    const { id } = req.params;
-    const organizationInfo = await Organizationinfo.findById(id);
+    const { organizationID } = req.params; // Extract organizationID from request params
+
+    // Query the database using the organizationID field
+    const organizationInfo = await Organizationinfo.findOne({ organizationID });
+
     if (!organizationInfo) {
-      return res.status(404).json({ success: false, message: "Organization info not found" });
+      return res.status(404).json({
+        success: false,
+        message: "Organization info not found",
+      });
     }
-    res.status(200).json({ success: true, message: "Organization info retrieved successfully", data: organizationInfo });
+
+    return res.status(200).json({
+      success: true,
+      message: "Organization info retrieved successfully",
+      data: organizationInfo,
+    });
   } catch (error) {
-    res.status(500).json({ success: false, message: "Error retrieving organization info", error: error.message });
+    console.error("Error retrieving organization info:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Error retrieving organization info",
+      error: error.message,
+    });
   }
 };
 

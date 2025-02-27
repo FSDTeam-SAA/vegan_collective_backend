@@ -2,7 +2,7 @@ const express = require("express");
 const {
   createProfessionalInfo,
   getAllProfessionalInfo,
-  getProfessionalInfoById,
+  getProfessionalInfoByProfessionalId,
   updateProfessionalInfo,
   deleteProfessionalInfo,
 } = require("../controllers/professionalInfo.controller");
@@ -20,7 +20,7 @@ router.put("/professionalInfo/uploadImages", uploadImages);
 router.get("/professionalInfo", getAllProfessionalInfo);
 
 // Get a single professional info by ID
-router.get("/professionalInfo/:id", getProfessionalInfoById);
+router.get("/professionalInfo/:id", getProfessionalInfoByProfessionalId);
 
 // Update professional info by ID
 router.put("/professionalInfo/:id", updateProfessionalInfo);
