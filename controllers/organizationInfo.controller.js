@@ -3,6 +3,8 @@ const mongoose = require("mongoose");
 const Organizationinfo = require("../models/organizationInfo.model");
 const User = require("../models/user.model");
 const upload = require("../utils/multerConfig");
+const Organizationeventmanagement = require('../models/organizationEventManagement.model');  // Adjust path as needed
+
 
 /**
  * Create a new organization info entry with profile photo upload
@@ -70,18 +72,19 @@ exports.createOrganizationInfo = async (req, res) => {
 /**
  * Get all organization info entries
  */
+
 exports.getAllOrganizationInfo = async (req, res) => {
   try {
     // Extract query parameters for pagination, search, and sorting
-    const page = parseInt(req.query.page, 10) || 1; // Default to page 1 if not provided
-    const limit = parseInt(req.query.limit, 10) || 10; // Default to 10 items per page
-    const searchQuery = req.query.search || ""; // Default to empty string if no search term is provided
-    const sortBy = req.query.sortBy || "organizationName"; // Default to sorting by organizationName
-    const sortOrder = req.query.sortOrder || "asc"; // Default to ascending order
+    const page = parseInt(req.query.page, 10) || 1;
+    const limit = parseInt(req.query.limit, 10) || 10;
+    const searchQuery = req.query.search || "";
+    const sortBy = req.query.sortBy || "organizationName";
+    const sortOrder = req.query.sortOrder || "asc";
 
     // Build the filter for searching by organizationName
     const filter = searchQuery
-      ? { organizationName: { $regex: searchQuery, $options: "i" } } // Case-insensitive regex search
+      ? { organizationName: { $regex: searchQuery, $options: "i" } }
       : {};
 
     // Calculate total items and total pages
@@ -90,27 +93,43 @@ exports.getAllOrganizationInfo = async (req, res) => {
 
     // Define the sort order
     const sortOptions = {};
-    sortOptions[sortBy] = sortOrder === "asc" ? 1 : -1; // 1 for ascending, -1 for descending
+    sortOptions[sortBy] = sortOrder === "asc" ? 1 : -1;
 
-    // Fetch paginated and sorted results
+    // Fetch paginated and sorted organizations
     const organizationInfoList = await Organizationinfo.find(filter)
-      .sort(sortOptions) // Apply sorting
-      .skip((page - 1) * limit) // Skip documents based on the current page
-      .limit(limit); // Limit the number of documents per page
+      .sort(sortOptions)
+      .skip((page - 1) * limit)
+      .limit(limit);
 
-    // Construct the pagination metadata
+    // Fetch event counts in parallel using organizationID (which is the same as userID)
+    const organizationsWithEvents = await Promise.all(
+      organizationInfoList.map(async (organization) => {
+        const organizationID = organization.userID; // Use userID as organizationID
+
+        const totalEvents = await Organizationeventmanagement.countDocuments({
+          organizationID: new mongoose.Types.ObjectId(organizationID),
+        });
+
+        return {
+          ...organization.toObject(), // Convert Mongoose document to plain JS object
+          totalEvents, // Attach totalEvents count
+        };
+      })
+    );
+
+    // Construct pagination metadata
     const pagination = {
       currentPage: page,
-      totalPages: totalPages,
-      totalItems: totalItems,
+      totalPages,
+      totalItems,
       itemsPerPage: limit,
     };
 
-    // Return the response with data and pagination metadata
+    // Return the response with organization data and pagination metadata
     return res.status(200).json({
       success: true,
       message: "Organization info retrieved successfully",
-      data: organizationInfoList,
+      data: organizationsWithEvents,
       pagination: pagination,
     });
   } catch (error) {
@@ -122,6 +141,10 @@ exports.getAllOrganizationInfo = async (req, res) => {
     });
   }
 };
+
+
+
+
 
 /**
  * Get a single organization info entry by ID
