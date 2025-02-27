@@ -68,6 +68,7 @@ const userPayment = require("./routes/userPayment.route.js");
 const userSupport = require("./routes/userSupport.route.js");
 const userGoLive = require("./routes/userGoLive.route.js");
 
+const paymentRoute = require("./routes/payment.Routes.js");
 //endpoints for professional
 app.use("/api/v1", professionalBooking);
 app.use("/api/v1", professionalEvent);
@@ -115,6 +116,9 @@ app.use("/api/v1", founderVerificationManagement);
 app.use("/api/v1", userRoute);
 app.use('/api/v1', require('./routes/globalfind'));
 app.use("/api/v1/auth/zoom", zoomRoutes);
+
+// payment routes
+app.use("/api/v1/payment", paymentRoute);
 
 app.get("/api/v1/", (req, res) => {
   res.status(201).json({
