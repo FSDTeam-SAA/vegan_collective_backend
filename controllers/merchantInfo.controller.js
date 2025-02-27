@@ -94,16 +94,34 @@ exports.getAllMerchantInfo = async (req, res) => {
 /**
  * Get a single merchant info entry by ID
  */
-exports.getMerchantInfoById = async (req, res) => {
+/**
+ * Get a single merchant info entry by merchantID
+ */
+exports.getMerchantInfoByMerchantID = async (req, res) => {
   try {
-    const { id } = req.params;
-    const merchantInfo = await Merchantinfo.findById(id);
+    const { merchantID } = req.params; // Extract merchantID from request parameters
+
+    // Query the database using findOne and filter by merchantID
+    const merchantInfo = await Merchantinfo.findOne({ merchantID });
+
+    // If no merchant info is found, return a 404 error
     if (!merchantInfo) {
       return res.status(404).json({ success: false, message: "Merchant info not found" });
     }
-    res.status(200).json({ success: true, message: "Merchant info retrieved successfully", data: merchantInfo });
+
+    // Return the retrieved merchant info with a success response
+    res.status(200).json({
+      success: true,
+      message: "Merchant info retrieved successfully",
+      data: merchantInfo,
+    });
   } catch (error) {
-    res.status(500).json({ success: false, message: "Error retrieving merchant info", error: error.message });
+    // Handle any errors that occur during the process
+    res.status(500).json({
+      success: false,
+      message: "Error retrieving merchant info",
+      error: error.message,
+    });
   }
 };
 
