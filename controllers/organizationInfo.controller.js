@@ -72,10 +72,54 @@ exports.createOrganizationInfo = async (req, res) => {
  */
 exports.getAllOrganizationInfo = async (req, res) => {
   try {
-    const organizationInfoList = await Organizationinfo.find();
-    return res.status(200).json({ success: true, message: "Organization info retrieved successfully", data: organizationInfoList });
+    // Extract query parameters for pagination, search, and sorting
+    const page = parseInt(req.query.page, 10) || 1; // Default to page 1 if not provided
+    const limit = parseInt(req.query.limit, 10) || 10; // Default to 10 items per page
+    const searchQuery = req.query.search || ""; // Default to empty string if no search term is provided
+    const sortBy = req.query.sortBy || "organizationName"; // Default to sorting by organizationName
+    const sortOrder = req.query.sortOrder || "asc"; // Default to ascending order
+
+    // Build the filter for searching by organizationName
+    const filter = searchQuery
+      ? { organizationName: { $regex: searchQuery, $options: "i" } } // Case-insensitive regex search
+      : {};
+
+    // Calculate total items and total pages
+    const totalItems = await Organizationinfo.countDocuments(filter);
+    const totalPages = Math.ceil(totalItems / limit);
+
+    // Define the sort order
+    const sortOptions = {};
+    sortOptions[sortBy] = sortOrder === "asc" ? 1 : -1; // 1 for ascending, -1 for descending
+
+    // Fetch paginated and sorted results
+    const organizationInfoList = await Organizationinfo.find(filter)
+      .sort(sortOptions) // Apply sorting
+      .skip((page - 1) * limit) // Skip documents based on the current page
+      .limit(limit); // Limit the number of documents per page
+
+    // Construct the pagination metadata
+    const pagination = {
+      currentPage: page,
+      totalPages: totalPages,
+      totalItems: totalItems,
+      itemsPerPage: limit,
+    };
+
+    // Return the response with data and pagination metadata
+    return res.status(200).json({
+      success: true,
+      message: "Organization info retrieved successfully",
+      data: organizationInfoList,
+      pagination: pagination,
+    });
   } catch (error) {
-    res.status(500).json({ success: false, message: "Error retrieving organization info", error: error.message });
+    // Handle errors
+    return res.status(500).json({
+      success: false,
+      message: "Error retrieving organization info",
+      error: error.message,
+    });
   }
 };
 
