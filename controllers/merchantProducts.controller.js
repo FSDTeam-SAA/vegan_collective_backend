@@ -53,12 +53,17 @@ exports.createProduct = async (req, res) => {
 // Get All Products with Pagination, Search, and Sorting
 exports.getAllProducts = async (req, res) => {
   try {
-    const { page = 1, limit = 10, search = "", sort = "asc", merchantID } = req.query;
+    const { page = 1, limit = 10, search = "", sort = "asc", merchantID, category } = req.query;
     const query = {};
 
     // Filter by merchantID if provided
     if (merchantID) {
       query.merchantID = merchantID;
+    }
+
+    // Filter by category if provided
+    if (category) {
+      query.category = category; // Assuming your product schema has a `category` field
     }
 
     // Search by product name (case-insensitive)

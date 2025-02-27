@@ -81,6 +81,9 @@ const getEvents = async (req, res) => {
     // Count total documents for pagination
     const totalItems = await Organizationeventmanagement.countDocuments(query);
 
+    // Count total events matching the query (without pagination)
+    const totalEvents = await Organizationeventmanagement.countDocuments(query);
+
     // Calculate total pages
     const totalPages = Math.ceil(totalItems / limit);
 
@@ -95,6 +98,7 @@ const getEvents = async (req, res) => {
         totalItems,
         itemsPerPage: parseInt(limit),
       },
+      totalEvents, // Add total events count to the response
     });
   } catch (error) {
     res.status(500).json({
