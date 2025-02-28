@@ -261,7 +261,7 @@ const getAllEvents = async (req, res) => {
 const getEventsByOrganization = async (req, res) => {
   try {
     const { organizationID } = req.params; // Extract organizationID from URL params
-    const { page = 1, limit = 10 } = req.query;
+    const { page = 1, limit = 10, eventType } = req.query; // Extract pagination and eventType from query params
 
     // Ensure organizationID is provided
     if (!organizationID) {
@@ -271,14 +271,20 @@ const getEventsByOrganization = async (req, res) => {
       });
     }
 
-    // Fetch events associated with the given organizationID
-    const events = await Organizationeventmanagement.find({ organizationID })
+    // Build the query object dynamically
+    const query = { organizationID };
+    if (eventType) {
+      query.eventType = eventType; // Add eventType filter if provided
+    }
+
+    // Fetch events associated with the given organizationID and optional eventType
+    const events = await Organizationeventmanagement.find(query)
       .limit(limit * 1)
       .skip((page - 1) * limit)
       .exec();
 
     // Count total documents for pagination
-    const totalItems = await Organizationeventmanagement.countDocuments({ organizationID });
+    const totalItems = await Organizationeventmanagement.countDocuments(query);
 
     // Calculate total pages
     const totalPages = Math.ceil(totalItems / limit);
