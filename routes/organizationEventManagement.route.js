@@ -23,4 +23,7 @@ router.get('/organizationevents', eventController.getAllEvents);
 // get events by organization
 router.get('/organizationeventsbyorganization/:organizationID', eventController.getEventsByOrganization);
 
+// get events by type
+router.get('/organizationeventsbytype/:eventType', eventController.getEventsByTypeBoth);
+
 module.exports = router;
