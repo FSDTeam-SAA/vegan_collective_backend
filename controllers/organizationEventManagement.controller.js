@@ -310,6 +310,46 @@ const getEventsByOrganization = async (req, res) => {
   }
 };
 
+const getEventsByTypeBoth = async (req, res) => {
+  try {
+    const { page = 1, limit = 10 } = req.query;
+
+    // Query to fetch only "free event" and "paid event"
+    const query = { eventType: { $in: ["free event", "paid event"] } };
+
+    // Fetch events with pagination
+    const events = await Organizationeventmanagement.find(query)
+      .limit(limit * 1)
+      .skip((page - 1) * limit)
+      .exec();
+
+    // Count total documents for pagination
+    const totalItems = await Organizationeventmanagement.countDocuments(query);
+
+    // Calculate total pages
+    const totalPages = Math.ceil(totalItems / limit);
+
+    // Send response
+    res.status(200).json({
+      success: true,
+      message: "Events fetched successfully",
+      data: events,
+      pagination: {
+        currentPage: parseInt(page),
+        totalPages,
+        totalItems,
+        itemsPerPage: parseInt(limit),
+      },
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Error fetching events",
+      error: error.message,
+    });
+  }
+};
+
 module.exports = {
   addEvent,
   getEvents,
@@ -317,7 +357,8 @@ module.exports = {
   updateEvent,
   deleteEvent,
   getAllEvents,
-  getEventsByOrganization, // New function
+  getEventsByOrganization,
+  getEventsByTypeBoth, // New function
 };
 
 
