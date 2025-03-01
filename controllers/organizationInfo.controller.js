@@ -142,13 +142,6 @@ exports.getAllOrganizationInfo = async (req, res) => {
   }
 };
 
-
-
-
-
-/**
- * Get a single organization info entry by ID
- */
 /**
  * Get a single organization info entry by organizationID
  */
