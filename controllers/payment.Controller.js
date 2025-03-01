@@ -2,16 +2,32 @@ const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY)
 
 const savePaymentMethod = async (req, res) => {
   try {
-    const { paymentMethodId, customerId } = req.body
+    const { cardNumber, expMonth, expYear, cvc  } = req.body
 
-    await stripe.paymentMethods.attach(paymentMethodId, {
-      customer: customerId,
+    // create a payment method
+    const paymentMethod = await stripe.paymentMethods.create({
+      type: 'card',
+      card: {
+        number: cardNumber,
+        exp_month: expMonth,
+        exp_year:expYear,
+        cvc:cvc,
+      }
     })
 
-    await stripe.customers.update(customerId, {
+    // create a customer 
+    const customer = await stripe.customers.create();
+
+    // attach the payment method to the customer
+    await stripe.paymentMethods.attach(paymentMethod.id, {
+      customer: customer.id,
+    })
+
+    // set default payment method
+    await stripe.customers.update(customer.id, {
       invoice_settings: {
-        default_payment_method: paymentMethodId,
-      },
+        default_payment_method: paymentMethod.id,
+      }
     })
 
     res.status(200).json({
