@@ -12,4 +12,6 @@ router.get("/fetch-pending-data", fetchDataController.fetchPendingVerificationDa
 // New route for updating verification status (using PUT)
 router.put('/update-verification-status', fetchDataController.updateVerificationStatus);
 
+router.get('/user-details', fetchDataController.getFounderVendorDetails);
+
 module.exports = router;

@@ -55,6 +55,9 @@ const professionalInfoSchema = new mongoose.Schema(
       type: String,
       enum:["approved","declined","pending"],
       default:"pending",
+    },
+    phoneNumber:{
+      type: String,
     }
   },
   {

@@ -132,9 +132,6 @@ exports.getAllProfessionalInfo = async (req, res) => {
 };
 
 /**
- * Get a single professional info entry by ID
- */
-/**
  * Get a single professional info entry by professionalId
  */
 exports.getProfessionalInfoByProfessionalId = async (req, res) => {
@@ -186,7 +183,7 @@ exports.updateProfessionalInfo = [
       console.log("Uploaded file:", req.file);
 
       // ✅ Prepare update data
-      const updateData = { ...req.body };
+      const updateData = { userID, fullName, designation, businessName, address, about, highlightedStatement, experience, certifications, websiteURL, governmentIssuedID, professionalCertification, photoWithID, isVerified,phoneNumber } = req.body;
 
       // ✅ Handle profile photo upload (if provided)
       if (req.file) {
