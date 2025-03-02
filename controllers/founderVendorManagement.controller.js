@@ -123,223 +123,6 @@ exports.fetchRequiredData = async (req, res) => {
   }
 };
 
-
-// exports.fetchRequiredData = async (req, res) => {
-//     try {
-//       // Helper function to fetch email from UserModel
-//       const getEmail = async (userId) => {
-//         const user = await User.findById(userId, { email: 1 }).lean();
-//         return user ? user.email : null;
-//       };
-  
-//       // Fetch professional info and add role: 'professional'
-//       const professionalData = await Professionalinfo.find(
-//         {},
-//         { 
-//           businessName: 1, 
-//           createdAt: 1, 
-//           isVerified: 1, 
-//           _id: 1, 
-//           userId: 1,
-//           address: 1,
-//           governmentIssuedID: 1, 
-//           photoWithID: 1, 
-//           professionalCertification: 1 
-//         }
-//       ).lean();
-  
-//       const professionalsWithRole = await Promise.all(professionalData.map(async (item) => {
-//         const email = await getEmail(item.userId);
-//         return {
-//           ...item,
-//           email,
-//           role: 'professional',
-//         };
-//       }));
-  
-//       // Fetch merchant info and add role: 'merchant'
-//       const merchantData = await Merchantinfo.find(
-//         {},
-//         { 
-//           businessName: 1, 
-//           createdAt: 1, 
-//           isVerified: 1, 
-//           _id: 1, 
-//           userID: 1,
-//           address: 1,
-//           governmentIssuedID: 1, 
-//           photoWithID: 1, 
-//           professionalCertification: 1 
-//         }
-//       ).lean();
-  
-//       const merchantsWithRole = await Promise.all(merchantData.map(async (item) => {
-//         const email = await getEmail(item.userID);
-//         return {
-//           ...item,
-//           email,
-//           role: 'merchant',
-//         };
-//       }));
-  
-//       // Fetch organization info and add role: 'organization'
-//       const organizationData = await Organizationinfo.find(
-//         {},
-//         { 
-//           // organizationName: 1, 
-//           businessName: "$organizationName",
-//           createdAt: 1, 
-//           isVerified: 1, 
-//           _id: 1, 
-//           userID: 1,
-//           address: 1,
-//           governmentIssuedID: 1, 
-//           photoWithID: 1, 
-//           professionalCertification: 1 
-//         }
-//       ).lean();
-  
-//       const organizationsWithRole = await Promise.all(organizationData.map(async (item) => {
-//         const email = await getEmail(item.userID);
-//         return {
-//           ...item,
-//           email,
-//           role: 'organization',
-//         };
-//       }));
-
-//       return res.status(200).json({
-//         success : true,
-//         message : "fetched data",
-//         data : [
-//           ...professionalsWithRole,
-//           ...merchantsWithRole,
-//           ...organizationsWithRole,
-//         ]
-//       });
-//     } catch (error) {
-//       console.error("Error fetching data:", error);
-//       return res.status(500).json({ success: false, message: "Internal Server Error" });
-//     }
-//   };
-
-// exports.fetchRequiredData = async (req, res) => {
-//   try {
-//       const { search, order = 'asc', isVerified, role, page = 1, limit = 10 } = req.query;
-
-//       const pageNumber = parseInt(page, 10);
-//       const limitNumber = parseInt(limit, 10);
-//       const sortOrder = order === 'asc' ? 1 : -1;
-
-//       console.log("Received Query Params:", req.query);
-
-//       // Helper function to fetch email from UserModel
-//       const getEmail = async (userId) => {
-//           if (!userId) return null;
-//           const user = await User.findById(userId, { email: 1 }).lean();
-//           return user ? user.email : null;
-//       };
-
-//       let data = [];
-
-//       // **Common Filter Logic**
-//       const createFilter = (searchField) => {
-//           let filter = {};
-
-//           if (search) {
-//               filter[searchField] = { $regex: search, $options: "i" };
-//           }
-
-//           if (isVerified && isVerified !== "all") {
-//               filter.isVerified = isVerified;
-//           }
-
-//           return filter;
-//       };
-
-//       // **Fetch Professionals**
-//       if (!role || role === "professional") {
-//           const professionalFilter = createFilter("businessName");
-//           console.log("Professional Filter:", professionalFilter);
-
-//           const professionalData = await Professionalinfo.find(professionalFilter)
-//               .sort({ createdAt: sortOrder })
-//               .skip((pageNumber - 1) * limitNumber)
-//               .limit(limitNumber)
-//               .lean();
-
-//           console.log("Fetched Professionals:", professionalData.length);
-
-//           const professionalsWithRole = await Promise.all(professionalData.map(async (item) => ({
-//               ...item,
-//               email: await getEmail(item.userId),
-//               role: 'professional'
-//           })));
-
-//           data.push(...professionalsWithRole);
-//       }
-
-//       // **Fetch Merchants**
-//       if (!role || role === "merchant") {
-//           const merchantFilter = createFilter("businessName");
-//           console.log("Merchant Filter:", merchantFilter);
-
-//           const merchantData = await Merchantinfo.find(merchantFilter)
-//               .sort({ createdAt: sortOrder })
-//               .skip((pageNumber - 1) * limitNumber)
-//               .limit(limitNumber)
-//               .lean();
-
-//           console.log("Fetched Merchants:", merchantData.length);
-
-//           const merchantsWithRole = await Promise.all(merchantData.map(async (item) => ({
-//               ...item,
-//               email: await getEmail(item.userID),
-//               role: 'merchant'
-//           })));
-
-//           data.push(...merchantsWithRole);
-//       }
-
-//       // **Fetch Organizations**
-//       if (!role || role === "organization") {
-//           const organizationFilter = createFilter("organizationName");
-//           console.log("Organization Filter:", organizationFilter);
-
-//           const organizationData = await Organizationinfo.find(organizationFilter)
-//               .sort({ createdAt: sortOrder })
-//               .skip((pageNumber - 1) * limitNumber)
-//               .limit(limitNumber)
-//               .lean();
-
-//           console.log("Fetched Organizations:", organizationData.length);
-
-//           const organizationsWithRole = await Promise.all(organizationData.map(async (item) => ({
-//               ...item,
-//               businessName: item.organizationName, // Rename organizationName to businessName
-//               email: await getEmail(item.userID),
-//               role: 'organization'
-//           })));
-
-//           data.push(...organizationsWithRole);
-//       }
-
-//       console.log("Final Data Length:", data.length);
-
-//       return res.status(200).json({
-//           success: true,
-//           message: "Fetched data successfully",
-//           data,
-//           pagination: { page: pageNumber, limit: limitNumber }
-//       });
-
-//   } catch (error) {
-//       console.error("Error fetching data:", error);
-//       return res.status(500).json({ success: false, message: "Internal Server Error" });
-//   }
-// };
-
-
 exports.fetchPendingVerificationData = async (req, res) => {
     try {
       // Fetch professional info where isVerified is "pending"
@@ -414,3 +197,62 @@ exports.updateVerificationStatus = async (req, res) => {
     return res.status(500).json({ success: false, message: "Internal Server Error" });
   }
 };
+
+exports.getFounderVendorDetails = async (req, res) => {
+  try {
+      const { id, userID } = req.query; // Get both ID and userID from query parameters
+
+      if (!id) {
+          return res.status(400).json({
+              success: false,
+              message: 'ID is required',
+          });
+      }
+
+      if (!userID) {
+          return res.status(400).json({
+              success: false,
+              message: 'userID is required',
+          });
+      }
+
+      // Fetch data from all models based on the provided ID
+      const founderVendorData = await Foundervendonmanagement.findOne({ merchantId: id });
+      const professionalData = await Professionalinfo.findOne({ _id: id });
+      const merchantData = await Merchantinfo.findOne({ _id: id });
+      const organizationData = await Organizationinfo.findOne({ _id: id });
+      const userData = await User.findOne({ _id: userID }); // Use userID to fetch user data
+
+      // Combine data into a structured response
+      const profileData = {
+          profilePhoto: professionalData?.profilePhoto ||  merchantData?.profilePhoto || organizationData?.profilePhoto || null,
+          businessName: professionalData?.businessName || merchantData?.businessName || null,
+          organizationName: organizationData?.organizationName || null,
+          about: professionalData?.about || merchantData?.about || organizationData?.about || null,
+          experience: professionalData?.experience || organizationData?.experience || null,
+          certifications: professionalData?.certifications || organizationData?.certifications || null,
+          submittedDocuments: {
+              governmentIssuedID: professionalData?.governmentIssuedID || merchantData?.governmentIssuedID || organizationData?.governmentIssuedID || null,
+              professionalCertification: professionalData?.professionalCertification || merchantData?.professionalCertification || organizationData?.professionalCertification || null,
+          },
+          contactInfo: {
+              email: userData?.email || null, // Use email from the user data fetched using userID
+              phoneNumber: professionalData?.phoneNumber || merchantData?.phoneNumber || organizationData?.phoneNumber || null,
+          },
+      };
+
+      // Send the combined data as a response
+      res.status(200).json({
+          success: true,
+          message: 'Profile data retrieved successfully',
+          data: profileData,
+      });
+  } catch (error) {
+      console.error(error);
+      res.status(500).json({
+          success: false,
+          message: 'Internal Server Error',
+      });
+  }
+};
+

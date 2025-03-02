@@ -49,7 +49,12 @@ const organizationInfoSchema = new mongoose.Schema(
      
     },
     isVerified: { type: String, enum: ["pending", "approved", "rejected"], default: "pending" }, 
+    phoneNumber: {
+      type: String,
+    },
   },
+ 
+  
   {
     timestamps: true,
   } 
