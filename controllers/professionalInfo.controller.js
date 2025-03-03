@@ -13,20 +13,22 @@ exports.createProfessionalInfo = async (req, res) => {
         return res.status(500).json({ error: "Error uploading file to Cloudinary" });
       }
 
-      let { userID, fullName, designation, businessName, address, about, highlightedStatement, experience, certifications, websiteURL, governmentIssuedID, professionalCertification, photoWithID, isVerified, phoneNumber } = req.body;
+      let { userID, fullName, designation, businessName, address, about, highlightedStatement, experience, certifications, websiteURL, governmentIssuedID, professionalCertification, photoWithID, isVerified } = req.body;
 
-      // Validate userID format
+      console.log("Received userID:", userID);
+
+      // ✅ Validate userID format
       if (!mongoose.Types.ObjectId.isValid(userID)) {
         return res.status(400).json({ success: false, message: "Invalid userID format" });
       }
 
-      // Ensure userID exists in the database
+      // ✅ Ensure userID exists in the database
       const userExists = await User.findById(userID);
       if (!userExists) {
         return res.status(404).json({ success: false, message: "User does not exist" });
       }
 
-      // Check if professional info already exists
+      // ✅ Check if professional info already exists
       const existingProfessionalInfo = await Professionalinfo.findOne({ userId: userID });
       if (existingProfessionalInfo) {
         return res.status(400).json({
@@ -35,37 +37,36 @@ exports.createProfessionalInfo = async (req, res) => {
         });
       }
 
-      // Parse highlightedStatement safely
+      // ✅ Parse highlightedStatement safely
       let parsedHighlightedStatement = [];
       if (highlightedStatement) {
         try {
-          // Convert the highlightedStatement objects into a simpler array of strings
-          parsedHighlightedStatement = highlightedStatement.map(item => `${item.title}: ${item.description}`);
+          parsedHighlightedStatement = JSON.parse(highlightedStatement);
         } catch (parseError) {
           return res.status(400).json({
             success: false,
-            message: "Invalid format for highlightedStatement",
+            message: "Invalid JSON format for highlightedStatement",
           });
         }
       }
 
-      // Parse experience safely and convert it to an array of strings
+      // ✅ Parse experience field into an array
       let parsedExperience = [];
       if (experience) {
         try {
+          // If experience is a JSON string, parse it
           parsedExperience = JSON.parse(experience);
         } catch (parseError) {
-          return res.status(400).json({
-            success: false,
-            message: "Invalid JSON format for experience",
-          });
+          // If it's not JSON, split by commas to create an array
+          parsedExperience = experience.split(",").map((item) => item.trim());
         }
       }
 
       const profilePhotoUrl = req.file ? req.file.path : null;
 
+      // ✅ Use correct `userId` field name
       const newProfessionalInfo = new Professionalinfo({
-        userId: userID,
+        userId: userID, // ✅ FIXED: Correct field name
         fullName,
         profilePhoto: profilePhotoUrl,
         designation,
@@ -73,51 +74,32 @@ exports.createProfessionalInfo = async (req, res) => {
         address,
         about,
         highlightedStatement: parsedHighlightedStatement,
-        experience: parsedExperience,
+        experience: parsedExperience, 
         certifications,
         websiteURL,
         governmentIssuedID,
         professionalCertification,
         photoWithID,
         isVerified,
-        phoneNumber,
       });
 
       const savedProfessionalInfo = await newProfessionalInfo.save();
 
-      return res.status(201).json({
+      res.status(201).json({
         success: true,
         message: "Professional info created successfully",
-        data: {
-          userId: savedProfessionalInfo.userId,
-          profilePhoto: savedProfessionalInfo.profilePhoto,
-          fullName: savedProfessionalInfo.fullName,
-          designation: savedProfessionalInfo.designation,
-          businessName: savedProfessionalInfo.businessName,
-          address: savedProfessionalInfo.address,
-          about: savedProfessionalInfo.about,
-          highlightedStatement: savedProfessionalInfo.highlightedStatement,
-          experience: savedProfessionalInfo.experience,
-          certifications: savedProfessionalInfo.certifications,
-          websiteURL: savedProfessionalInfo.websiteURL,
-          isVerified: savedProfessionalInfo.isVerified,
-          _id: savedProfessionalInfo._id,
-          createdAt: savedProfessionalInfo.createdAt,
-          updatedAt: savedProfessionalInfo.updatedAt,
-          __v: savedProfessionalInfo.__v,
-        },
+        data: savedProfessionalInfo,
       });
     });
   } catch (error) {
     console.error("Error:", error.message);
-    return res.status(500).json({
+    res.status(500).json({
       success: false,
       message: "Error creating professional info",
       error: error.message,
     });
   }
 };
-
 
 
 /**
