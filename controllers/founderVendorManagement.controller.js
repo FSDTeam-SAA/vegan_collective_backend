@@ -296,6 +296,115 @@ exports.fetchPendingVerificationData = async (req, res) => {
     }
   };
 
+
+  exports.fetchPendingVerificationDataById = async (req, res) => {
+    try {
+      // Extract _id from request parameters
+      const { id } = req.params;
+  
+      if (!id) {
+        return res.status(400).json({
+          success: false,
+          message: "ID is required.",
+        });
+      }
+  
+      // Fetch professional info where isVerified is "pending" and _id matches
+      const pendingProfessionals = await Professionalinfo.find(
+        { isVerified: "pending", _id: id },
+        {
+          userID: 1,
+          businessName: 1,
+          address: 1,
+          isVerified: 1,
+          createdAt: 1,
+          governmentIssuedID: 1,
+          photoWithID: 1,
+          professionalCertification: 1,
+          email: 1,
+        }
+      ).lean();
+  
+      // Add role field to each professional result
+      const professionalsWithRole = pendingProfessionals.map((item) => ({
+        ...item,
+        role: "professional",
+      }));
+  
+      // Fetch merchant info where isVerified is "pending" and _id matches
+      const pendingMerchants = await Merchantinfo.find(
+        { isVerified: "pending", _id: id },
+        {
+          userID: 1,
+          businessName: 1,
+          address: 1,
+          isVerified: 1,
+          createdAt: 1,
+          governmentIssuedID: 1,
+          photoWithID: 1,
+          professionalCertification: 1,
+          email: 1,
+        }
+      ).lean();
+  
+      // Add role field to each merchant result
+      const merchantsWithRole = pendingMerchants.map((item) => ({
+        ...item,
+        role: "merchant",
+      }));
+  
+      // Fetch organization info where isVerified is "pending" and _id matches
+      const pendingOrganizations = await Organizationinfo.find(
+        { isVerified: "pending", _id: id },
+        {
+          userID: 1,
+          organizationName: 1,
+          address: 1,
+          isVerified: 1,
+          createdAt: 1,
+          governmentIssuedID: 1,
+          photoWithID: 1,
+          professionalCertification: 1,
+          email: 1,
+        }
+      ).lean();
+  
+      // Add role field to each organization result
+      const organizationsWithRole = pendingOrganizations.map((item) => ({
+        ...item,
+        role: "organization",
+      }));
+  
+      // Combine all results into a single array
+      const combinedResults = [
+        ...professionalsWithRole,
+        ...merchantsWithRole,
+        ...organizationsWithRole,
+      ];
+  
+      // Check if any data was found
+      if (combinedResults.length === 0) {
+        return res.status(404).json({
+          success: false,
+          message: "No pending verification data found for the given ID.",
+        });
+      }
+  
+      // Return the combined data as an array of objects
+      return res.status(200).json({
+        success: true,
+        message: "Pending verification data retrieved successfully.",
+        data: combinedResults,
+      });
+    } catch (error) {
+      console.error("Error fetching pending verification data by ID:", error);
+      return res.status(500).json({
+        success: false,
+        message: "Internal Server Error. Please try again later.",
+      });
+    }
+  };
+
 exports.updateVerificationStatus = async (req, res) => {
   try {
     const { id, role, status } = req.body;
