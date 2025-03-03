@@ -375,6 +375,7 @@ exports.getFounderVendorDetails = async (req, res) => {
           certifications: professionalData?.certifications || organizationData?.certifications || null,
           submittedDocuments: {
               governmentIssuedID: professionalData?.governmentIssuedID || merchantData?.governmentIssuedID || organizationData?.governmentIssuedID || null,
+              photoWithID: professionalData?.photoWithID || merchantData?.photoWithID || organizationData?.photoWithID || null,
               professionalCertification: professionalData?.professionalCertification || merchantData?.professionalCertification || organizationData?.professionalCertification || null,
           },
           contactInfo: {
