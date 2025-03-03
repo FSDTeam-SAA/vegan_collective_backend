@@ -4,6 +4,7 @@ const Merchantinfo = require('../models/merchantInfo.model'); // Assuming you ha
 const Organizationinfo = require('../models/organizationInfo.model'); // Assuming you have this model
 const User = require('../models/user.model'); // Assuming you have this model
 const nodemailer = require('nodemailer'); // For sending emails
+const mongoose = require('mongoose');
 
 
 exports.fetchRequiredData = async (req, res) => {
@@ -142,127 +143,6 @@ exports.fetchRequiredData = async (req, res) => {
 };
 
 
-//   try {
-//     const { page = 1, limit = 10, search = '', order = 'asc', isVerified = 'all', role = 'all' } = req.query;
-//     const pageNumber = parseInt(page, 10);
-//     const limitNumber = parseInt(limit, 10);
-//     const skip = (pageNumber - 1) * limitNumber;
-
-//     // Helper function to fetch email from UserModel
-//     const getEmail = async (userId) => {
-//       const user = await User.findById(userId, { email: 1 }).lean();
-//       return user ? user.email : null;
-//     };
-
-//     // Build the base query for filtering
-//     const buildQuery = (model, roleSpecificField) => {
-//       const query = {};
-
-//       // Apply search filter
-//       if (search) {
-//         query[roleSpecificField] = { $regex: search, $options: 'i' };
-//       }
-
-//       // Apply isVerified filter
-//       if (isVerified !== 'all') {
-//         query.isVerified = isVerified; // Directly use the value (pending, rejected, approved)
-//       }
-
-//       return query;
-//     };
-
-//     // Fetch professional info
-//     const professionalQuery = buildQuery(Professionalinfo, 'businessName');
-//     const professionalData = await Professionalinfo.find(professionalQuery, {
-//       businessName: 1, createdAt: 1, isVerified: 1, _id: 1, userId: 1,
-//       address: 1, governmentIssuedID: 1, photoWithID: 1, professionalCertification: 1
-//     })
-//       .sort({ createdAt: order === 'asc' ? 1 : -1 })
-//       .skip(skip)
-//       .limit(limitNumber)
-//       .lean();
-
-//     const professionalsWithRole = await Promise.all(professionalData.map(async (item) => {
-//       const email = await getEmail(item.userId);
-
-//       const resData = { ...item, email, role: 'professional', userID: item.userId };
-
-//       delete resData.userId;
-//       return resData
-//     }));
-
-//     // Fetch merchant info
-//     const merchantQuery = buildQuery(Merchantinfo, 'businessName');
-//     const merchantData = await Merchantinfo.find(merchantQuery, {
-//       businessName: 1, createdAt: 1, isVerified: 1, _id: 1, userID: 1,
-//       address: 1, governmentIssuedID: 1, photoWithID: 1, professionalCertification: 1
-//     })
-//       .sort({ createdAt: order === 'asc' ? 1 : -1 })
-//       .skip(skip)
-//       .limit(limitNumber)
-//       .lean();
-
-//     const merchantsWithRole = await Promise.all(merchantData.map(async (item) => {
-//       const email = await getEmail(item.userID);
-//       return { ...item, email, role: 'merchant' };
-//     }));
-
-//     // Fetch organization info
-//     const organizationQuery = buildQuery(Organizationinfo, 'organizationName');
-//     const organizationData = await Organizationinfo.find(organizationQuery, {
-//       organizationName: 1, createdAt: 1, isVerified: 1, _id: 1, userID: 1,
-//       address: 1, governmentIssuedID: 1, photoWithID: 1, professionalCertification: 1
-//     })
-//       .sort({ createdAt: order === 'asc' ? 1 : -1 })
-//       .skip(skip)
-//       .limit(limitNumber)
-//       .lean();
-
-//     const organizationsWithRole = await Promise.all(organizationData.map(async (item) => {
-//       const email = await getEmail(item.userID);
-//       return { ...item, email, role: 'organization' };
-//     }));
-
-//     // Combine data based on role filter
-//     let combinedData = [];
-//     if (role === 'all') {
-//       combinedData = [...professionalsWithRole, ...merchantsWithRole, ...organizationsWithRole];
-//     } else if (role === 'professional') {
-//       combinedData = professionalsWithRole;
-//     } else if (role === 'merchant') {
-//       combinedData = merchantsWithRole;
-//     } else if (role === 'organization') {
-//       combinedData = organizationsWithRole;
-//     }
-
-//     // Total count for pagination
-//     const totalProfessionals = await Professionalinfo.countDocuments(professionalQuery);
-//     const totalMerchants = await Merchantinfo.countDocuments(merchantQuery);
-//     const totalOrganizations = await Organizationinfo.countDocuments(organizationQuery);
-//     const totalItems = role === 'all' ? totalProfessionals + totalMerchants + totalOrganizations :
-//       role === 'professional' ? totalProfessionals :
-//       role === 'merchant' ? totalMerchants :
-//       totalOrganizations;
-
-//     const totalPages = Math.ceil(totalItems / limitNumber);
-
-//     return res.status(200).json({
-//       success: true,
-//       message: "Fetched data",
-//       data: combinedData,
-//       meta: {
-//         currentPage: pageNumber,
-//         totalPages,
-//         totalItems,
-//         itemsPerPage: limitNumber,
-//       }
-//     });
-//   } catch (error) {
-//     console.error("Error fetching data:", error);
-//     return res.status(500).json({ success: false, message: "Internal Server Error" });
-//   }
-// };
-
 exports.fetchPendingVerificationData = async (req, res) => {
     try {
       // Fetch professional info where isVerified is "pending"
@@ -310,7 +190,7 @@ exports.fetchPendingVerificationData = async (req, res) => {
       }
   
       // Fetch professional info where isVerified is "pending" and _id matches
-      const pendingProfessionals = await Professionalinfo.find(
+      const pendingProfessional = await Professionalinfo.findOne(
         { isVerified: "pending", _id: id },
         {
           userID: 1,
@@ -325,14 +205,19 @@ exports.fetchPendingVerificationData = async (req, res) => {
         }
       ).lean();
   
-      // Add role field to each professional result
-      const professionalsWithRole = pendingProfessionals.map((item) => ({
-        ...item,
-        role: "professional",
-      }));
+      if (pendingProfessional) {
+        return res.status(200).json({
+          success: true,
+          message: "Pending verification data retrieved successfully.",
+          data: {
+            ...pendingProfessional,
+            role: "professional",
+          },
+        });
+      }
   
       // Fetch merchant info where isVerified is "pending" and _id matches
-      const pendingMerchants = await Merchantinfo.find(
+      const pendingMerchant = await Merchantinfo.findOne(
         { isVerified: "pending", _id: id },
         {
           userID: 1,
@@ -347,14 +232,19 @@ exports.fetchPendingVerificationData = async (req, res) => {
         }
       ).lean();
   
-      // Add role field to each merchant result
-      const merchantsWithRole = pendingMerchants.map((item) => ({
-        ...item,
-        role: "merchant",
-      }));
+      if (pendingMerchant) {
+        return res.status(200).json({
+          success: true,
+          message: "Pending verification data retrieved successfully.",
+          data: {
+            ...pendingMerchant,
+            role: "merchant",
+          },
+        });
+      }
   
       // Fetch organization info where isVerified is "pending" and _id matches
-      const pendingOrganizations = await Organizationinfo.find(
+      const pendingOrganization = await Organizationinfo.findOne(
         { isVerified: "pending", _id: id },
         {
           userID: 1,
@@ -369,32 +259,21 @@ exports.fetchPendingVerificationData = async (req, res) => {
         }
       ).lean();
   
-      // Add role field to each organization result
-      const organizationsWithRole = pendingOrganizations.map((item) => ({
-        ...item,
-        role: "organization",
-      }));
-  
-      // Combine all results into a single array
-      const combinedResults = [
-        ...professionalsWithRole,
-        ...merchantsWithRole,
-        ...organizationsWithRole,
-      ];
-  
-      // Check if any data was found
-      if (combinedResults.length === 0) {
-        return res.status(404).json({
-          success: false,
-          message: "No pending verification data found for the given ID.",
+      if (pendingOrganization) {
+        return res.status(200).json({
+          success: true,
+          message: "Pending verification data retrieved successfully.",
+          data: {
+            ...pendingOrganization,
+            role: "organization",
+          },
         });
       }
   
-      // Return the combined data as an array of objects
-      return res.status(200).json({
-        success: true,
-        message: "Pending verification data retrieved successfully.",
-        data: combinedResults,
+      // If no data is found in any collection
+      return res.status(404).json({
+        success: false,
+        message: "No pending verification data found for the given ID.",
       });
     } catch (error) {
       console.error("Error fetching pending verification data by ID:", error);
@@ -405,49 +284,82 @@ exports.fetchPendingVerificationData = async (req, res) => {
     }
   };
 
-exports.updateVerificationStatus = async (req, res) => {
-  try {
-    const { id, role, status } = req.body;
-
-    if (!id || !role || !status) {
-      return res.status(400).json({ success: false, message: "Missing required fields: id, role, or status" });
+  exports.updateVerificationStatus = async (req, res) => {
+    try {
+      const { id, status } = req.body;
+  
+      // Validate required fields
+      if (!id || !status) {
+        return res.status(400).json({ success: false, message: "Missing required fields: id or status" });
+      }
+  
+      // Validate status against enum values
+      const allowedStatuses = ["approved", "declined", "pending"];
+      if (!allowedStatuses.includes(status)) {
+        return res.status(400).json({ success: false, message: "Invalid status. Allowed values are: approved, declined, pending" });
+      }
+  
+      // Convert id to ObjectId
+      let objectId;
+      try {
+        objectId = mongoose.Types.ObjectId(id);
+      } catch (error) {
+        return res.status(400).json({ success: false, message: "Invalid id format" });
+      }
+  
+      // Fetch the record from the database
+      // Assuming a single model (e.g., VerificationRecord) for simplicity
+      const model = VerificationRecord; // Replace with your actual model
+      const record = await model.findById(objectId).lean();
+      if (!record) {
+        return res.status(404).json({ success: false, message: "Record not found" });
+      }
+  
+      // Update the verification status
+      await model.findByIdAndUpdate(objectId, { isVerified: status });
+  
+      // Fetch the user's email address
+      const userId = record.userId; // Assuming the model has a userId field
+      const user = await User.findById(userId).lean(); // Assuming a User model exists
+      if (!user || !user.email) {
+        console.warn("User email not found for ID:", userId);
+      }
+  
+      // Send email notification asynchronously
+      if (user && user.email) {
+        sendVerificationStatusEmail(user.email, status)
+          .then(() => console.log("Email sent successfully"))
+          .catch((emailError) => console.error("Failed to send email:", emailError));
+      }
+  
+      // Respond with success
+      return res.status(200).json({ success: true, message: `Verification status updated to ${status} successfully` });
+    } catch (error) {
+      console.error("Error updating verification status:", error);
+      return res.status(500).json({ success: false, message: "Internal Server Error" });
     }
-
-    let model;
-    let userIdField;
-
-    switch (role) {
-      case 'professional':
-        model = Professionalinfo;
-        userIdField = 'userId';
-        break;
-      case 'merchant':
-        model = Merchantinfo;
-        userIdField = 'userID';
-        break;
-      case 'organization':
-        model = Organizationinfo;
-        userIdField = 'userID';
-        break;
-      default:
-        return res.status(400).json({ success: false, message: "Invalid role specified" });
-    }
-
-    const record = await model.findById(id).lean();
-    if (!record) {
-      return res.status(404).json({ success: false, message: "Record not found" });
-    }
-
-    await model.findByIdAndUpdate(id, { isVerified: status });
-
-    return res.status(200).json({ success: true, message: `Verification status updated to ${status} successfully` });
-  } catch (error) {
-    console.error("Error updating verification status:", error);
-    return res.status(500).json({ success: false, message: "Internal Server Error" });
+  };
+  
+  // Helper function to send email
+  async function sendVerificationStatusEmail(email, status) {
+    const transporter = nodemailer.createTransport({
+      service: 'Gmail', // Replace with your email service
+      auth: {
+        user: process.env.EMAIL_USER, // Your email address
+        pass: process.env.EMAIL_PASS, // Your email password or app-specific password
+      },
+    });
+  
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: email,
+      subject: 'Verification Status Update',
+      text: `Your verification status has been updated to: ${status}.`,
+      html: `<p>Your verification status has been updated to: <strong>${status}</strong>.</p>`,
+    };
+  
+    await transporter.sendMail(mailOptions);
   }
-};
-
-
 
 exports.getFounderVendorDetails = async (req, res) => {
   try {
@@ -507,3 +419,6 @@ exports.getFounderVendorDetails = async (req, res) => {
       });
   }
 };
+
+
+
