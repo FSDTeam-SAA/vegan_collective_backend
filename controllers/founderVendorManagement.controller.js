@@ -9,7 +9,7 @@ const nodemailer = require('nodemailer'); // For sending emails
 exports.fetchRequiredData = async (req, res) => {
   try {
     const { page = 1, limit = 10, search = '', order = 'asc', isVerified = 'all', role = 'all' } = req.query;
-    
+
     // Ensure pagination is an integer
     const pageNumber = parseInt(page, 10);
     const limitNumber = parseInt(limit, 10);
@@ -54,8 +54,6 @@ exports.fetchRequiredData = async (req, res) => {
       address: 1, governmentIssuedID: 1, photoWithID: 1, professionalCertification: 1
     })
       .sort({ createdAt: order === 'asc' ? 1 : -1 })
-      .skip(skip)
-      .limit(limitNumber)
       .lean();
 
     const professionalsWithRole = await Promise.all(professionalData.map(async (item) => {
@@ -70,8 +68,6 @@ exports.fetchRequiredData = async (req, res) => {
       address: 1, governmentIssuedID: 1, photoWithID: 1, professionalCertification: 1
     })
       .sort({ createdAt: order === 'asc' ? 1 : -1 })
-      .skip(skip)
-      .limit(limitNumber)
       .lean();
 
     const merchantsWithRole = await Promise.all(merchantData.map(async (item) => {
@@ -86,8 +82,6 @@ exports.fetchRequiredData = async (req, res) => {
       address: 1, governmentIssuedID: 1, photoWithID: 1, professionalCertification: 1
     })
       .sort({ createdAt: order === 'asc' ? 1 : -1 })
-      .skip(skip)
-      .limit(limitNumber)
       .lean();
 
     const organizationsWithRole = await Promise.all(organizationData.map(async (item) => {
@@ -107,10 +101,17 @@ exports.fetchRequiredData = async (req, res) => {
       combinedData = organizationsWithRole;
     }
 
-    // Ensure only 1 item is returned when limit=1
-    if (limitNumber === 1 && combinedData.length > 1) {
-      combinedData = [combinedData[0]]; // If more than 1 item, slice to only the first one
-    }
+    // Apply global sorting
+    combinedData.sort((a, b) => {
+      if (order === 'asc') {
+        return a.createdAt - b.createdAt;
+      } else {
+        return b.createdAt - a.createdAt;
+      }
+    });
+
+    // Apply global pagination
+    const paginatedData = combinedData.slice(skip, skip + limitNumber);
 
     // Total count for pagination
     const totalProfessionals = await Professionalinfo.countDocuments(professionalQuery);
@@ -126,7 +127,7 @@ exports.fetchRequiredData = async (req, res) => {
     return res.status(200).json({
       success: true,
       message: "Fetched data",
-      data: combinedData,
+      data: paginatedData,
       meta: {
         currentPage: pageNumber,
         totalPages,
