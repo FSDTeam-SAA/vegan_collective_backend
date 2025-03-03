@@ -201,17 +201,24 @@ exports.fetchPendingVerificationData = async (req, res) => {
           governmentIssuedID: 1,
           photoWithID: 1,
           professionalCertification: 1,
-          email: 1,
         }
       ).lean();
   
       if (pendingProfessional) {
+        // Fetch user details from the User schema
+        const user = await User.findById(pendingProfessional.userId, {
+          fullName: 1,
+          email: 1,
+        }).lean();
+  
         return res.status(200).json({
           success: true,
           message: "Pending verification data retrieved successfully.",
           data: {
             ...pendingProfessional,
             role: "professional",
+            fullName: user?.fullName || null,
+            email: user?.email || null,
           },
         });
       }
@@ -228,17 +235,24 @@ exports.fetchPendingVerificationData = async (req, res) => {
           governmentIssuedID: 1,
           photoWithID: 1,
           professionalCertification: 1,
-          email: 1,
         }
       ).lean();
   
       if (pendingMerchant) {
+        // Fetch user details from the User schema
+        const user = await User.findById(pendingMerchant.userID, {
+          fullName: 1,
+          email: 1,
+        }).lean();
+  
         return res.status(200).json({
           success: true,
           message: "Pending verification data retrieved successfully.",
           data: {
             ...pendingMerchant,
             role: "merchant",
+            fullName: user?.fullName || null,
+            email: user?.email || null,
           },
         });
       }
@@ -255,17 +269,24 @@ exports.fetchPendingVerificationData = async (req, res) => {
           governmentIssuedID: 1,
           photoWithID: 1,
           professionalCertification: 1,
-          email: 1,
         }
       ).lean();
   
       if (pendingOrganization) {
+        // Fetch user details from the User schema
+        const user = await User.findById(pendingOrganization.userID, {
+          fullName: 1,
+          email: 1,
+        }).lean();
+  
         return res.status(200).json({
           success: true,
           message: "Pending verification data retrieved successfully.",
           data: {
             ...pendingOrganization,
             role: "organization",
+            fullName: user?.fullName || null,
+            email: user?.email || null,
           },
         });
       }
@@ -300,15 +321,13 @@ exports.fetchPendingVerificationData = async (req, res) => {
       }
   
       // Convert id to ObjectId
-      let objectId;
-      try {
-        objectId = mongoose.Types.ObjectId(id);
-      } catch (error) {
+      if (!mongoose.isValidObjectId(id)) {
         return res.status(400).json({ success: false, message: "Invalid id format" });
       }
+      const objectId = new mongoose.Types.ObjectId(id);
+      
   
       // Fetch the record from the database
-      // Assuming a single model (e.g., VerificationRecord) for simplicity
       const model = VerificationRecord; // Replace with your actual model
       const record = await model.findById(objectId).lean();
       if (!record) {
@@ -338,7 +357,7 @@ exports.fetchPendingVerificationData = async (req, res) => {
       console.error("Error updating verification status:", error);
       return res.status(500).json({ success: false, message: "Internal Server Error" });
     }
-  };
+  };;
   
   // Helper function to send email
   async function sendVerificationStatusEmail(email, status) {
