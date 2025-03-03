@@ -29,7 +29,7 @@ exports.createProfessionalInfo = async (req, res) => {
       }
 
       // ✅ Check if professional info already exists
-      const existingProfessionalInfo = await Professionalinfo.findOne({ userId: userID });
+      const existingProfessionalInfo = await Professionalinfo.findOne({ userID: userID });
       if (existingProfessionalInfo) {
         return res.status(400).json({
           success: false,
@@ -52,9 +52,9 @@ exports.createProfessionalInfo = async (req, res) => {
 
       const profilePhotoUrl = req.file ? req.file.path : null;
 
-      // ✅ Use correct `userId` field name
+      // ✅ Use correct `userID` field name
       const newProfessionalInfo = new Professionalinfo({
-        userId: userID, // ✅ FIXED: Correct field name
+        userID: userID, // ✅ FIXED: Correct field name
         fullName,
         profilePhoto: profilePhotoUrl,
         designation,

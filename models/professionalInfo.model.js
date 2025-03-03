@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 
 const professionalInfoSchema = new mongoose.Schema(
   {
-    userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+    userID: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
 
     profilePhoto: {
       type: String,
