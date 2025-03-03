@@ -22,11 +22,13 @@ const professionalInfoSchema = new mongoose.Schema(
     about: {
       type: String,
     },
-   highlightedStatement: [{ 
-    title: { type: String },
-    description: { type: String }
-  }],
-  
+    highlightedStatement: [
+      {
+        title: { type: String },
+        description: { type: String },
+      },
+    ],
+
     experience: [
       {
         type: String,
