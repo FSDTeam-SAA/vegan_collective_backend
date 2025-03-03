@@ -32,6 +32,7 @@ exports.createMerchantInfo = async (req, res) => {
       let parsedBusinessHours = [];
       let parsedHighlightedStatement = [];
       
+      
       try {
         if (businessHours) parsedBusinessHours = JSON.parse(businessHours);
         if (highlightedStatement) parsedHighlightedStatement = JSON.parse(highlightedStatement);
