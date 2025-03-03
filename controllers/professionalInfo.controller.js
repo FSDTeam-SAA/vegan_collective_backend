@@ -105,41 +105,50 @@ exports.createProfessionalInfo = async (req, res) => {
 /**
  * Get all professional info with filtering, pagination, and sorting
  */
-exports.getAllProfessionalInfo = async (req, res) => {
+exports. getAllProfessionalInfo = async (req, res) => {
   try {
-    const { page = 1, limit = 6, sortBy = "fullName", order = "asc", fullName, designation, address } = req.query;
+    const { fullName, designation, address, page = 1, limit = 6, sortBy = "fullName", order = "asc" } = req.query;
 
-    // Build filters
+    // Build the filter object based on query parameters
     const filter = {};
-    if (fullName) filter.fullName = { $regex: fullName, $options: "i" };
+    if (fullName) filter.fullName = { $regex: fullName, $options: "i" }; // Case-insensitive search
     if (designation) filter.designation = { $regex: designation, $options: "i" };
     if (address) filter.address = { $regex: address, $options: "i" };
 
-    // Sorting and pagination
-    const sortOptions = { [sortBy]: order === "asc" ? 1 : -1 };
-    const skip = (parseInt(page) - 1) * parseInt(limit);
+    // Calculate pagination values
+    const skip = (page - 1) * limit;
 
-    const professionalInfoList = await Professionalinfo.find(filter)
-      .sort(sortOptions)
+    // Build the sort object
+    const sort = {};
+    sort[sortBy] = order === "asc" ? 1 : -1;
+
+    // Fetch professional info with filtering, pagination, and sorting
+    const professionalInfos = await Professionalinfo.find(filter)
+      .sort(sort)
       .skip(skip)
       .limit(parseInt(limit));
 
-    const totalDocuments = await Professionalinfo.countDocuments(filter);
-    const totalPages = Math.ceil(totalDocuments / parseInt(limit));
+    // Get the total count of documents matching the filter (for pagination)
+    const totalCount = await Professionalinfo.countDocuments(filter);
 
-    return res.status(200).json({
+    res.status(200).json({
       success: true,
       message: "Professional info retrieved successfully",
-      data: professionalInfoList,
+      data: professionalInfos,
       pagination: {
         currentPage: parseInt(page),
-        totalPages,
-        totalItems: totalDocuments,
+        totalPages: Math.ceil(totalCount / limit),
+        totalItems: totalCount,
         itemsPerPage: parseInt(limit),
       },
     });
   } catch (error) {
-    return res.status(500).json({ success: false, message: "Error retrieving professional info", error: error.message });
+    console.error("Error:", error.message);
+    res.status(500).json({
+      success: false,
+      message: "Error retrieving professional info",
+      error: error.message,
+    });
   }
 };
 

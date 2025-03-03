@@ -367,6 +367,7 @@ exports.getFounderVendorDetails = async (req, res) => {
       // Combine data into a structured response
       const profileData = {
           profilePhoto: professionalData?.profilePhoto || merchantData?.profilePhoto || organizationData?.profilePhoto || null,
+          shortDescriptionOfStore: professionalData?.designation || merchantData?.shortDescriptionOfStore || organizationData?.shortDescriptionOfOrganization || null,
           businessName: professionalData?.businessName || merchantData?.businessName || null,
           organizationName: organizationData?.organizationName || null,
           about: professionalData?.about || merchantData?.about || organizationData?.about || null,
