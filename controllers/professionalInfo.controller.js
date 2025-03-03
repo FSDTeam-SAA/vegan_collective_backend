@@ -105,42 +105,54 @@ exports.createProfessionalInfo = async (req, res) => {
 /**
  * Get all professional info with filtering, pagination, and sorting
  */
-exports. getAllProfessionalInfo = async (req, res) => {
+exports.getAllProfessionalInfo = async (req, res) => {
   try {
-    const { fullName, designation, address, page = 1, limit = 6, sortBy = "fullName", order = "asc" } = req.query;
+    // Extract query parameters for filtering
+    const { fullName, designation, address } = req.query;
+
+    // Extract query parameters for pagination
+    const page = parseInt(req.query.page, 10) || 1; // Default to page 1 if not provided
+    const limit = parseInt(req.query.limit, 10) || 10; // Default to 10 items per page if not provided
+
+    // Extract query parameters for sorting
+    const sortBy = req.query.sortBy || "createdAt"; // Default to sorting by createdAt
+    const order = req.query.order === "asc" ? 1 : -1; // Default to descending order
 
     // Build the filter object based on query parameters
     const filter = {};
     if (fullName) filter.fullName = { $regex: fullName, $options: "i" }; // Case-insensitive search
-    if (designation) filter.designation = { $regex: designation, $options: "i" };
-    if (address) filter.address = { $regex: address, $options: "i" };
+    if (designation) filter.designation = { $regex: designation, $options: "i" }; // Case-insensitive search
+    if (address) filter.address = { $regex: address, $options: "i" }; // Case-insensitive search
 
-    // Calculate pagination values
+    // Calculate skip value for pagination
     const skip = (page - 1) * limit;
 
-    // Build the sort object
-    const sort = {};
-    sort[sortBy] = order === "asc" ? 1 : -1;
-
-    // Fetch professional info with filtering, pagination, and sorting
-    const professionalInfos = await Professionalinfo.find(filter)
-      .sort(sort)
+    // Fetch professional info entries with filtering, pagination, and sorting
+    const professionalInfoList = await Professionalinfo.find(filter)
+      .sort({ [sortBy]: order }) // Dynamic sorting
       .skip(skip)
-      .limit(parseInt(limit));
+      .limit(limit);
 
-    // Get the total count of documents matching the filter (for pagination)
-    const totalCount = await Professionalinfo.countDocuments(filter);
+    // Count total number of documents matching the filter
+    const totalItems = await Professionalinfo.countDocuments(filter);
 
+    // Calculate total pages
+    const totalPages = Math.ceil(totalItems / limit);
+
+    // Prepare pagination metadata
+    const pagination = {
+      currentPage: page,
+      totalPages,
+      totalItems,
+      itemsPerPage: limit,
+    };
+
+    // Return the list of professional info entries with pagination metadata
     res.status(200).json({
       success: true,
-      message: "Professional info retrieved successfully",
-      data: professionalInfos,
-      pagination: {
-        currentPage: parseInt(page),
-        totalPages: Math.ceil(totalCount / limit),
-        totalItems: totalCount,
-        itemsPerPage: parseInt(limit),
-      },
+      message: "Professional info entries retrieved successfully",
+      data: professionalInfoList,
+      pagination,
     });
   } catch (error) {
     console.error("Error:", error.message);
@@ -151,7 +163,6 @@ exports. getAllProfessionalInfo = async (req, res) => {
     });
   }
 };
-
 /**
  * Get a single professional info entry by professionalId
  */
@@ -162,13 +173,15 @@ exports.getProfessionalInfoByProfessionalId = async (req, res) => {
     // Query the database using the professionalId field
     const professionalInfo = await Professionalinfo.findOne({ professionalId });
 
+    // If no matching document is found, return a 404 response
     if (!professionalInfo) {
       return res.status(404).json({
         success: false,
-        message: "Professional info not found",
+        message: "Professional ID not found in the database",
       });
     }
 
+    // Return the professional info if found
     return res.status(200).json({
       success: true,
       message: "Professional info retrieved successfully",
