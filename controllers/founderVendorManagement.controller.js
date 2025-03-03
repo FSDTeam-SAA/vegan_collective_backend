@@ -189,11 +189,26 @@ exports.fetchPendingVerificationData = async (req, res) => {
         });
       }
   
-      // Fetch professional info where isVerified is "pending" and _id matches
+      // Helper function to fetch email by userId
+      const getEmail = async (userId) => {
+        if (!userId) return null;
+  
+        // Validate the userId and convert it to ObjectId
+        if (!mongoose.Types.ObjectId.isValid(userId)) {
+          console.error("Invalid userId:", userId);
+          return null;
+        }
+  
+        const user = await User.findById(new mongoose.Types.ObjectId(userId), { email: 1 }).lean();
+        return user?.email || null;
+      };
+  
+      // Fetch pending professional info
       const pendingProfessional = await Professionalinfo.findOne(
         { isVerified: "pending", _id: id },
         {
-          userID: 1,
+          userId: 1, // Ensure this matches the field name in your database
+          fullName: 1,
           businessName: 1,
           address: 1,
           isVerified: 1,
@@ -205,29 +220,32 @@ exports.fetchPendingVerificationData = async (req, res) => {
       ).lean();
   
       if (pendingProfessional) {
-        // Fetch user details from the User schema
-        const user = await User.findById(pendingProfessional.userId, {
-          fullName: 1,
-          email: 1,
-        }).lean();
+        // Enrich the professional data with email and role
+        const professionalsWithRole = await Promise.all(
+          [pendingProfessional].map(async (item) => {
+            const email = await getEmail(item.userId); // Fetch email using the helper function
+            return {
+              ...item,
+              email,
+              role: "professional",
+              userID: item.userId, // Add userID for consistency
+            };
+          })
+        );
   
         return res.status(200).json({
           success: true,
           message: "Pending verification data retrieved successfully.",
-          data: {
-            ...pendingProfessional,
-            role: "professional",
-            fullName: user?.fullName || null,
-            email: user?.email || null,
-          },
+          data: professionalsWithRole[0], // Return the enriched data
         });
       }
   
-      // Fetch merchant info where isVerified is "pending" and _id matches
+      // Fetch pending merchant info
       const pendingMerchant = await Merchantinfo.findOne(
         { isVerified: "pending", _id: id },
         {
           userID: 1,
+          fullName: 1,
           businessName: 1,
           address: 1,
           isVerified: 1,
@@ -239,25 +257,19 @@ exports.fetchPendingVerificationData = async (req, res) => {
       ).lean();
   
       if (pendingMerchant) {
-        // Fetch user details from the User schema
-        const user = await User.findById(pendingMerchant.userID, {
-          fullName: 1,
-          email: 1,
-        }).lean();
-  
+        const email = await getEmail(pendingMerchant.userID); // Fetch email using the helper function
         return res.status(200).json({
           success: true,
           message: "Pending verification data retrieved successfully.",
           data: {
             ...pendingMerchant,
+            email,
             role: "merchant",
-            fullName: user?.fullName || null,
-            email: user?.email || null,
           },
         });
       }
   
-      // Fetch organization info where isVerified is "pending" and _id matches
+      // Fetch pending organization info
       const pendingOrganization = await Organizationinfo.findOne(
         { isVerified: "pending", _id: id },
         {
@@ -273,20 +285,14 @@ exports.fetchPendingVerificationData = async (req, res) => {
       ).lean();
   
       if (pendingOrganization) {
-        // Fetch user details from the User schema
-        const user = await User.findById(pendingOrganization.userID, {
-          fullName: 1,
-          email: 1,
-        }).lean();
-  
+        const email = await getEmail(pendingOrganization.userID); // Fetch email using the helper function
         return res.status(200).json({
           success: true,
           message: "Pending verification data retrieved successfully.",
           data: {
             ...pendingOrganization,
+            email,
             role: "organization",
-            fullName: user?.fullName || null,
-            email: user?.email || null,
           },
         });
       }
