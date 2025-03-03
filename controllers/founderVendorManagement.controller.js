@@ -142,8 +142,6 @@ exports.fetchRequiredData = async (req, res) => {
 };
 
 
-
-// exports.fetchRequiredData = async (req, res) => {
 //   try {
 //     const { page = 1, limit = 10, search = '', order = 'asc', isVerified = 'all', role = 'all' } = req.query;
 //     const pageNumber = parseInt(page, 10);
@@ -340,6 +338,8 @@ exports.updateVerificationStatus = async (req, res) => {
   }
 };
 
+
+
 exports.getFounderVendorDetails = async (req, res) => {
   try {
       const { id, userID } = req.query; // Get both ID and userID from query parameters
@@ -357,10 +357,16 @@ exports.getFounderVendorDetails = async (req, res) => {
               message: 'userID is required',
           });
       }
-      // Fetch professional info
+
+      // Fetch data from database
+      const professionalData = await Professionalinfo.findById(id).catch(() => null);
+      const merchantData = await Merchantinfo.findById(id).catch(() => null);
+      const organizationData = await Organizationinfo.findById(id).catch(() => null);
+      const userData = await User.findById(userID).catch(() => null);
+
       // Combine data into a structured response
       const profileData = {
-          profilePhoto: professionalData?.profilePhoto ||  merchantData?.profilePhoto || organizationData?.profilePhoto || null,
+          profilePhoto: professionalData?.profilePhoto || merchantData?.profilePhoto || organizationData?.profilePhoto || null,
           businessName: professionalData?.businessName || merchantData?.businessName || null,
           organizationName: organizationData?.organizationName || null,
           about: professionalData?.about || merchantData?.about || organizationData?.about || null,
@@ -390,4 +396,3 @@ exports.getFounderVendorDetails = async (req, res) => {
       });
   }
 };
-

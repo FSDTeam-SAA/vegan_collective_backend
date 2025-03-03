@@ -26,6 +26,7 @@ const professionalInfoSchema = new mongoose.Schema(
     title: { type: String },
     description: { type: String }
   }],
+  
     experience: [
       {
         type: String,
