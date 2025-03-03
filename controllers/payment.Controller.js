@@ -1,28 +1,64 @@
+const Userpayment =  require('../models/userPayment.model')
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY)
+
+const createCustomer = async (req, res) => {
+  try {
+    const { email } = req.body
+
+    // Check if customer exists
+    const customers = await stripe.customers.list({ email, limit: 1 })
+    let customer = customers.data.length ? customers.data[0] : null
+
+    // Create customer if not found
+    if (!customer) {
+      customer = await stripe.customers.create({ email })
+    }
+
+    res.json({ customerId: customer.id })
+  } catch (error) {
+    console.error('Error creating customer:', error)
+    res.status(500).json({ error: 'Failed to create customer' })
+  }
+}
 
 const savePaymentMethod = async (req, res) => {
   try {
-    const { paymentMethodId, customerId } = req.body
+    const { paymentMethodId, customerId, userId } = req.body
 
+    // Attach the payment method to the customer
     await stripe.paymentMethods.attach(paymentMethodId, {
       customer: customerId,
     })
 
+    // Set the default payment method
     await stripe.customers.update(customerId, {
       invoice_settings: {
         default_payment_method: paymentMethodId,
       },
     })
 
+    // Save payment method details to the database
+    const paymentEntry = new Userpayment({
+      userID: userId,
+      customerId,
+      paymentMethodId,
+    })
+
+    await paymentEntry.save()
+    console.log('Payment method saved successfully')
     res.status(200).json({
       status: true,
       message: 'Payment method saved successfully',
+      data: paymentEntry,
     })
+
+    console.log('Payment method saved successfully')
   } catch (error) {
     console.error('Error saving payment method:', error)
     res.status(500).json({ success: false, message: error.message })
   }
 }
+
 
 const chargeCustomer = async (customerId, paymentMethodId, amount) => {
   try {
@@ -32,7 +68,7 @@ const chargeCustomer = async (customerId, paymentMethodId, amount) => {
       customer: customerId,
       payment_method: paymentMethodId,
       confirm: true,
-      return_url: 'https://yourwebsite.com/payment-success', // Redirect URL
+      return_url: 'https://yourwebsite.com/payment-success',
     })
 
     return paymentIntent
@@ -66,7 +102,7 @@ const purchaseMethod = async (req, res) => {
         amount: vendorAmount,
         currency: 'usd',
         destination: sellerStripeAccountId,
-        transfer_group: `ORDER_${paymentIntent.id}`, // Group transfers
+        transfer_group: `ORDER_${paymentIntent.id}`,
       })
 
       return res.status(200).json({
@@ -113,4 +149,5 @@ module.exports = {
   savePaymentMethod,
   purchaseMethod,
   webhookController,
+  createCustomer,
 }
