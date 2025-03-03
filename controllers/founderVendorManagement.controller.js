@@ -310,81 +310,88 @@ exports.fetchPendingVerificationData = async (req, res) => {
       });
     }
   };
-
+  
   exports.updateVerificationStatus = async (req, res) => {
     try {
-      const { id, status } = req.body;
-  
-      // Validate required fields
-      if (!id || !status) {
-        return res.status(400).json({ success: false, message: "Missing required fields: id or status" });
-      }
-  
-      // Validate status against enum values
-      const allowedStatuses = ["approved", "declined", "pending"];
-      if (!allowedStatuses.includes(status)) {
-        return res.status(400).json({ success: false, message: "Invalid status. Allowed values are: approved, declined, pending" });
-      }
-  
-      // Convert id to ObjectId
-      if (!mongoose.isValidObjectId(id)) {
-        return res.status(400).json({ success: false, message: "Invalid id format" });
-      }
-      const objectId = new mongoose.Types.ObjectId(id);
-      
-  
-      // Fetch the record from the database
-      const model = VerificationRecord; // Replace with your actual model
-      const record = await model.findById(objectId).lean();
-      if (!record) {
-        return res.status(404).json({ success: false, message: "Record not found" });
-      }
-  
-      // Update the verification status
-      await model.findByIdAndUpdate(objectId, { isVerified: status });
-  
-      // Fetch the user's email address
-      const userId = record.userId; // Assuming the model has a userId field
-      const user = await User.findById(userId).lean(); // Assuming a User model exists
-      if (!user || !user.email) {
-        console.warn("User email not found for ID:", userId);
-      }
-  
-      // Send email notification asynchronously
-      if (user && user.email) {
-        sendVerificationStatusEmail(user.email, status)
-          .then(() => console.log("Email sent successfully"))
-          .catch((emailError) => console.error("Failed to send email:", emailError));
-      }
-  
-      // Respond with success
-      return res.status(200).json({ success: true, message: `Verification status updated to ${status} successfully` });
+        const { userId, status } = req.body;
+
+        // Validate required fields
+        if (!userId || !status) {
+            return res.status(400).json({ success: false, message: "Missing required fields: userId or status" });
+        }
+
+        // Validate allowed statuses
+        const allowedStatuses = ["approved", "declined", "pending"];
+        if (!allowedStatuses.includes(status)) {
+            return res.status(400).json({ success: false, message: "Invalid status. Allowed values are: approved, declined, pending" });
+        }
+
+        // Validate userId format
+        if (!mongoose.isValidObjectId(userId)) {
+            return res.status(400).json({ success: false, message: "Invalid userId format" });
+        }
+
+        // Update Merchantinfo
+        const merchantInfoUpdated = await Merchantinfo.findOneAndUpdate(
+            { userID: userId },
+            { isVerified: status },
+            { new: true }
+        );
+
+        // Update Professionalinfo
+        const professionalInfoUpdated = await Professionalinfo.findOneAndUpdate(
+            { userID: userId },
+            { isVerified: status },
+            { new: true }
+        );
+
+        // Update Organizationinfo
+        const organizationInfoUpdated = await Organizationinfo.findOneAndUpdate(
+            { userID: userId },
+            { isVerified: status },
+            { new: true }
+        );
+
+        // Log updates for debugging
+        // console.log("Merchant Info Updated:", merchantInfoUpdated);
+        // console.log("Professional Info Updated:", professionalInfoUpdated);
+        // console.log("Organization Info Updated:", organizationInfoUpdated);
+
+        // Send email notification (optional)
+        // You can use the `sendVerificationStatusEmail` function here if needed.
+
+        // Respond with success
+        return res.status(200).json({
+            success: true,
+            message: `Verification status updated to ${status} for all info types`,
+        });
     } catch (error) {
-      console.error("Error updating verification status:", error);
-      return res.status(500).json({ success: false, message: "Internal Server Error" });
+        console.error("Error updating verification status:", error);
+        return res.status(500).json({ success: false, message: "Internal Server Error" });
     }
-  };;
+};
+
+async function sendVerificationStatusEmail(email, status) {
+    try {
+        const transporter = nodemailer.createTransport({
+            service: 'Gmail',
+            auth: {
+                user: process.env.EMAIL_USER,
+                pass: process.env.EMAIL_PASS,
+            },
+        });
+
+        await transporter.sendMail({
+            from: process.env.EMAIL_USER,
+            to: email,
+            subject: 'Verification Status Update',
+            html: `<p>Your verification status has been updated to: <strong>${status}</strong>.</p>`
+        });
+    } catch (error) {
+        console.error("Failed to send email:", error);
+    }
+}
   
-  // Helper function to send email
-  async function sendVerificationStatusEmail(email, status) {
-    const transporter = nodemailer.createTransport({
-      service: 'Gmail', // Replace with your email service
-      auth: {
-        user: process.env.EMAIL_USER, // Your email address
-        pass: process.env.EMAIL_PASS, // Your email password or app-specific password
-      },
-    });
-  
-    const mailOptions = {
-      from: process.env.EMAIL_USER,
-      to: email,
-      subject: 'Verification Status Update',
-      text: `Your verification status has been updated to: ${status}.`,
-      html: `<p>Your verification status has been updated to: <strong>${status}</strong>.</p>`,
-    };
-  
-    await transporter.sendMail(mailOptions);
-  }
 
 exports.getFounderVendorDetails = async (req, res) => {
   try {
