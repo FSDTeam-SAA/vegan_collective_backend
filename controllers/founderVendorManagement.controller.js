@@ -48,7 +48,11 @@ exports.fetchRequiredData = async (req, res) => {
 
     const professionalsWithRole = await Promise.all(professionalData.map(async (item) => {
       const email = await getEmail(item.userId);
-      return { ...item, email, role: 'professional' };
+
+      const resData = { ...item, email, role: 'professional', userID: item.userId };
+
+      delete resData.userId;
+      return resData
     }));
 
     // Fetch merchant info
