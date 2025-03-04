@@ -48,7 +48,7 @@ const organizationInfoSchema = new mongoose.Schema(
       type: String,
      
     },
-    isVerified: { type: String, enum: ["pending", "approved", "rejected"], default: "pending" }, 
+    isVerified: { type: String, enum: ["pending", "approved", "declined"], default: "pending" }, 
     phoneNumber: {
       type: String,
     },
