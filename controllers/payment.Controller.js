@@ -59,23 +59,23 @@ const savePaymentMethod = async (req, res) => {
   }
 }
 
-// const chargeCustomer = async (customerId, paymentMethodId, amount) => {
-//   try {
-//     const paymentIntent = await stripe.paymentIntents.create({
-//       amount: Math.round(amount * 100), // Convert to cents
-//       currency: 'usd',
-//       customer: customerId,
-//       payment_method: paymentMethodId,
-//       confirm: true,
-//       return_url: 'https://yourwebsite.com/payment-success',
-//     })
+const chargeCustomer = async (customerId, paymentMethodId, amount) => {
+  try {
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: Math.round(amount * 100), // Convert to cents
+      currency: 'usd',
+      customer: customerId,
+      payment_method: paymentMethodId,
+      confirm: true,
+      return_url: 'https://yourwebsite.com/payment-success',
+    })
 
-//     return paymentIntent
-//   } catch (error) {
-//     console.error('Error creating PaymentIntent:', error)
-//     throw error
-//   }
-// }
+    return paymentIntent
+  } catch (error) {
+    console.error('Error creating PaymentIntent:', error)
+    throw error
+  }
+}
 
 // const purchaseMethod = async (req, res) => {
 //   try {
@@ -85,22 +85,49 @@ const savePaymentMethod = async (req, res) => {
 //       return res.status(400).json({ error: 'Missing required fields' })
 //     }
 
-    
-//     const user = User.findById(userID)
-//     const {customerId, paymentMethodId } = user
+//     // Ensure we wait for the user query
+//     const user = await User.findById(userID)
+//     if (!user) {
+//       return res.status(404).json({ error: 'User not found' })
+//     }
 
+//     // Ensure we wait for the user payment method query
+//     const userpayment = await Userpayment.findOne({ userID })
+//     if (!userpayment) {
+//       return res
+//         .status(400)
+//         .json({ error: 'User does not have a valid payment method' })
+//     }
+
+//     const { customerId, paymentMethodId } = userpayment
+
+//     console.log(customerId, 'customerId found')
+
+//     // Fetch merchant details
 //     const merchantUser = await Merchantinfo.findById(merchantID)
-//     const sellerStripeAccountId = merchantUser.StripeAccountId
+//     if (!merchantUser) {
+//       return res.status(404).json({ error: 'Merchant not found' })
+//     }
 
+//     const sellerStripeAccountId = merchantUser.StripeAccountId
+//     if (!sellerStripeAccountId) {
+//       return res
+//         .status(400)
+//         .json({ error: 'Merchant does not have a connected Stripe account' })
+//     }
+
+//     // Charge the customer
 //     const paymentIntent = await chargeCustomer(
 //       customerId,
 //       paymentMethodId,
 //       amount
 //     )
 
+//     console.log(paymentIntent, 'paymentIntent created')
+
 //     if (paymentIntent.status === 'succeeded') {
 //       // Calculate the 90% share for the vendor
-//       const vendorAmount = Math.round(amount * 0.9 * 100)
+//       const vendorAmount = Math.round(amount * 0.9 * 100) 
 
 //       // Create a transfer to the vendor's Stripe account
 //       const transfer = await stripe.transfers.create({
@@ -127,121 +154,11 @@ const savePaymentMethod = async (req, res) => {
 //   }
 // }
 
-// const chargeCustomer = async (customerId, paymentMethodId, amount) => {
-//   try {
-//     const paymentIntent = await stripe.paymentIntents.create({
-//       amount: Math.round(amount * 100), // Convert to cents
-//       currency: 'usd',
-//       customer: customerId,
-//       payment_method: paymentMethodId,
-//       confirm: true,
-//       return_url: 'https://yourwebsite.com/payment-success',
-//     })
-
-//     return paymentIntent
-//   } catch (error) {
-//     console.error('Error creating PaymentIntent:', error)
-//     throw error
-//   }
-// }
-
-// const purchaseMethod = async (req, res) => {
-//   try {
-//     const { userID, amount, merchantID } = req.body
-
-//     if (!userID || !amount || !merchantID) {
-//       return res.status(400).json({ error: 'Missing required fields' })
-//     }
-
-//     // Ensure we wait for the user query
-//     const user = await User.findById(userID)
-//     if (!user) {
-//       return res.status(404).json({ error: 'User not found' })
-//     }
-//  const userpayment = Userpayment.findById(userID)
-
-//     const { customerId, paymentMethodId } = userpayment
-
-//     console.log(customerId , paymentIntent, "paymentIntent------")
-
-//     if (!customerId || !paymentMethodId) {
-//       return res
-//         .status(400)
-//         .json({ error: 'User does not have a valid payment method' })
-//     }
-
-//     // Fetch merchant details
-//     const merchantUser = await Merchantinfo.findById(merchantID)
-//     if (!merchantUser) {
-//       return res.status(404).json({ error: 'Merchant not found' })
-//     }
-
-//     const sellerStripeAccountId = merchantUser.StripeAccountId
-//     if (!sellerStripeAccountId) {
-//       return res
-//         .status(400)
-//         .json({ error: 'Merchant does not have a connected Stripe account' })
-//     }
-
-//     // Charge the customer
-//     const paymentIntent = await chargeCustomer(
-//       customerId,
-//       paymentMethodId,
-//       amount
-//     )
-
-//     if (paymentIntent.status === 'succeeded') {
-//       // Calculate the 90% share for the vendor
-//       const vendorAmount = Math.round(amount * 0.9 * 100) // Convert to cents
-
-//       // Create a transfer to the vendor's Stripe account
-//       const transfer = await stripe.transfers.create({
-//         amount: vendorAmount,
-//         currency: 'usd',
-//         destination: sellerStripeAccountId,
-//         transfer_group: `ORDER_${paymentIntent.id}`,
-//       })
-
-//       return res.status(200).json({
-//         success: true,
-//         message: 'Payment processed and transferred successfully',
-//         paymentIntentId: paymentIntent.id,
-//         transferId: transfer.id,
-//         amountReceived: paymentIntent.amount_received,
-//         transferredAmount: vendorAmount / 100, // Convert back to dollars
-//       })
-//     } else {
-//       return res.status(400).json({ error: 'Payment failed' })
-//     }
-//   } catch (error) {
-//     console.error('Error processing payment:', error)
-//     return res.status(500).json({ error: 'Payment processing failed' })
-//   }
-// }
-
-const chargeCustomer = async (customerId, paymentMethodId, amount) => {
-  try {
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount: Math.round(amount * 100), // Convert to cents
-      currency: 'usd',
-      customer: customerId,
-      payment_method: paymentMethodId,
-      confirm: true,
-      return_url: 'https://yourwebsite.com/payment-success',
-    })
-
-    return paymentIntent
-  } catch (error) {
-    console.error('Error creating PaymentIntent:', error)
-    throw error
-  }
-}
-
 const purchaseMethod = async (req, res) => {
   try {
-    const { userID, amount, merchantID } = req.body
+    const { userID, amount, merchantID, productId } = req.body
 
-    if (!userID || !amount || !merchantID) {
+    if (!userID || !amount || !merchantID || !productId || !productId.length) {
       return res.status(400).json({ error: 'Missing required fields' })
     }
 
@@ -261,7 +178,6 @@ const purchaseMethod = async (req, res) => {
 
     const { customerId, paymentMethodId } = userpayment
 
-    console.log(customerId, 'customerId found')
 
     // Fetch merchant details
     const merchantUser = await Merchantinfo.findById(merchantID)
@@ -276,6 +192,12 @@ const purchaseMethod = async (req, res) => {
         .json({ error: 'Merchant does not have a connected Stripe account' })
     }
 
+    // **Optional: Validate product existence in the database**
+    // const products = await Product.find({ _id: { $in: productId } })
+    // if (products.length !== productId.length) {
+    //   return res.status(400).json({ error: 'Some products were not found' })
+    // }
+
     // Charge the customer
     const paymentIntent = await chargeCustomer(
       customerId,
@@ -287,7 +209,7 @@ const purchaseMethod = async (req, res) => {
 
     if (paymentIntent.status === 'succeeded') {
       // Calculate the 90% share for the vendor
-      const vendorAmount = Math.round(amount * 0.9 * 100) // Convert to cents
+      const vendorAmount = Math.round(amount * 0.9 * 100)
 
       // Create a transfer to the vendor's Stripe account
       const transfer = await stripe.transfers.create({
@@ -297,13 +219,24 @@ const purchaseMethod = async (req, res) => {
         transfer_group: `ORDER_${paymentIntent.id}`,
       })
 
+      // Save purchase details (optional)
+      const newPaymentRecord = new Userpayment({
+        userID,
+        customerId,
+        paymentMethodId,
+        sellerStripeAccountId,
+        productId,
+      })
+      await newPaymentRecord.save()
+
       return res.status(200).json({
         success: true,
         message: 'Payment processed and transferred successfully',
         paymentIntentId: paymentIntent.id,
         transferId: transfer.id,
         amountReceived: paymentIntent.amount_received,
-        transferredAmount: vendorAmount / 100, // Convert back to dollars
+        transferredAmount: vendorAmount / 100,
+        purchasedProducts: productId,
       })
     } else {
       return res.status(400).json({ error: 'Payment failed' })
