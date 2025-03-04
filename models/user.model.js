@@ -4,7 +4,7 @@ const userSchema = new mongoose.Schema(
   {
     role: {
       type: String,
-      enum: ["user", "admin", "vendor"],
+      enum: ['user', 'admin', 'vendor'],
     },
     fullName: {
       type: String,
@@ -23,8 +23,8 @@ const userSchema = new mongoose.Schema(
     },
     accountType: {
       type: String,
-      enum : ["merchant", "professional", "organization"],
-    }, 
+      enum: ['merchant', 'professional', 'organization'],
+    },
     image: {
       type: String,
     },
@@ -41,8 +41,12 @@ const userSchema = new mongoose.Schema(
     refreshToken: {
       type: String,
     },
-    
-    organizationInfo:[
+    paymentAdded: {
+      type: Boolean,
+      default: false,
+    },
+
+    organizationInfo: [
       {
         organizationName: {
           type: String,
@@ -77,17 +81,16 @@ const userSchema = new mongoose.Schema(
         },
         verificationStatus: {
           type: String,
-          enum: ["verified", "not verified"],
-          default: "not verified",
+          enum: ['verified', 'not verified'],
+          default: 'not verified',
         },
-      }
+      },
     ],
-   
   },
   {
     timestamps: true,
   }
-);
+)
 
 const User = mongoose.model("User", userSchema);
 module.exports = User;
