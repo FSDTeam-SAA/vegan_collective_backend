@@ -15,6 +15,12 @@ const userPaymentSchema = new mongoose.Schema(
     sellerStripeAccountId: {
       type: String,
     },
+    productId: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'MerchantProducts',
+      },
+    ],
   },
   {
     timestamps: true,
