@@ -205,7 +205,7 @@ exports.fetchPendingVerificationData = async (req, res) => {
   
       // Fetch pending professional info
       const pendingProfessional = await Professionalinfo.findOne(
-        { isVerified: "pending", _id: id },
+        { isVerified: { $in: ["approved", "declined", "pending"] }, _id: id },
         {
           userId: 1, // Ensure this matches the field name in your database
           fullName: 1,
@@ -242,7 +242,7 @@ exports.fetchPendingVerificationData = async (req, res) => {
   
       // Fetch pending merchant info
       const pendingMerchant = await Merchantinfo.findOne(
-        { isVerified: "pending", _id: id },
+        { isVerified: { $in: ["approved", "declined", "pending"] }, _id: id },
         {
           userID: 1,
           fullName: 1,
