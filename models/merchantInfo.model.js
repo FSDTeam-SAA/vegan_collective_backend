@@ -24,6 +24,9 @@ const merchantInfoSchema = new mongoose.Schema(
     shortDescriptionOfStore: {
       type: String,
     },
+    StripeAccountId: {
+      type: String
+    },
     businessHours: [
       {
         Day: {
