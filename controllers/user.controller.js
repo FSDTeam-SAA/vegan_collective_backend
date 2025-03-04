@@ -284,7 +284,7 @@ exports.getUserProfile = async (req, res) => {
 
     return res.status(200).json({
       status: true,
-      message: "User profile retrieved successfully",
+      message: 'User profile retrieved successfully',
 
       data: {
         _id: user._id,
@@ -293,8 +293,9 @@ exports.getUserProfile = async (req, res) => {
         email: user.email,
         accountType: user.accountType,
         token,
+        paymentAdded,
       },
-    });
+    })
   } catch (error) {
     return res.status(500).json({
       status: false,
