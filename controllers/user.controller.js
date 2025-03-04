@@ -2,11 +2,12 @@ const User = require("../models/user.model");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 const { sendEmail } = require("../utility/emailSender");
+const Reffer = require("../models/reffer.model");
 
 // Register a new user
 exports.registerUser = async (req, res) => {
   try {
-    const { role, fullName, email, password, accountType } = req.body;
+    const { role, fullName, email, password, accountType, ref } = req.body;
 
     // Check if the user already exists
     const existingUser = await User.findOne({ email });
@@ -29,6 +30,24 @@ exports.registerUser = async (req, res) => {
       accountType: role === "vendor" ? accountType : null, // Set accountType based on role
       verifyEmail: false,
     });
+
+    // Handle referral logic if `ref` is provided
+    if (ref) {
+      // Find the referral document by the provided slug
+      const referral = await Reffer.findOne({ slug: ref });
+
+      if (referral) {
+        // Push the new user's ID into the participants array
+        referral.participants.push(user._id);
+
+        // Increment the `remain` field
+        referral.remain += 1;
+
+        // Save the updated referral document
+        await referral.save();
+      }
+    }
+
 
     // Generate verification token
     const verifyToken = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
