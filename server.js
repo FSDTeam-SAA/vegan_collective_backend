@@ -4,6 +4,7 @@ const dotenv = require("dotenv").config();
 const cookieParser = require("cookie-parser");
 const cors = require("cors");
 const authenticateToken = require("./middleware/auth.middleware");
+const refferRoutes = require("./routes/refferRoutes");
 
 const zoomRoutes = require("./routes/zoomRoutes");
 
@@ -116,6 +117,7 @@ app.use("/api/v1", founderVerificationManagement);
 app.use("/api/v1", userRoute);
 // app.use('/api/v1', require('./routes/globalfind'));
 app.use("/api/v1/auth/zoom", zoomRoutes);
+app.use("/api/v1", refferRoutes); // Base API route
 
 // payment routes
 app.use("/api/v1/payment", paymentRoute);
