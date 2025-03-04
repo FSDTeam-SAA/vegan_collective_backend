@@ -71,7 +71,7 @@ exports.getCustomerById = async (req, res) => {
     res.status(200).json({ 
       success: true, 
       message: 'Customer fetched successfully', 
-      data: [customer] // Ensure data is an array
+      data: { customer } // Ensure data is an array
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
