@@ -179,13 +179,13 @@ exports.fetchPendingVerificationData = async (req, res) => {
 
   exports.fetchPendingVerificationDataById = async (req, res) => {
     try {
-      // Extract _id from request parameters
       const { id } = req.params;
   
-      if (!id) {
+      // Validate the ID format
+      if (!mongoose.Types.ObjectId.isValid(id)) {
         return res.status(400).json({
           success: false,
-          message: "ID is required.",
+          message: "Invalid ID format.",
         });
       }
   
@@ -193,7 +193,6 @@ exports.fetchPendingVerificationData = async (req, res) => {
       const getEmail = async (userId) => {
         if (!userId) return null;
   
-        // Validate the userId and convert it to ObjectId
         if (!mongoose.Types.ObjectId.isValid(userId)) {
           console.error("Invalid userId:", userId);
           return null;
@@ -203,97 +202,47 @@ exports.fetchPendingVerificationData = async (req, res) => {
         return user?.email || null;
       };
   
-      // Fetch pending professional info
-      const pendingProfessional = await Professionalinfo.findOne(
-        { isVerified: { $in: ["approved", "declined", "pending"] }, _id: id },
-        {
-          userId: 1, // Ensure this matches the field name in your database
-          fullName: 1,
-          businessName: 1,
-          address: 1,
-          isVerified: 1,
-          createdAt: 1,
-          governmentIssuedID: 1,
-          photoWithID: 1,
-          professionalCertification: 1,
-        }
-      ).lean();
+      // Helper function to fetch and enrich data
+      const fetchDataAndEnrich = async (Model, id, roleField) => {
+        const data = await Model.findOne(
+          { isVerified: { $in: ["approved", "declined", "pending"] }, _id: id },
+          { userID: 1, userId: 1, fullName: 1, businessName: 1, address: 1, isVerified: 1, createdAt: 1, governmentIssuedID: 1, photoWithID: 1, professionalCertification: 1 }
+        ).lean();
   
+        if (data) {
+          const email = await getEmail(data.userID || data.userId);
+          return { ...data, email, role: roleField };
+        }
+        return null;
+      };
+  
+      // Fetch data from Professionalinfo
+      const pendingProfessional = await fetchDataAndEnrich(Professionalinfo, id, "professional");
       if (pendingProfessional) {
-        // Enrich the professional data with email and role
-        const professionalsWithRole = await Promise.all(
-          [pendingProfessional].map(async (item) => {
-            const email = await getEmail(item.userId); // Fetch email using the helper function
-            return {
-              ...item,
-              email,
-              role: "professional",
-              userID: item.userId, // Add userID for consistency
-            };
-          })
-        );
-  
         return res.status(200).json({
           success: true,
           message: "Pending verification data retrieved successfully.",
-          data: professionalsWithRole[0], // Return the enriched data
+          data: pendingProfessional,
         });
       }
   
-      // Fetch pending merchant info
-      const pendingMerchant = await Merchantinfo.findOne(
-        { isVerified: { $in: ["approved", "declined", "pending"] }, _id: id },
-        {
-          userID: 1,
-          fullName: 1,
-          businessName: 1,
-          address: 1,
-          isVerified: 1,
-          createdAt: 1,
-          governmentIssuedID: 1,
-          photoWithID: 1,
-          professionalCertification: 1,
-        }
-      ).lean();
-  
+      // Fetch data from Merchantinfo
+      const pendingMerchant = await fetchDataAndEnrich(Merchantinfo, id, "merchant");
       if (pendingMerchant) {
-        const email = await getEmail(pendingMerchant.userID); // Fetch email using the helper function
         return res.status(200).json({
           success: true,
           message: "Pending verification data retrieved successfully.",
-          data: {
-            ...pendingMerchant,
-            email,
-            role: "merchant",
-          },
+          data: pendingMerchant,
         });
       }
   
-      // Fetch pending organization info
-      const pendingOrganization = await Organizationinfo.findOne(
-        { isVerified: "pending", _id: id },
-        {
-          userID: 1,
-          organizationName: 1,
-          address: 1,
-          isVerified: 1,
-          createdAt: 1,
-          governmentIssuedID: 1,
-          photoWithID: 1,
-          professionalCertification: 1,
-        }
-      ).lean();
-  
+      // Fetch data from Organizationinfo
+      const pendingOrganization = await fetchDataAndEnrich(Organizationinfo, id, "organization");
       if (pendingOrganization) {
-        const email = await getEmail(pendingOrganization.userID); // Fetch email using the helper function
         return res.status(200).json({
           success: true,
           message: "Pending verification data retrieved successfully.",
-          data: {
-            ...pendingOrganization,
-            email,
-            role: "organization",
-          },
+          data: pendingOrganization,
         });
       }
   
@@ -303,7 +252,7 @@ exports.fetchPendingVerificationData = async (req, res) => {
         message: "No pending verification data found for the given ID.",
       });
     } catch (error) {
-      console.error("Error fetching pending verification data by ID:", error);
+      console.error("Error fetching pending verification data by ID:", error.message);
       return res.status(500).json({
         success: false,
         message: "Internal Server Error. Please try again later.",
@@ -313,7 +262,7 @@ exports.fetchPendingVerificationData = async (req, res) => {
   
   exports.updateVerificationStatus = async (req, res) => {
     try {
-        const { userId, status } = req.body;
+        const { userId, status, message } = req.body;
 
         // Validate required fields
         if (!userId || !status) {
@@ -332,33 +281,60 @@ exports.fetchPendingVerificationData = async (req, res) => {
         }
 
         // Update Merchantinfo
-        const merchantInfoUpdated = await Merchantinfo.findOneAndUpdate(
-            { userID: userId },
+        let merchantInfoUpdated = await Merchantinfo.findOneAndUpdate(
+            { userID: userId }, // Use "userId" (lowercase "u")
             { isVerified: status },
             { new: true }
         );
+
+        if (!merchantInfoUpdated) {
+            merchantInfoUpdated = await Merchantinfo.create({
+                userID: userId, // Use "userId" (lowercase "u")
+                isVerified: status,
+            });
+        }
 
         // Update Professionalinfo
-        const professionalInfoUpdated = await Professionalinfo.findOneAndUpdate(
-            { userID: userId },
+        let professionalInfoUpdated = await Professionalinfo.findOneAndUpdate(
+            { userId: userId }, // Use "userId" (lowercase "u")
             { isVerified: status },
             { new: true }
         );
+
+        if (!professionalInfoUpdated) {
+            professionalInfoUpdated = await Professionalinfo.create({
+                userId: userId, // Use "userId" (lowercase "u")
+                isVerified: status,
+            });
+        }
 
         // Update Organizationinfo
-        const organizationInfoUpdated = await Organizationinfo.findOneAndUpdate(
-            { userID: userId },
+        let organizationInfoUpdated = await Organizationinfo.findOneAndUpdate(
+            { userID: userId }, // Use "userId" (lowercase "u")
             { isVerified: status },
             { new: true }
         );
 
-        // Log updates for debugging
+        if (!organizationInfoUpdated) {
+            organizationInfoUpdated = await Organizationinfo.create({
+                userID: userId, // Use "userId" (lowercase "u")
+                isVerified: status,
+            });
+        }
+
+        // Debugging logs
         // console.log("Merchant Info Updated:", merchantInfoUpdated);
         // console.log("Professional Info Updated:", professionalInfoUpdated);
         // console.log("Organization Info Updated:", organizationInfoUpdated);
 
-        // Send email notification (optional)
-        // You can use the `sendVerificationStatusEmail` function here if needed.
+        // Fetch the user's email to send the notification
+        const user = await User.findById(userId); // Assuming you have a User model
+        if (!user) {
+            return res.status(404).json({ success: false, message: "User not found" });
+        }
+
+        // Send email notification with custom message
+        await sendVerificationStatusEmail(user.email, status, message);
 
         // Respond with success
         return res.status(200).json({
@@ -371,7 +347,7 @@ exports.fetchPendingVerificationData = async (req, res) => {
     }
 };
 
-async function sendVerificationStatusEmail(email, status) {
+async function sendVerificationStatusEmail(email, status, message) {
     try {
         const transporter = nodemailer.createTransport({
             service: 'Gmail',
@@ -381,11 +357,17 @@ async function sendVerificationStatusEmail(email, status) {
             },
         });
 
+        // Customize email content to include the message
+        const emailContent = `
+            <p>Your verification status has been updated to: <strong>${status}</strong>.</p>
+            ${message ? `<p>Message from the admin: <em>${message}</em></p>` : ''}
+        `;
+
         await transporter.sendMail({
             from: process.env.EMAIL_USER,
             to: email,
             subject: 'Verification Status Update',
-            html: `<p>Your verification status has been updated to: <strong>${status}</strong>.</p>`
+            html: emailContent,
         });
     } catch (error) {
         console.error("Failed to send email:", error);
