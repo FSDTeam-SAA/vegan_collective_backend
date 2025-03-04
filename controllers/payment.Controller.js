@@ -1,29 +1,29 @@
+const User = require('../models/user.model')
 const Userpayment =  require('../models/userPayment.model')
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY)
 
-const createCustomer = async (req, res) => {
+
+const savePaymentMethod = async (req, res) => {
   try {
-    const { email } = req.body
+    const { paymentMethodId, userID } = req.body
+
+    // Find user by ID
+    const user = await User.findById(userID)
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' })
+    }
+
+    const email = user.email
 
     // Check if customer exists
     const customers = await stripe.customers.list({ email, limit: 1 })
     let customer = customers.data.length ? customers.data[0] : null
 
-    // Create customer if not found
     if (!customer) {
       customer = await stripe.customers.create({ email })
     }
 
-    res.json({ customerId: customer.id })
-  } catch (error) {
-    console.error('Error creating customer:', error)
-    res.status(500).json({ error: 'Failed to create customer' })
-  }
-}
-
-const savePaymentMethod = async (req, res) => {
-  try {
-    const { paymentMethodId, customerId, userId } = req.body
+    const customerId = customer.id
 
     // Attach the payment method to the customer
     await stripe.paymentMethods.attach(paymentMethodId, {
@@ -32,33 +32,30 @@ const savePaymentMethod = async (req, res) => {
 
     // Set the default payment method
     await stripe.customers.update(customerId, {
-      invoice_settings: {
-        default_payment_method: paymentMethodId,
-      },
+      invoice_settings: { default_payment_method: paymentMethodId },
     })
 
     // Save payment method details to the database
     const paymentEntry = new Userpayment({
-      userID: userId,
+      userID, // Ensure this matches your schema (check your model)
       customerId,
       paymentMethodId,
     })
 
+    console.log('Saving payment entry:', paymentEntry)
+
     await paymentEntry.save()
-    console.log('Payment method saved successfully')
+
     res.status(200).json({
-      status: true,
+      success: true,
       message: 'Payment method saved successfully',
       data: paymentEntry,
     })
-
-    console.log('Payment method saved successfully')
   } catch (error) {
     console.error('Error saving payment method:', error)
     res.status(500).json({ success: false, message: error.message })
   }
 }
-
 
 const chargeCustomer = async (customerId, paymentMethodId, amount) => {
   try {
@@ -80,7 +77,7 @@ const chargeCustomer = async (customerId, paymentMethodId, amount) => {
 
 const purchaseMethod = async (req, res) => {
   try {
-    const { customerId, paymentMethodId, amount, sellerStripeAccountId } =
+    const { userID, amount, sellerStripeAccountId } =
       req.body
 
     if (!customerId || !paymentMethodId || !amount || !sellerStripeAccountId) {
@@ -149,5 +146,4 @@ module.exports = {
   savePaymentMethod,
   purchaseMethod,
   webhookController,
-  createCustomer,
 }
