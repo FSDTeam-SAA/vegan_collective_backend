@@ -108,7 +108,7 @@ exports.updateCustomer = async (req, res) => {
     res.status(200).json({ 
       success: true, 
       message: 'Customer updated successfully', 
-      data: [updatedCustomer] // Ensure data is an array
+      data: {updatedCustomer}// Ensure data is an array
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
