@@ -7,7 +7,10 @@ const findOrCreateReffer = async (req, res) => {
   const { creator } = req.body; // Creator ID from request body
 
   if (!mongoose.Types.ObjectId.isValid(creator)) {
-    return res.status(400).json({ error: "Invalid creator ID" });
+    return res.status(400).json({
+      success: false,
+      message: "Invalid creator ID",
+    });
   }
 
   try {
@@ -15,7 +18,11 @@ const findOrCreateReffer = async (req, res) => {
     let reffer = await Reffer.findOne({ creator });
 
     if (reffer) {
-      return res.status(200).json(reffer);
+      return res.status(200).json({
+        success: true,
+        message: "Referral entry already exists",
+        data: reffer,
+      });
     }
 
     // Generate a unique 7-character slug
@@ -39,10 +46,17 @@ const findOrCreateReffer = async (req, res) => {
     });
 
     await reffer.save();
-    return res.status(201).json(reffer);
+    return res.status(201).json({
+      success: true,
+      message: "Referral entry created successfully",
+      data: reffer,
+    });
   } catch (error) {
     console.error("Error in findOrCreateReffer:", error);
-    return res.status(500).json({ error: "Internal Server Error" });
+    return res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+    });
   }
 };
 
