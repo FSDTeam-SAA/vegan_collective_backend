@@ -263,29 +263,31 @@ exports.logoutUser = async (req, res) => {
 // Get user profile
 exports.getUserProfile = async (req, res) => {
   try {
-    const userId = req.params.userId; // Extract userId from route parameters
+    const userId = req.params.userId
     if (!userId) {
       return res.status(400).json({
         status: false,
-        message: "User ID is required",
-      });
+        message: 'User ID is required',
+      })
     }
+
     // Find the user by ID
-    const user = await User.findById(userId);
+    const user = await User.findById(userId)
     if (!user) {
       return res.status(404).json({
         status: false,
-        message: "User not found",
-      });
+        message: 'User not found',
+      })
     }
 
-    //Generate JWT token
-    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: "1h" });
+    // Generate JWT token
+    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
+      expiresIn: '1h',
+    })
 
     return res.status(200).json({
       status: true,
       message: 'User profile retrieved successfully',
-
       data: {
         _id: user._id,
         role: user.role,
@@ -293,14 +295,14 @@ exports.getUserProfile = async (req, res) => {
         email: user.email,
         accountType: user.accountType,
         token,
-        paymentAdded,
+        paymentAdded: user.paymentAdded,
       },
     })
   } catch (error) {
     return res.status(500).json({
       status: false,
-      message: "Something went wrong",
+      message: 'Something went wrong',
       error: error.message,
-    });
+    })
   }
-};
+}
