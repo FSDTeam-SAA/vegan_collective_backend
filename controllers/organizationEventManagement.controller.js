@@ -1,4 +1,5 @@
 const Organizationeventmanagement = require("../models/organizationEventManagement.model");
+const mongoose = require("mongoose");
 
 // Add a new event
 const addEvent = async (req, res) => {
@@ -312,24 +313,31 @@ const getEventsByOrganization = async (req, res) => {
 
 const getEventsByTypeBoth = async (req, res) => {
   try {
-    const { page = 1, limit = 10 } = req.query;
+    const { page = 1, limit = 10,  organizationID } = req.query;
 
-    // Query to fetch only "free event" and "paid event"
-    const query = { eventType: { $in: ["free event", "paid event"] } };
+    if (! organizationID) {
+      return res.status(400).json({
+        success: false,
+        message: "organizationId is required",
+      });
+    }
 
-    // Fetch events with pagination
+    // Ensure organizationId is an ObjectId
+    const orgId = new mongoose.Types.ObjectId( organizationID);
+
+    const query = {
+      eventType: { $in: ["free event", "paid event"] },
+      organizationID: orgId, // Convert to ObjectId
+    };
+
     const events = await Organizationeventmanagement.find(query)
-      .limit(limit * 1)
-      .skip((page - 1) * limit)
+      .limit(parseInt(limit))
+      .skip((parseInt(page) - 1) * parseInt(limit))
       .exec();
 
-    // Count total documents for pagination
     const totalItems = await Organizationeventmanagement.countDocuments(query);
-
-    // Calculate total pages
     const totalPages = Math.ceil(totalItems / limit);
 
-    // Send response
     res.status(200).json({
       success: true,
       message: "Events fetched successfully",
@@ -349,6 +357,8 @@ const getEventsByTypeBoth = async (req, res) => {
     });
   }
 };
+
+
 
 module.exports = {
   addEvent,
