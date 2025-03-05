@@ -1,4 +1,7 @@
 const Review = require('../models/professionalReview.model'); // Import the Review model
+const Professionalinfo = require('../models/professionalInfo.model'); // Import the Professional model
+const mongoose = require('mongoose');
+
 
 // Controller to add a review
 exports.addReview = async (req, res) => {
@@ -177,3 +180,131 @@ exports.getAllReviews = async (req, res) => {
     });
   }
 };
+
+
+
+// Controller to get top professionals based on average ratings
+exports.getTopProfessionals = async (req, res) => {
+  try {
+    // Step 1: Aggregate reviews to calculate average ratings and total reviews
+    const professionalsWithRatings = await Review.aggregate([
+      {
+        $group: {
+          _id: "$professionalID", // Group reviews by professionalID
+          averageRating: { $avg: "$rating" }, // Calculate average rating
+          totalReviews: { $sum: 1 }, // Count total reviews for each professional
+        },
+      },
+      { $sort: { averageRating: -1 } }, // Sort by rating descending
+    ]);
+
+    // Step 2: Extract professional IDs (which are actually userId values)
+    const professionalUserIDs = professionalsWithRatings.map(prof => new mongoose.Types.ObjectId(prof._id));
+
+    // console.log("Extracted Professional User IDs:", professionalUserIDs);
+
+    // Step 3: Fetch professional details using userId instead of _id
+    const professionals = await Professionalinfo.find(
+      { userId: { $in: professionalUserIDs } }, // Match userId, not _id
+      "userId businessName about address"
+    ).lean();
+
+    // console.log("Fetched Professional Data:", professionals);
+
+    // Step 4: Combine review data with professional details
+    const result = professionalsWithRatings.map(professionalWithRating => {
+      const professionalInfo = professionals.find(
+        pro => pro.userId.toString() === professionalWithRating._id.toString()
+      );
+
+      return {
+        professionalID: professionalWithRating._id,
+        businessName: professionalInfo?.businessName || "Not Found",
+        about: professionalInfo?.about || "Not Found",
+        address: professionalInfo?.address || "Not Found",
+        averageRating: professionalWithRating.averageRating.toFixed(2),
+        totalReviews: professionalWithRating.totalReviews,
+      };
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Top professionals fetched successfully.",
+      data: result,
+    });
+  } catch (error) {
+    console.error("Error fetching top professionals:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error while fetching top professionals.",
+    });
+  }
+};
+
+// exports.getTopProfessionals = async (req, res) => {
+//   try {
+//     // Step 1: Aggregate reviews to calculate average ratings and total reviews
+//     const professionalsWithRatings = await Review.aggregate([
+//       {
+//         $group: {
+//           _id: "$professionalID", // Group reviews by professionalID
+//           averageRating: { $avg: "$rating" }, // Calculate average rating
+//           totalReviews: { $sum: 1 }, // Count total reviews for each professional
+//         },
+//       },
+//       {
+//         $sort: { averageRating: -1 }, // Sort by averageRating in descending order
+//       },
+//     ]);
+
+//     // Log the aggregation result
+//     console.log("Professionals with ratings:", professionalsWithRatings);
+
+//     // Step 2: Extract professional IDs from the aggregation result
+//     const professionalIDs = professionalsWithRatings.map(professional => professional._id);
+
+//     // Log the extracted professional IDs
+//     console.log("Professional IDs from reviews:", professionalIDs);
+
+//     // Step 3: Fetch professional details using the IDs
+//     const professionals = await Professionalinfo.find(
+//       { _id: { $in: professionalIDs } }, // Find professionals whose IDs are in the list
+//       'businessName about address' // Select only the required fields
+//     );
+
+//     // Log the professionals fetched from Professionalinfo
+//     console.log("Professionals fetched from Professionalinfo:", professionals);
+
+//     // Step 4: Combine review data with professional details
+//     const result = professionalsWithRatings.map(professionalWithRating => {
+//       const professionalInfo = professionals.find(
+//         professional => professional._id.toString() === professionalWithRating._id.toString()
+//       );
+
+//       // Log the matching professional info
+//       console.log("Matching professional info for ID:", professionalWithRating._id, professionalInfo);
+
+//       return {
+//         professionalID: professionalWithRating._id,
+//         businessName: professionalInfo?.businessName || null,
+//         about: professionalInfo?.about || null,
+//         address: professionalInfo?.address || null,
+//         averageRating: professionalWithRating.averageRating.toFixed(2), // Format to 2 decimal places
+//         totalReviews: professionalWithRating.totalReviews,
+//       };
+//     });
+
+//     // Step 5: Return the combined data
+//     return res.status(200).json({
+//       success: true,
+//       message: "Top professionals fetched successfully.",
+//       data: result,
+//     });
+//   } catch (error) {
+//     console.error(error);
+//     return res.status(500).json({
+//       success: false,
+//       message: "Internal server error while fetching top professionals.",
+//     });
+//   }
+// };
