@@ -51,7 +51,7 @@ const merchantSupport = require("./routes/merchantSupport.routes.js");
 const merchantGoLive = require("./routes/merchantGoLive.route.js");
 
 const merchantPolicies = require("./routes/merchantPolicies.route.js");
-
+const merchantStripe = require("./routes/merchantStripe.route.js")
 //routes for organization
 const organizationInfo = require("./routes/organizationInfo.route.js");
 const organizationUpdateAndNews = require("./routes/organizationUpdateAndNews.route.js");
@@ -91,6 +91,7 @@ app.use("/api/v1", merchantCustomerManagement);
 app.use("/api/v1", merchantSupport);
 app.use("/api/v1", merchantGoLive);
 app.use("/api/v1", merchantPolicies);
+app.use('/api/v1', merchantStripe)
 
 //endpoints for organization
 app.use("/api/v1", organizationInfo);
