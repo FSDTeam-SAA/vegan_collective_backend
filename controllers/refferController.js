@@ -1,6 +1,5 @@
 const mongoose = require("mongoose");
 const Reffer = require("../models/reffer.model");
-const { nanoid } = require("nanoid");
 
 // Function to find or create a referral
 const findOrCreateReffer = async (req, res) => {
@@ -14,6 +13,9 @@ const findOrCreateReffer = async (req, res) => {
   }
 
   try {
+    // Dynamically import nanoid
+    const { nanoid } = await import("nanoid");
+
     // Check if the creator already has a referral entry
     let reffer = await Reffer.findOne({ creator });
 
@@ -62,4 +64,4 @@ const findOrCreateReffer = async (req, res) => {
 
 module.exports = {
   findOrCreateReffer,
-}; 
+};
