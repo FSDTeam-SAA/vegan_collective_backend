@@ -13,4 +13,8 @@ router.put('/updateprofessionalReview/:reviewID', reviewController.updateReview)
 router.get('/professionalReview/:professionalID', reviewController.getAverageRating);
 
 router.get('/professionalReview', reviewController.getAllReviews);
+
+// Route to get top professionals based on average ratings
+
+router.get('/top-professionals', reviewController.getTopProfessionals);
 module.exports = router;
