@@ -169,6 +169,65 @@ exports.deleteReview = async (req, res) => {
   }
 };
 
+// Get top merchant products sorted by average rating
+exports.getTopMerchantProducts = async (req, res) => {
+  try {
+    // Fetch all products with their average ratings
+    const products = await MerchantProducts.find({}).lean();
+
+    // Calculate average rating for each product
+    const productsWithAvgRating = await Promise.all(
+      products.map(async (product) => {
+        const reviews = await MerchantProductsReview.find({
+          productID: product._id,
+        });
+        const avgRating =
+          reviews.length > 0
+            ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length
+            : 0;
+        return {
+          ...product,
+          avgRating: avgRating.toFixed(2),
+        };
+      })
+    );
+
+    // Filter out products with an average rating of 0.00
+    const filteredProducts = productsWithAvgRating.filter(
+      (product) => parseFloat(product.avgRating) > 0
+    );
+
+    // Sort products by average rating in descending order
+    const sortedProducts = filteredProducts.sort(
+      (a, b) => parseFloat(b.avgRating) - parseFloat(a.avgRating)
+    );
+
+    // Format the response
+    const response = sortedProducts.map((product) => ({
+      merchantID: product.merchantID,
+      productID: product._id,
+      productName: product.productName,
+      productImage: product.productImage,
+      description: product.description,
+      metaDescription: product.metaDescription,
+      price: product.price,
+      avgRating: product.avgRating,
+    }));
+
+    res.status(200).json({
+      success: true,
+      message: "Top merchant products fetched successfully",
+      products: response,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+      error,
+    });
+  }
+};
+
 // Helper function to update the product's average rating
 async function updateProductAverageRating(productID) {
   const reviews = await MerchantProductsReview.find({ productID });
@@ -180,3 +239,4 @@ async function updateProductAverageRating(productID) {
     avgRating: avgRating.toFixed(2),
   });
 }
+

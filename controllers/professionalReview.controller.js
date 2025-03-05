@@ -206,7 +206,7 @@ exports.getTopProfessionals = async (req, res) => {
     // Step 3: Fetch professional details using userId instead of _id
     const professionals = await Professionalinfo.find(
       { userId: { $in: professionalUserIDs } }, // Match userId, not _id
-      "userId businessName about address"
+      "userId profilePhoto businessName about address"
     ).lean();
 
     // console.log("Fetched Professional Data:", professionals);
@@ -221,6 +221,7 @@ exports.getTopProfessionals = async (req, res) => {
         professionalID: professionalWithRating._id,
         businessName: professionalInfo?.businessName || "Not Found",
         about: professionalInfo?.about || "Not Found",
+        profilePhoto: professionalInfo?.profilePhoto || "Not Found",
         address: professionalInfo?.address || "Not Found",
         averageRating: professionalWithRating.averageRating.toFixed(2),
         totalReviews: professionalWithRating.totalReviews,
