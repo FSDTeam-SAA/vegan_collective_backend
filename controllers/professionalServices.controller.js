@@ -214,6 +214,55 @@ const getUserServices = async (req, res) => {
   }
 };
 
+// Get offline services by professional ID (1-on-1 session or Group session)
+const getOfflineServicesByProfessionalId = async (req, res) => {
+  try {
+    const { userID } = req.params;
+
+    const services = await Professionalservices.find({
+      userID,
+      isLiveStream: false,
+      sessionType: { $in: ["1-on-1 session", "Group session"] },
+    });
+
+    if (!services.length) {
+      return res.status(404).json({
+        success: false,
+        message: "No offline services found for this professional.",
+      });
+    }
+
+    res.status(200).json({ success: true, services });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// Get online services by professional ID (Webinar only)
+const getOnlineServicesByProfessionalId = async (req, res) => {
+  try {
+    const { userID } = req.params;
+
+    const services = await Professionalservices.find({
+      userID,
+      isLiveStream: true,
+      sessionType: "Webinar",
+    });
+
+    if (!services.length) {
+      return res.status(404).json({
+        success: false,
+        message: "No online services (Webinar) found for this professional.",
+      });
+    }
+
+    res.status(200).json({ success: true, services });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+
 
 module.exports = {
   createService,
@@ -222,5 +271,8 @@ module.exports = {
   getLiveServices,
   updateService,
   deleteService,
-  getUserServices
+  getUserServices,
+  getOfflineServicesByProfessionalId,
+  getOnlineServicesByProfessionalId,
+  
 };
