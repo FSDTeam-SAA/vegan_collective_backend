@@ -62,6 +62,53 @@ const findOrCreateReffer = async (req, res) => {
   }
 };
 
+
+// New function to get referral by creator ID
+const getRefferByCreator = async (req, res) => {
+  const { creatorId } = req.params;
+
+  if (!mongoose.Types.ObjectId.isValid(creatorId)) {
+    return res.status(400).json({
+      success: false,
+      message: "Invalid creator ID",
+      data: [],
+    });
+  }
+
+  try {
+    const reffer = await Reffer.findOne({ creator: creatorId });
+
+    if (!reffer) {
+      return res.status(200).json({
+        success: true,
+        message: "No referral entry found for this creator",
+        data: [],
+      });
+    }
+
+    // Calculate total referrals from participants array length
+    const totalReferrals = reffer.participants.length;
+
+    return res.status(200).json({
+      success: true,
+      message: "Referral entry retrieved successfully",
+      data: {
+        ...reffer.toObject(), // Convert Mongoose document to plain object
+        totalReferrals // Add total referrals to the response
+      },
+    });
+  } catch (error) {
+    console.error("Error in getRefferByCreator:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+      data: [],
+    });
+  }
+};
+
 module.exports = {
   findOrCreateReffer,
+  getRefferByCreator,
 };
+
