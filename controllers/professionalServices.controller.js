@@ -205,12 +205,24 @@ const getUserServices = async (req, res) => {
     const services = await Professionalservices.find({ userID });
 
     if (!services.length) {
-      return res.status(404).json({ success: false, message: "No services found for this user." });
+      return res.status(200).json({ 
+        success: true, 
+        message: "No services found for this user.", 
+        data: [] 
+      });
     }
 
-    res.status(200).json({ success: true, services });
+    res.status(200).json({ 
+      success: true, 
+      message: "Services retrieved successfully",
+      data: services 
+    });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ 
+      success: false, 
+      message: error.message,
+      data: []
+    });
   }
 };
 
