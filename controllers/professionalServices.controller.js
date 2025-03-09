@@ -226,13 +226,14 @@ const getOfflineServicesByProfessionalId = async (req, res) => {
     });
 
     if (!services.length) {
-      return res.status(404).json({
-        success: false,
+      return res.status(200).json({
+        success: true,
         message: "No offline services found for this professional.",
+        data: [], // Return an empty array
       });
     }
 
-    res.status(200).json({ success: true, services });
+    res.status(200).json({ success: true, message: "Offline services retrieved successfully.", data: services });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -250,15 +251,24 @@ const getOnlineServicesByProfessionalId = async (req, res) => {
     });
 
     if (!services.length) {
-      return res.status(404).json({
-        success: false,
+      return res.status(200).json({
+        success: true,
         message: "No online services (Webinar) found for this professional.",
+        data: []
       });
     }
 
-    res.status(200).json({ success: true, services });
+    res.status(200).json({ 
+      success: true, 
+      message: "Online services retrieved successfully",
+      data: services 
+    });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ 
+      success: false, 
+      message: error.message,
+      data: []
+    });
   }
 };
 
