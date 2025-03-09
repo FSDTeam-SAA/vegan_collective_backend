@@ -163,33 +163,44 @@ exports.getAllProfessionalInfo = async (req, res) => {
     });
   }
 };
+
+
+
 /**
- * Get a single professional info entry by professionalId
+ * Get professional info by user ID
  */
-exports.getProfessionalInfoByProfessionalId = async (req, res) => {
+exports.getProfessionalInfoByUserId = async (req, res) => {
   try {
-    const { professionalId } = req.params; // Extract professionalId from request params
+    const { userId } = req.params;
 
-    // Query the database using the professionalId field
-    const professionalInfo = await Professionalinfo.findOne({ professionalId });
-
-    // If no matching document is found, return a 404 response
-    if (!professionalInfo) {
-      return res.status(404).json({
+    // ✅ Validate userID format
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({
         success: false,
-        message: "Professional ID not found in the database",
+        message: "Invalid userID format",
       });
     }
 
-    // Return the professional info if found
-    return res.status(200).json({
+    // ✅ Find professional info by userId
+    const professionalInfo = await Professionalinfo.findOne({ userId: userId });
+
+    // ✅ Check if professional info exists
+    if (!professionalInfo) {
+      return res.status(404).json({
+        success: false,
+        message: "Professional info not found for this user",
+      });
+    }
+
+    // ✅ Return the professional info
+    res.status(200).json({
       success: true,
       message: "Professional info retrieved successfully",
       data: professionalInfo,
     });
   } catch (error) {
-    console.error("Error retrieving professional info:", error);
-    return res.status(500).json({
+    console.error("Error retrieving professional info:", error.message);
+    res.status(500).json({
       success: false,
       message: "Error retrieving professional info",
       error: error.message,
