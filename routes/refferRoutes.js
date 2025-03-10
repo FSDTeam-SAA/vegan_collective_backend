@@ -1,5 +1,5 @@
 const express = require("express");
-const { findOrCreateReffer,getRefferByCreator } = require("../controllers/refferController");
+const { findOrCreateReffer,getRefferByCreator,getTopProfessionals} = require("../controllers/refferController");
 
 const router = express.Router();
 
@@ -8,5 +8,8 @@ router.post("/reffer", findOrCreateReffer);
 
 // New route to get referral by creator ID
 router.get("/reffer/:creatorId", getRefferByCreator);
+
+// New route to get top professionals based on totalReferrals
+router.get("/topprofessionalsbyreffer", getTopProfessionals);
 
 module.exports = router;
