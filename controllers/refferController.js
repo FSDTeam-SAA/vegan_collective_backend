@@ -150,7 +150,7 @@ const getTopProfessionals = async (req, res) => {
     const referrals = await Reffer.find({ participants: { $exists: true, $not: { $size: 0 } } })
       .limit(100); // Fetch up to 100 documents for in-memory sorting
 
-    // Transform the data to include totalReferrals and remain
+    // Transform the data to include totalReferrals, remain, and amount
     const topProfessionals = await Promise.all(referrals.map(async (referral) => {
       const creatorId = referral.creator;
 
@@ -160,7 +160,9 @@ const getTopProfessionals = async (req, res) => {
         return {
           creator: creatorId,
           totalReferrals: Array.isArray(referral.participants) ? referral.participants.length : 0,
-          remain: referral.remain || 0,
+          // remain: referral.remain || 0,
+          // paid: referral.paid || 0, // Ensure paid field is included
+          amount: (referral.paid || 0) + (referral.remain || 0), // Calculate amount
           type: 'Professional',
           fullName: professionalInfo.fullName,
           designation: professionalInfo.designation,
@@ -173,7 +175,9 @@ const getTopProfessionals = async (req, res) => {
         return {
           creator: creatorId,
           totalReferrals: Array.isArray(referral.participants) ? referral.participants.length : 0,
-          remain: referral.remain || 0,
+          // remain: referral.remain || 0,
+          // paid: referral.paid || 0, // Ensure paid field is included
+          amount: (referral.paid || 0) + (referral.remain || 0), // Calculate amount
           type: 'Merchant',
           fullName: merchantInfo.fullName,
           shortDescriptionOfStore: merchantInfo.shortDescriptionOfStore,
@@ -186,7 +190,9 @@ const getTopProfessionals = async (req, res) => {
         return {
           creator: creatorId,
           totalReferrals: Array.isArray(referral.participants) ? referral.participants.length : 0,
-          remain: referral.remain || 0,
+          // remain: referral.remain || 0,
+          // paid: referral.paid || 0, // Ensure paid field is included
+          amount: (referral.paid || 0) + (referral.remain || 0), // Calculate amount
           type: 'Organization',
           organizationName: organizationInfo.organizationName,
           shortDescriptionOfOrganization: organizationInfo.shortDescriptionOfOrganization,
@@ -198,6 +204,8 @@ const getTopProfessionals = async (req, res) => {
         creator: creatorId,
         totalReferrals: Array.isArray(referral.participants) ? referral.participants.length : 0,
         remain: referral.remain || 0,
+        paid: referral.paid || 0, // Ensure paid field is included
+        amount: (referral.paid || 0) + (referral.remain || 0), // Calculate amount
         type: 'Unknown',
       };
     }));
