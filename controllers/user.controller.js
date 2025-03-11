@@ -30,6 +30,7 @@ exports.registerUser = async (req, res) => {
       accountType: role === "vendor" ? accountType : null, // Set accountType based on role
       verifyEmail: false,
       isgratings: false,
+      isVerified: "pending",
     });
 
     // Handle referral logic if `ref` is provided
@@ -98,6 +99,7 @@ res.status(201).json({
     email: user.email,
     verifyEmail: user.verifyEmail,
     isgratings: user.isgratings, // Ensure this is included
+    isVerified: user.isVerified, // Ensure this is included
   },
 });
 } catch (error) {
@@ -295,6 +297,7 @@ exports.getUserProfile = async (req, res) => {
         token,
         paymentAdded: user.paymentAdded,
         isgratings: user.isgratings,
+        isVerified: user.isVerified,
       },
     })
   } catch (error) {
