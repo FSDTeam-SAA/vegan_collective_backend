@@ -294,6 +294,7 @@ exports.getUserProfile = async (req, res) => {
         accountType: user.accountType,
         token,
         paymentAdded: user.paymentAdded,
+        isgratings: user.isgratings,
       },
     })
   } catch (error) {
