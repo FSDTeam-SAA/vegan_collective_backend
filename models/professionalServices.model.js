@@ -49,6 +49,15 @@ const professionalServicesSchema = new mongoose.Schema(
       enum: ["true", "false"],
       default: "true"
     },
+
+    timeSlots: [
+      {
+        type: String,
+      }
+    ],
+    date: {
+      type: String,
+    },
     
   },
   {
