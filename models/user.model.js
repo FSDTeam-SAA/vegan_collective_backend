@@ -49,6 +49,11 @@ const userSchema = new mongoose.Schema(
     isgratings: {
       type: Boolean,
       default: false,
+    },
+    isVerified:{
+      type: String,
+      enum:["approved","declined","pending"],
+      default:"pending",
     }
   },
   {

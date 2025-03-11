@@ -280,6 +280,17 @@ exports.fetchPendingVerificationData = async (req, res) => {
             return res.status(400).json({ success: false, message: "Invalid userId format" });
         }
 
+        // Update User verification status first
+        const userUpdated = await User.findByIdAndUpdate(
+          userId,
+          { isVerified: status },
+          { new: true }
+      );
+
+      if (!userUpdated) {
+          return res.status(404).json({ success: false, message: "User not found" });
+      }
+
         // Update Merchantinfo
         let merchantInfoUpdated = await Merchantinfo.findOneAndUpdate(
             { userID: userId }, // Use "userId" (lowercase "u")
