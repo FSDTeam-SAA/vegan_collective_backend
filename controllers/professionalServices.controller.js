@@ -76,6 +76,19 @@ const createService = async (req, res) => {
      ? timeSlots.map(slot => slot.toString().trim()) // Ensure it's an array of strings
      : [];
 
+
+     // Fix date format
+    let formattedDate;
+    if (typeof date === "string") {
+      try {
+        formattedDate = JSON.parse(date); // Remove extra escape characters
+      } catch (error) {
+        formattedDate = date; // If parsing fails, use as is
+      }
+    } else {
+      formattedDate = date; // Use directly if already in correct format
+    }
+
     const newService = new Professionalservices({
       userID,
       serviceName,
@@ -90,7 +103,7 @@ const createService = async (req, res) => {
       isLiveStream: isLiveStream === "true",
       visibility,
       timeSlots: formattedTimeSlots,
-      date,
+      date: formattedDate,
     });
 
     await newService.save();
@@ -183,6 +196,18 @@ const updateService = async (req, res) => {
      ? timeSlots.map(slot => slot.toString().trim()) // Ensure it's an array of strings
      : [];
 
+     // Fix date format
+    let formattedDate;
+    if (typeof date === "string") {
+      try {
+        formattedDate = JSON.parse(date); // Remove extra escape characters
+      } catch (error) {
+        formattedDate = date; // If parsing fails, use as is
+      }
+    } else {
+      formattedDate = date; // Use directly if already in correct format
+    }
+
     const updatedService = await Professionalservices.findByIdAndUpdate(
       id,
       {
@@ -199,7 +224,7 @@ const updateService = async (req, res) => {
         isLiveStream: isLiveStream === "true",
         visibility,
         timeSlots: formattedTimeSlots,
-        date,
+        date: formattedDate,
       },
       { new: true }
     );
