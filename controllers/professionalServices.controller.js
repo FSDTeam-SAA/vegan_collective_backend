@@ -78,16 +78,20 @@ const createService = async (req, res) => {
 
 
      // Fix date format
-    let formattedDate;
-    if (typeof date === "string") {
-      try {
-        formattedDate = JSON.parse(date); // Remove extra escape characters
-      } catch (error) {
-        formattedDate = date; // If parsing fails, use as is
-      }
-    } else {
-      formattedDate = date; // Use directly if already in correct format
-    }
+     //Ensure date is in the correct format
+     let formattedDate;
+     if (typeof date === "string") {
+       try {
+         formattedDate = new Date(date).toISOString(); // Convert to ISO 8601 format
+       } catch (error) {
+         return res.status(400).json({
+           success: false,
+           message: "Invalid date format. Please provide a valid ISO 8601 date.",
+         });
+       }
+     } else {
+       formattedDate = new Date().toISOString(); // Default to current date-time if not provided
+     }
 
     const newService = new Professionalservices({
       userID,
@@ -196,17 +200,20 @@ const updateService = async (req, res) => {
      ? timeSlots.map(slot => slot.toString().trim()) // Ensure it's an array of strings
      : [];
 
-     // Fix date format
-    let formattedDate;
-    if (typeof date === "string") {
-      try {
-        formattedDate = JSON.parse(date); // Remove extra escape characters
-      } catch (error) {
-        formattedDate = date; // If parsing fails, use as is
-      }
-    } else {
-      formattedDate = date; // Use directly if already in correct format
-    }
+     // Ensure date is in the correct format
+     let formattedDate;
+     if (typeof date === "string") {
+       try {
+         formattedDate = new Date(date).toISOString(); // Convert to ISO 8601 format
+       } catch (error) {
+         return res.status(400).json({
+           success: false,
+           message: "Invalid date format. Please provide a valid ISO 8601 date.",
+         });
+       }
+     } else {
+       formattedDate = new Date().toISOString(); // Default to current date-time if not provided
+     }
 
     const updatedService = await Professionalservices.findByIdAndUpdate(
       id,
