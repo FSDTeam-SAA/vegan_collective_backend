@@ -29,6 +29,8 @@ const createService = async (req, res) => {
       sessionType,
       isLiveStream,
       visibility,
+      timeSlots,
+      date,
     } = req.body;
 
     let serviceImage = "";
@@ -64,6 +66,16 @@ const createService = async (req, res) => {
         ? keyWords
         : [];
 
+
+        // Validate or format timeSlots (optional step)
+   // Ensure timeSlots is stored as an array of strings
+   const formattedTimeSlots =
+   typeof timeSlots === "string"
+     ? JSON.parse(timeSlots) // If received as a stringified array
+     : Array.isArray(timeSlots)
+     ? timeSlots.map(slot => slot.toString().trim()) // Ensure it's an array of strings
+     : [];
+
     const newService = new Professionalservices({
       userID,
       serviceName,
@@ -77,6 +89,8 @@ const createService = async (req, res) => {
       sessionType: sessionType,
       isLiveStream: isLiveStream === "true",
       visibility,
+      timeSlots: formattedTimeSlots,
+      date,
     });
 
     await newService.save();
@@ -139,6 +153,8 @@ const updateService = async (req, res) => {
       sessionType,
       isLiveStream,
       visibility,
+      timeSlots,
+      date,
     } = req.body;
 
     let serviceImage = existingService.serviceImage;
@@ -159,6 +175,14 @@ const updateService = async (req, res) => {
         ? keyWords
         : [];
 
+        // Ensure timeSlots is stored as an array of strings
+   const formattedTimeSlots =
+   typeof timeSlots === "string"
+     ? JSON.parse(timeSlots) // If received as a stringified array
+     : Array.isArray(timeSlots)
+     ? timeSlots.map(slot => slot.toString().trim()) // Ensure it's an array of strings
+     : [];
+
     const updatedService = await Professionalservices.findByIdAndUpdate(
       id,
       {
@@ -174,6 +198,8 @@ const updateService = async (req, res) => {
         sessionType,
         isLiveStream: isLiveStream === "true",
         visibility,
+        timeSlots: formattedTimeSlots,
+        date,
       },
       { new: true }
     );
