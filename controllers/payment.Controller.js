@@ -77,82 +77,6 @@ const chargeCustomer = async (customerId, paymentMethodId, amount) => {
   }
 }
 
-// const purchaseMethod = async (req, res) => {
-//   try {
-//     const { userID, amount, merchantID } = req.body
-
-//     if (!userID || !amount || !merchantID) {
-//       return res.status(400).json({ error: 'Missing required fields' })
-//     }
-
-//     // Ensure we wait for the user query
-//     const user = await User.findById(userID)
-//     if (!user) {
-//       return res.status(404).json({ error: 'User not found' })
-//     }
-
-//     // Ensure we wait for the user payment method query
-//     const userpayment = await Userpayment.findOne({ userID })
-//     if (!userpayment) {
-//       return res
-//         .status(400)
-//         .json({ error: 'User does not have a valid payment method' })
-//     }
-
-//     const { customerId, paymentMethodId } = userpayment
-
-//     console.log(customerId, 'customerId found')
-
-//     // Fetch merchant details
-//     const merchantUser = await Merchantinfo.findById(merchantID)
-//     if (!merchantUser) {
-//       return res.status(404).json({ error: 'Merchant not found' })
-//     }
-
-//     const sellerStripeAccountId = merchantUser.StripeAccountId
-//     if (!sellerStripeAccountId) {
-//       return res
-//         .status(400)
-//         .json({ error: 'Merchant does not have a connected Stripe account' })
-//     }
-
-//     // Charge the customer
-//     const paymentIntent = await chargeCustomer(
-//       customerId,
-//       paymentMethodId,
-//       amount
-//     )
-
-//     console.log(paymentIntent, 'paymentIntent created')
-
-//     if (paymentIntent.status === 'succeeded') {
-//       // Calculate the 90% share for the vendor
-//       const vendorAmount = Math.round(amount * 0.9 * 100) 
-
-//       // Create a transfer to the vendor's Stripe account
-//       const transfer = await stripe.transfers.create({
-//         amount: vendorAmount,
-//         currency: 'usd',
-//         destination: sellerStripeAccountId,
-//         transfer_group: `ORDER_${paymentIntent.id}`,
-//       })
-
-//       return res.status(200).json({
-//         success: true,
-//         message: 'Payment processed and transferred successfully',
-//         paymentIntentId: paymentIntent.id,
-//         transferId: transfer.id,
-//         amountReceived: paymentIntent.amount_received,
-//         transferredAmount: vendorAmount / 100,
-//       })
-//     } else {
-//       return res.status(400).json({ error: 'Payment failed' })
-//     }
-//   } catch (error) {
-//     console.error('Error processing payment:', error)
-//     return res.status(500).json({ error: 'Payment processing failed' })
-//   }
-// }
 
 const purchaseMethod = async (req, res) => {
   try {
@@ -192,11 +116,7 @@ const purchaseMethod = async (req, res) => {
         .json({ error: 'Merchant does not have a connected Stripe account' })
     }
 
-    // **Optional: Validate product existence in the database**
-    // const products = await Product.find({ _id: { $in: productId } })
-    // if (products.length !== productId.length) {
-    //   return res.status(400).json({ error: 'Some products were not found' })
-    // }
+
 
     // Charge the customer
     const paymentIntent = await chargeCustomer(
@@ -247,6 +167,46 @@ const purchaseMethod = async (req, res) => {
   }
 }
 
+const removePaymentMethod = async (req, res) => {
+  try {
+    const { userID } = req.body
+
+    if (!userID) {
+      return res.status(400).json({ status: false, error: 'Missing user ID' })
+    }
+
+    // Find the user's payment details
+    const userPayment = await Userpayment.findOne({ userID })
+    if (!userPayment) {
+      return res
+        .status(404)
+        .json({ status: false, error: 'Payment method not found' })
+    }
+
+    const { customerId, paymentMethodId } = userPayment
+
+    // Detach the payment method from the customer in Stripe
+    await stripe.paymentMethods.detach(paymentMethodId)
+
+    // Remove payment details from the database
+    await Userpayment.deleteOne({ userID })
+
+    // Update the user's paymentAdded field to false
+    await User.findByIdAndUpdate(userID, { paymentAdded: false })
+
+    return res.status(200).json({
+      status: true,
+      message: 'Payment method removed successfully',
+    })
+  } catch (error) {
+    console.error('Error removing payment method:', error)
+    return res
+      .status(500)
+      .json({ status: false, error: 'Failed to remove payment method' })
+  }
+}
+
+
 
 const webhookController = async (req, res) => {
   let event
@@ -275,4 +235,5 @@ module.exports = {
   savePaymentMethod,
   purchaseMethod,
   webhookController,
+  removePaymentMethod,
 }

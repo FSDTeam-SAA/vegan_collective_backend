@@ -3,6 +3,7 @@ const {
   savePaymentMethod,
   purchaseMethod,
   webhookController,
+  removePaymentMethod,
 
 } = require('../controllers/payment.Controller')
 
@@ -15,5 +16,7 @@ route.post(
   express.raw({ type: 'application/json' }),
   webhookController
 )
+
+route.post('/remove-payment-method', removePaymentMethod)
 
 module.exports = route

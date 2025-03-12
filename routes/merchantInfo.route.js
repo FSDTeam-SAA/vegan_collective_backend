@@ -21,4 +21,6 @@ router.put("/merchant/:id", merchantInfoController.updateMerchantInfo);
 // Delete a merchant info by ID
 router.delete("/merchant/:id", merchantInfoController.deleteMerchantInfo);
 
+// Merchant stripeAccountId
+router.post('/stripe-account-id', merchantInfoController.addAccountIdController)
 module.exports = router;
