@@ -123,7 +123,7 @@ app.use("/api/v1", founderVerificationManagement);
 //global routes
 app.use("/api/v1", userRoute);
 // app.use('/api/v1', require('./routes/globalfind'));
-app.use("/api/v1/auth/zoom", zoomRoutes);
+app.use("/api/v1/zoom", zoomRoutes);
 app.use("/api/v1", refferRoutes); // Base API route
 
 // payment routes
