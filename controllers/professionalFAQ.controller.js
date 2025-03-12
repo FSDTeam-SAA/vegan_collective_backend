@@ -74,115 +74,67 @@ exports.getAllFAQs = async (req, res) => {
 };
 
 // Get a specific FAQ by ID
-exports.getFAQByID = async (req, res) => {
+// Get FAQs by User ID
+exports.getFAQsByUserID = async (req, res) => {
   try {
-    const { id } = req.params;
+    const { userID } = req.params;
 
-    // Validate if FAQ ID is a valid MongoDB ObjectId
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid FAQ ID format",
-      });
+    if (!mongoose.Types.ObjectId.isValid(userID)) {
+      return res.status(400).json({ success: false, message: "Invalid User ID format" });
     }
 
-    // Find the FAQ entry
-    const faq = await professionalFAQ.findById(id);
-    if (!faq) {
-      return res.status(404).json({
-        success: false,
-        message: "FAQ not found",
-      });
-    }
-
-    return res.status(200).json({
-      success: true,
-      message: "FAQ retrieved successfully",
-      data: faq,
-    });
+    const faqs = await professionalFAQ.find({ userID });
+    return res.status(200).json({ success: true, message: "FAQs retrieved successfully", data: faqs });
   } catch (error) {
     console.error(error);
-    return res.status(500).json({
-      success: false,
-      message: "Internal server error",
-    });
+    return res.status(500).json({ success: false, message: "Internal server error" });
   }
 };
 
-// Update an FAQ by ID
-exports.updateFAQ = async (req, res) => {
+
+// Update an FAQ by userID and FAQ ID
+// Update FAQs by User ID
+exports.updateFAQsByUserID = async (req, res) => {
   try {
-    const { id } = req.params;
+    const { userID } = req.params;
     const { question, answer } = req.body;
 
-    // Validate if FAQ ID is a valid MongoDB ObjectId
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid FAQ ID format",
-      });
+    if (!mongoose.Types.ObjectId.isValid(userID)) {
+      return res.status(400).json({ success: false, message: "Invalid User ID format" });
     }
 
-    // Find the FAQ entry
-    const faq = await professionalFAQ.findById(id);
-    if (!faq) {
-      return res.status(404).json({
-        success: false,
-        message: "FAQ not found",
-      });
+    const updatedFAQs = await professionalFAQ.updateMany({ userID }, { $set: { question, answer } });
+
+    if (updatedFAQs.matchedCount === 0) {
+      return res.status(404).json({ success: false, message: "No FAQs found for this user" });
     }
 
-    // Update the FAQ entry
-    faq.question = question || faq.question;
-    faq.answer = answer || faq.answer;
-
-    await faq.save();
-
-    return res.status(200).json({
-      success: true,
-      message: "FAQ updated successfully",
-      data: faq,
-    });
+    return res.status(200).json({ success: true, message: "FAQs updated successfully" });
   } catch (error) {
     console.error(error);
-    return res.status(500).json({
-      success: false,
-      message: "Internal server error",
-    });
+    return res.status(500).json({ success: false, message: "Internal server error" });
   }
 };
 
 // Delete an FAQ by ID
-exports.deleteFAQ = async (req, res) => {
+// Delete FAQs by User ID
+exports.deleteFAQsByUserID = async (req, res) => {
   try {
-    const { id } = req.params;
+    const { userID } = req.params;
 
-    // Validate if FAQ ID is a valid MongoDB ObjectId
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid FAQ ID format",
-      });
+    if (!mongoose.Types.ObjectId.isValid(userID)) {
+      return res.status(400).json({ success: false, message: "Invalid User ID format" });
     }
 
-    // Find and delete the FAQ entry
-    const faq = await professionalFAQ.findByIdAndDelete(id);
-    if (!faq) {
-      return res.status(404).json({
-        success: false,
-        message: "FAQ not found",
-      });
+    const deletedFAQs = await professionalFAQ.deleteMany({ userID });
+
+    if (deletedFAQs.deletedCount === 0) {
+      return res.status(404).json({ success: false, message: "No FAQs found for this user" });
     }
 
-    return res.status(200).json({
-      success: true,
-      message: "FAQ deleted successfully",
-    });
+    return res.status(200).json({ success: true, message: "FAQs deleted successfully" });
   } catch (error) {
     console.error(error);
-    return res.status(500).json({
-      success: false,
-      message: "Internal server error",
-    });
+    return res.status(500).json({ success: false, message: "Internal server error" });
   }
 };
