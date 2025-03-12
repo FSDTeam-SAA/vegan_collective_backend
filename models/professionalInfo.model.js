@@ -2,7 +2,11 @@ const mongoose = require("mongoose");
 
 const professionalInfoSchema = new mongoose.Schema(
   {
-    userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+    },
 
     profilePhoto: {
       type: String,
@@ -20,6 +24,9 @@ const professionalInfoSchema = new mongoose.Schema(
       type: String,
     },
     about: {
+      type: String,
+    },
+    StripeAccountId: {
       type: String,
     },
     highlightedStatement: [
@@ -44,29 +51,26 @@ const professionalInfoSchema = new mongoose.Schema(
     },
     governmentIssuedID: {
       type: String,
-      
     },
     professionalCertification: {
       type: String,
-     
     },
     photoWithID: {
       type: String,
-      
     },
-    isVerified:{
+    isVerified: {
       type: String,
-      enum:["approved","declined","pending"],
-      default:"pending",
+      enum: ['approved', 'declined', 'pending'],
+      default: 'pending',
     },
-    phoneNumber:{
+    phoneNumber: {
       type: String,
-    }
+    },
   },
   {
     timestamps: true,
   }
-);
+)
 
 const Professionalinfo = mongoose.model(
   "Professionalinfo",

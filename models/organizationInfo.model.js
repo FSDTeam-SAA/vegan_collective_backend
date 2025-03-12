@@ -3,7 +3,7 @@ const organizationInfoSchema = new mongoose.Schema(
   {
     userID: {
       type: mongoose.Types.ObjectId,
-      ref: "User",
+      ref: 'User',
     },
     organizationName: {
       type: String,
@@ -23,6 +23,9 @@ const organizationInfoSchema = new mongoose.Schema(
     shortDescriptionOfOrganization: {
       type: String,
     },
+    StripeAccountId: {
+      type: String,
+    },
     experience: [
       {
         type: String,
@@ -38,27 +41,27 @@ const organizationInfoSchema = new mongoose.Schema(
     },
     governmentIssuedID: {
       type: String,
-      
     },
     professionalCertification: {
       type: String,
-      
     },
     photoWithID: {
       type: String,
-     
     },
-    isVerified: { type: String, enum: ["pending", "approved", "declined"], default: "pending" }, 
+    isVerified: {
+      type: String,
+      enum: ['pending', 'approved', 'declined'],
+      default: 'pending',
+    },
     phoneNumber: {
       type: String,
     },
   },
- 
-  
+
   {
     timestamps: true,
-  } 
-);
+  }
+)
 
 const Organizationinfo = mongoose.model("Organizationinfo", organizationInfoSchema);
 module.exports = Organizationinfo;
