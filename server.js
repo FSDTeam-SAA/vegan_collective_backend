@@ -5,6 +5,8 @@ const cookieParser = require("cookie-parser");
 const cors = require("cors");
 const authenticateToken = require("./middleware/auth.middleware");
 const refferRoutes = require("./routes/refferRoutes");
+const session = require('express-session')
+const passport = require('passport')
 
 const zoomRoutes = require("./routes/zoomRoutes");
 
@@ -19,7 +21,9 @@ const PORT = process.env.PORT || 3001;
 app.use(cookieParser());
 app.use(express.json());
 app.use(cors({ origin: "*" }));
-
+app.use(session({ secret: 'cats', resave: false, saveUninitialized: true }))
+app.use(passport.initialize())
+app.use(passport.session())
 
 
 //routes for user
@@ -70,6 +74,8 @@ const userSupport = require("./routes/userSupport.route.js");
 const userGoLive = require("./routes/userGoLive.route.js");
 
 const paymentRoute = require("./routes/payment.Routes.js");
+const googleAuthRoute = require("./routes/googleAuth.js")
+
 //endpoints for professional
 app.use("/api/v1", professionalBooking);
 app.use("/api/v1", professionalEvent);
@@ -122,6 +128,9 @@ app.use("/api/v1", refferRoutes); // Base API route
 
 // payment routes
 app.use("/api/v1/payment", paymentRoute);
+
+// oauth
+app.use('/api/v1', googleAuthRoute)
 
 app.get("/api/v1/", (req, res) => {
   res.status(201).json({
