@@ -182,3 +182,85 @@ exports.deleteMerchantInfo = async (req, res) => {
     res.status(500).json({ success: false, message: "Error deleting merchant info", error: error.message });
   }
 };
+
+// add the Account Id
+exports.addAccountIdController = async (req, res) => {
+  try {
+    const { merchantID, stripeAccountId } = req.body
+
+    if (!merchantID || !stripeAccountId) {
+      return res
+        .status(400)
+        .json({
+          success: false,
+          message: 'Merchant ID and Stripe Account ID are required',
+        })
+    }
+
+    const merchant = await Merchantinfo.findOne({ merchantID })
+
+    if (!merchant) {
+      return res
+        .status(404)
+        .json({ success: false, message: 'Merchant not found' })
+    }
+
+    // Update the merchant's Stripe Account ID
+    merchant.stripeAccountId = stripeAccountId
+    await merchant.save()
+
+    res
+      .status(200)
+      .json({
+        success: true,
+        message: 'Stripe account ID added successfully',
+        stripeAccountId: merchant.stripeAccountId,
+      })
+  } catch (error) {
+    res
+      .status(500)
+      .json({
+        success: false,
+        message: 'Error adding Stripe account ID',
+        error: error.message,
+      })
+  }
+}
+
+// remove account id 
+exports.removeAccountIdController = async (req, res) => {
+  try {
+    const { merchantID } = req.body
+
+    if (!merchantID) {
+      return res.status(400).json({
+        success: false,
+        message: 'Merchant ID is required',
+      })
+    }
+
+    const merchant = await Merchantinfo.findOne({ merchantID })
+
+    if (!merchant) {
+      return res.status(404).json({
+        success: false,
+        message: 'Merchant not found',
+      })
+    }
+
+    // Remove the Stripe Account ID
+    merchant.stripeAccountId = null
+    await merchant.save()
+
+    res.status(200).json({
+      success: true,
+      message: 'Stripe account ID removed successfully',
+    })
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Error removing Stripe account ID',
+      error: error.message,
+    })
+  }
+}
