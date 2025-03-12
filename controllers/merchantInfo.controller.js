@@ -2,6 +2,8 @@ const mongoose = require("mongoose");
 const Merchantinfo = require("../models/merchantInfo.model");
 const User = require("../models/user.model");
 const upload = require("../utils/multerConfig");
+const Professionalinfo = require('../models/professionalInfo.model')
+const Organizationinfo = require('../models/organizationInfo.model')
 
 /**
  * Create a new merchant info entry with profile photo upload
@@ -186,71 +188,106 @@ exports.deleteMerchantInfo = async (req, res) => {
 // add the Account Id
 exports.addAccountIdController = async (req, res) => {
   try {
-    const { merchantID, stripeAccountId } = req.body
+    const { userID, stripeAccountId } = req.body
 
-    if (!merchantID || !stripeAccountId) {
-      return res
-        .status(400)
-        .json({
-          success: false,
-          message: 'Merchant ID and Stripe Account ID are required',
-        })
+    if (!userID || !stripeAccountId) {
+      return res.status(400).json({
+        success: false,
+        message: 'User ID and Stripe Account ID are required',
+      })
     }
 
-    const merchant = await Merchantinfo.findOne({ merchantID })
+    // Find user to determine account type
+    const user = await User.findById(userID)
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' })
+    }
 
-    if (!merchant) {
+    let model
+    if (user.accountType === 'merchant') {
+      model = Merchantinfo
+    } else if (user.accountType === 'professional') {
+      model = Professionalinfo
+    } else if (user.accountType === 'organization') {
+      model = Organizationinfo
+    } else {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid account type',
+      })
+    }
+
+    // Find and update the correct model
+    let accountInfo = await model.findOne({ userID })
+    if (!accountInfo) {
       return res
         .status(404)
-        .json({ success: false, message: 'Merchant not found' })
+        .json({ success: false, message: 'Account not found' })
     }
 
-    // Update the merchant's Stripe Account ID
-    merchant.stripeAccountId = stripeAccountId
-    await merchant.save()
+    accountInfo.stripeAccountId = stripeAccountId
+    await accountInfo.save()
 
-    res
-      .status(200)
-      .json({
-        success: true,
-        message: 'Stripe account ID added successfully',
-        stripeAccountId: merchant.stripeAccountId,
-      })
+    res.status(200).json({
+      success: true,
+      message: 'Stripe Account ID added successfully',
+      stripeAccountId: accountInfo.stripeAccountId,
+    })
   } catch (error) {
-    res
-      .status(500)
-      .json({
-        success: false,
-        message: 'Error adding Stripe account ID',
-        error: error.message,
-      })
+    res.status(500).json({
+      success: false,
+      message: 'Error adding Stripe Account ID',
+      error: error.message,
+    })
   }
 }
 
 // remove account id 
 exports.removeAccountIdController = async (req, res) => {
   try {
-    const { merchantID } = req.body
+    const { userID } = req.body
 
-    if (!merchantID) {
+    if (!userID) {
       return res.status(400).json({
         success: false,
-        message: 'Merchant ID is required',
+        message: 'User ID is required',
       })
     }
 
-    const merchant = await Merchantinfo.findOne({ merchantID })
-
-    if (!merchant) {
+    // Find user to determine account type
+    const user = await User.findById(userID)
+    if (!user) {
       return res.status(404).json({
         success: false,
-        message: 'Merchant not found',
+        message: 'User not found',
       })
     }
 
-    // Remove the Stripe Account ID
-    merchant.stripeAccountId = null
-    await merchant.save()
+    let model
+    if (user.accountType === 'merchant') {
+      model = Merchantinfo
+    } else if (user.accountType === 'professional') {
+      model = Professionalinfo
+    } else if (user.accountType === 'organization') {
+      model = Organizationinfo
+    } else {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid account type',
+      })
+    }
+
+    // Find the account info based on userID and remove the Stripe Account ID
+    let accountInfo = await model.findOne({ userID })
+    if (!accountInfo) {
+      return res.status(404).json({
+        success: false,
+        message: 'Account not found',
+      })
+    }
+
+    accountInfo.stripeAccountId = null
+    await accountInfo.save()
 
     res.status(200).json({
       success: true,
