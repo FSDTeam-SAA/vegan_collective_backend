@@ -4,40 +4,58 @@ const mongoose = require('mongoose');
 // Create a new booking
 exports.createBooking = async (req, res) => {
     try {
-        const { userID, professionalID, bookingInfo, payWith, cardHolderName, cardNumber, expiryDate, cvv } = req.body;
+        const { userID, bookingInfo, payWith, cardHolderName, cardNumber, expiryDate, cvv } = req.body;
 
-        // Validate user ID and professional ID
-        const isValidUserID = mongoose.Types.ObjectId.isValid(userID);
-        const isValidProfessionalID = mongoose.Types.ObjectId.isValid(professionalID);
-
-        if (!isValidUserID || !isValidProfessionalID) {
-            return res.status(400).json({ message: "Invalid User ID or Professional ID" });
+        // Validate user ID
+        if (!mongoose.Types.ObjectId.isValid(userID)) {
+            return res.status(400).json({ 
+                success: false, 
+                message: "Invalid User ID", 
+                data: null 
+            });
         }
 
         // Validate service IDs in bookingInfo
         for (const info of bookingInfo) {
             if (!mongoose.Types.ObjectId.isValid(info.serviceID)) {
-                return res.status(400).json({ message: "Invalid Service ID" });
+                return res.status(400).json({ 
+                    success: false, 
+                    message: "Invalid Service ID", 
+                    data: null 
+                });
             }
         }
 
+        // Create a new booking
         const newBooking = new Professionalservicebooking({
             userID,
-            professionalID,
             bookingInfo,
             payWith,
             cardHolderName,
             cardNumber,
             expiryDate,
             cvv,
+            status: "pending"
         });
 
         await newBooking.save();
-        res.status(201).json({ message: "Booking created successfully", data: newBooking });
+        
+        res.status(201).json({ 
+            success: true, 
+            message: "Booking created successfully", 
+            data: newBooking 
+        });
     } catch (error) {
-        res.status(500).json({ message: "Server error", error: error.message });
+        res.status(500).json({ 
+            success: false, 
+            message: "Server error", 
+            error: error.message, 
+            data: null 
+        });
     }
 };
+
+
 
 
 // Get all bookings with pagination
@@ -75,8 +93,23 @@ exports.getAllBookings = async (req, res) => {
         // Calculate total pages
         const totalPages = Math.ceil(totalBookings / limit);
 
+        if (bookings.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: "No bookings found",
+                data: [],
+                pagination: {
+                    currentPage: page,
+                    totalPages: totalPages,
+                    totalRecords: totalBookings,
+                    recordsPerPage: limit
+                }
+            });
+        }
+
         // Return paginated response
         res.status(200).json({
+            success: true,
             message: "Bookings retrieved successfully",
             data: bookings.map(booking => ({
                 ...booking.toObject(),
@@ -90,77 +123,155 @@ exports.getAllBookings = async (req, res) => {
             }
         });
     } catch (error) {
-        res.status(500).json({ message: "Server error", error: error.message });
+        res.status(500).json({ 
+            success: false, 
+            message: "Server error while fetching bookings", 
+            error: error.message 
+        });
     }
 };
 
-// Get a single booking by ID and return the desired response structure
-exports.getBookingById = async (req, res) => {
-    try {
-        const { id } = req.params;
 
-        // Find the booking by ID and populate the necessary fields
-        const booking = await Professionalservicebooking.findById(id)
+// Get bookings by user ID or service ID with formatted response
+exports.getBookingsByFilter = async (req, res) => {
+    try {
+        const { userID, serviceID, page = 1, limit = 10 } = req.query;
+        let filter = {};
+        
+        if (userID) {
+            filter.userID = userID;
+        }
+
+        if (serviceID) {
+            filter['bookingInfo.serviceID'] = serviceID;
+        }
+
+        const pageNumber = parseInt(page);
+        const limitNumber = parseInt(limit);
+        const skip = (pageNumber - 1) * limitNumber;
+
+        // Fetch total number of bookings for pagination metadata
+        const totalBookings = await Professionalservicebooking.countDocuments(filter);
+
+        const bookings = await Professionalservicebooking.find(filter)
             .populate({
                 path: 'bookingInfo.serviceID',
                 model: 'Professionalservices',
-                select: 'serviceName price sessionType' // Include only specific fields from Professionalservices
-            });
+                select: 'serviceName price sessionType'
+            })
+            .skip(skip)
+            .limit(limitNumber);
 
-        if (!booking) {
-            return res.status(404).json({ message: "Booking not found" });
+        if (!bookings.length) {
+            return res.status(404).json({
+                success: false,
+                message: "No bookings found",
+                data: [],
+                pagination: {
+                    currentPage: pageNumber,
+                    totalPages: Math.ceil(totalBookings / limitNumber),
+                    totalRecords: totalBookings,
+                    recordsPerPage: limitNumber
+                }
+            });
         }
 
-        // Format the bookingInfo array
-        const formattedBookingInfo = booking.bookingInfo.map(info => ({
-            serviceID: {
-                _id: info.serviceID._id,
-                serviceName: info.serviceID.serviceName,
-                price: info.serviceID.price,
-                sessionType: info.serviceID.sessionType,
-            },
-            date: info.date, // Assuming 'date' is part of the bookingInfo schema
-            time: info.time, // Assuming 'time' is part of the bookingInfo schema
-            _id: info._id,   // Include the ID of the bookingInfo entry
-        }));
-
-        // Construct the final response object
-        const responseData = {
-            bookingInfo: formattedBookingInfo,
+        // Format the response data
+        const formattedBookings = bookings.map(booking => ({
+            bookingInfo: booking.bookingInfo.map(info => ({
+                serviceID: {
+                    _id: info.serviceID?._id,
+                    serviceName: info.serviceID?.serviceName,
+                    price: info.serviceID?.price,
+                    sessionType: info.serviceID?.sessionType
+                },
+                date: info.date,
+                time: info.time,
+                _id: info._id
+            })),
             payWith: booking.payWith,
             cardHolderName: booking.cardHolderName,
             cardNumber: booking.cardNumber,
             expiryDate: booking.expiryDate,
             cvv: booking.cvv,
-            status: booking.status,
-        };
+            status: booking.status
+        }));
 
         res.status(200).json({
-            message: "Booking retrieved successfully",
-            data: responseData, // Return the formatted response
+            success: true,
+            message: "Bookings retrieved successfully",
+            data: formattedBookings,
+            pagination: {
+                currentPage: pageNumber,
+                totalPages: Math.ceil(totalBookings / limitNumber),
+                totalRecords: totalBookings,
+                recordsPerPage: limitNumber
+            }
         });
     } catch (error) {
-        res.status(500).json({ message: "Server error", error: error.message });
+        res.status(500).json({
+            success: false,
+            message: "Server error",
+            error: error.message
+        });
     }
 };
 
-// Update a booking by ID
-exports.updateBooking = async (req, res) => {
-    try {
-        const { id } = req.params;
-        const { status } = req.body; // Allow updating the status
 
-        const updatedBooking = await Professionalservicebooking.findByIdAndUpdate(
-            id,
-            { ...req.body, status }, // Update the status if provided
+
+// Update a booking by user ID
+exports.updateBookingByUserId = async (req, res) => {
+    try {
+        const { userId } = req.params;  // Get the userId from URL params
+        const { bookingInfo, payWith, cardHolderName, cardNumber, expiryDate, cvv, status } = req.body;
+
+        // Validate user ID
+        if (!mongoose.Types.ObjectId.isValid(userId)) {
+            return res.status(400).json({ 
+                success: false, 
+                message: "Invalid User ID", 
+                data: null 
+            });
+        }
+
+        // Validate service IDs in bookingInfo
+        if (bookingInfo && Array.isArray(bookingInfo)) {
+            for (const info of bookingInfo) {
+                if (!mongoose.Types.ObjectId.isValid(info.serviceID)) {
+                    return res.status(400).json({ 
+                        success: false, 
+                        message: "Invalid Service ID", 
+                        data: null 
+                    });
+                }
+            }
+        }
+
+        // Find the booking by userId and update it
+        const updatedBooking = await Professionalservicebooking.findOneAndUpdate(
+            { userID: userId },  // Match by userID
+            { 
+                bookingInfo, 
+                payWith, 
+                cardHolderName, 
+                cardNumber, 
+                expiryDate, 
+                cvv, 
+                status 
+            },  // Update the booking with the provided data
             { new: true }
         );
 
         if (!updatedBooking) {
-            return res.status(404).json({ message: "Booking not found" });
+            return res.status(404).json({ 
+                success: false, 
+                message: "Booking not found for this user", 
+                data: null 
+            });
         }
 
         res.status(200).json({ 
+            success: true, 
             message: "Booking updated successfully", 
             data: {
                 ...updatedBooking.toObject(),
@@ -168,22 +279,44 @@ exports.updateBooking = async (req, res) => {
             }
         });
     } catch (error) {
-        res.status(500).json({ message: "Server error", error: error.message });
+        res.status(500).json({
+            success: false,
+            message: "Server error while updating booking",
+            error: error.message,
+            data: null
+        });
     }
 };
 
+
+
 // Delete a booking by ID
-exports.deleteBooking = async (req, res) => {
+exports.deleteBookingByUserId = async (req, res) => {
     try {
-        const { id } = req.params;
-        const deletedBooking = await Professionalservicebooking.findByIdAndDelete(id);
+        const { userId } = req.params;  // Get the userId from URL params
+
+        // Find and delete the booking by userId
+        const deletedBooking = await Professionalservicebooking.findOneAndDelete({ userID: userId });
 
         if (!deletedBooking) {
-            return res.status(404).json({ message: "Booking not found" });
+            return res.status(404).json({
+                success: false,
+                message: "Booking not found for this user",
+                data: []
+            });
         }
 
-        res.status(200).json({ message: "Booking deleted successfully" });
+        res.status(200).json({
+            success: true,
+            message: "Booking deleted successfully",
+            data: deletedBooking
+        });
     } catch (error) {
-        res.status(500).json({ message: "Server error", error: error.message });
+        res.status(500).json({
+            success: false,
+            message: "Server error",
+            error: error.message,
+            data: []
+        });
     }
 };
