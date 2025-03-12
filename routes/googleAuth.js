@@ -13,23 +13,34 @@ route.get(
 route.get(
   '/auth/google/callback',
   passport.authenticate('google', {
-    successRedirect: '/protected',
     failureRedirect: '/auth/google/failure',
-  })
+  }),
+  (req, res) => {
+    res.redirect('/api/v1/protected') // Redirect to protected route after login
+  }
 )
 
-route.get('/protected', isLoggedIn, (req, res) => {
-  res.send(`Hello ${req.user.displayName}`)
+route.get('/protected', (req, res) => {
+  if (!req.user) {
+    return res.status(401).json({ message: 'Unauthorized' })
+  }
+  res.json({ message: `Hello ${req.user.fullName}`, user: req.user })
 })
+
 
 route.get('/auth/google/failure', (req, res) => {
   res.send('Failed to authenticate..')
 })
 
 route.get('/logout', (req, res) => {
-  req.logout()
-  req.session.destroy()
-  res.send('Goodbye!')
+  req.logout((err) => {
+    if (err) return res.status(500).json({ message: 'Logout failed' })
+
+    req.session.destroy(() => {
+      res.send('Logged out successfully')
+    })
+  })
 })
+
 
 module.exports = route
