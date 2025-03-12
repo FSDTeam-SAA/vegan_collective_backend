@@ -9,12 +9,12 @@ router.post("/faqs", professionalFAQController.createFAQ);
 router.get("/faqs", professionalFAQController.getAllFAQs);
 
 // Get a specific FAQ by ID
-router.get("/faqs/:id", professionalFAQController.getFAQByID);
+router.get("/faqs/:userID", professionalFAQController.getFAQsByUserID);
 
 // Update an FAQ by ID
-router.put("/faqs/:id", professionalFAQController.updateFAQ);
+router.put("/faqs/:userID", professionalFAQController.updateFAQsByUserID);
 
 // Delete an FAQ by ID
-router.delete("/faqs/:id", professionalFAQController.deleteFAQ);
+router.delete("/faqs/:userID", professionalFAQController.deleteFAQsByUserID);
 
 module.exports = router;
