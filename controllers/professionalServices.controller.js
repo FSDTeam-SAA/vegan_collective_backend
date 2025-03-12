@@ -29,6 +29,8 @@ const createService = async (req, res) => {
       sessionType,
       isLiveStream,
       visibility,
+      timeSlots,
+      date,
     } = req.body;
 
     let serviceImage = "";
@@ -64,6 +66,33 @@ const createService = async (req, res) => {
         ? keyWords
         : [];
 
+
+        // Validate or format timeSlots (optional step)
+   // Ensure timeSlots is stored as an array of strings
+   const formattedTimeSlots =
+   typeof timeSlots === "string"
+     ? JSON.parse(timeSlots) // If received as a stringified array
+     : Array.isArray(timeSlots)
+     ? timeSlots.map(slot => slot.toString().trim()) // Ensure it's an array of strings
+     : [];
+
+
+     // Fix date format
+     //Ensure date is in the correct format
+     let formattedDate;
+     if (typeof date === "string") {
+       try {
+         formattedDate = new Date(date).toISOString(); // Convert to ISO 8601 format
+       } catch (error) {
+         return res.status(400).json({
+           success: false,
+           message: "Invalid date format. Please provide a valid ISO 8601 date.",
+         });
+       }
+     } else {
+       formattedDate = new Date().toISOString(); // Default to current date-time if not provided
+     }
+
     const newService = new Professionalservices({
       userID,
       serviceName,
@@ -77,6 +106,8 @@ const createService = async (req, res) => {
       sessionType: sessionType,
       isLiveStream: isLiveStream === "true",
       visibility,
+      timeSlots: formattedTimeSlots,
+      date: formattedDate,
     });
 
     await newService.save();
@@ -139,6 +170,8 @@ const updateService = async (req, res) => {
       sessionType,
       isLiveStream,
       visibility,
+      timeSlots,
+      date,
     } = req.body;
 
     let serviceImage = existingService.serviceImage;
@@ -159,6 +192,29 @@ const updateService = async (req, res) => {
         ? keyWords
         : [];
 
+        // Ensure timeSlots is stored as an array of strings
+   const formattedTimeSlots =
+   typeof timeSlots === "string"
+     ? JSON.parse(timeSlots) // If received as a stringified array
+     : Array.isArray(timeSlots)
+     ? timeSlots.map(slot => slot.toString().trim()) // Ensure it's an array of strings
+     : [];
+
+     // Ensure date is in the correct format
+     let formattedDate;
+     if (typeof date === "string") {
+       try {
+         formattedDate = new Date(date).toISOString(); // Convert to ISO 8601 format
+       } catch (error) {
+         return res.status(400).json({
+           success: false,
+           message: "Invalid date format. Please provide a valid ISO 8601 date.",
+         });
+       }
+     } else {
+       formattedDate = new Date().toISOString(); // Default to current date-time if not provided
+     }
+
     const updatedService = await Professionalservices.findByIdAndUpdate(
       id,
       {
@@ -174,6 +230,8 @@ const updateService = async (req, res) => {
         sessionType,
         isLiveStream: isLiveStream === "true",
         visibility,
+        timeSlots: formattedTimeSlots,
+        date: formattedDate,
       },
       { new: true }
     );
@@ -205,14 +263,85 @@ const getUserServices = async (req, res) => {
     const services = await Professionalservices.find({ userID });
 
     if (!services.length) {
-      return res.status(404).json({ success: false, message: "No services found for this user." });
+      return res.status(200).json({ 
+        success: true, 
+        message: "No services found for this user.", 
+        data: [] 
+      });
     }
 
-    res.status(200).json({ success: true, services });
+    res.status(200).json({ 
+      success: true, 
+      message: "Services retrieved successfully",
+      data: services 
+    });
+  } catch (error) {
+    res.status(500).json({ 
+      success: false, 
+      message: error.message,
+      data: []
+    });
+  }
+};
+
+// Get offline services by professional ID (1-on-1 session or Group session)
+const getOfflineServicesByProfessionalId = async (req, res) => {
+  try {
+    const { userID } = req.params;
+
+    const services = await Professionalservices.find({
+      userID,
+      isLiveStream: false,
+      sessionType: { $in: ["1-on-1 session", "Group session"] },
+    });
+
+    if (!services.length) {
+      return res.status(200).json({
+        success: true,
+        message: "No offline services found for this professional.",
+        data: [], // Return an empty array
+      });
+    }
+
+    res.status(200).json({ success: true, message: "Offline services retrieved successfully.", data: services });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
+// Get online services by professional ID (Webinar only)
+const getOnlineServicesByProfessionalId = async (req, res) => {
+  try {
+    const { userID } = req.params;
+
+    const services = await Professionalservices.find({
+      userID,
+      isLiveStream: true,
+      sessionType: "Webinar",
+    });
+
+    if (!services.length) {
+      return res.status(200).json({
+        success: true,
+        message: "No online services (Webinar) found for this professional.",
+        data: []
+      });
+    }
+
+    res.status(200).json({ 
+      success: true, 
+      message: "Online services retrieved successfully",
+      data: services 
+    });
+  } catch (error) {
+    res.status(500).json({ 
+      success: false, 
+      message: error.message,
+      data: []
+    });
+  }
+};
+
 
 
 module.exports = {
@@ -222,5 +351,8 @@ module.exports = {
   getLiveServices,
   updateService,
   deleteService,
-  getUserServices
+  getUserServices,
+  getOfflineServicesByProfessionalId,
+  getOnlineServicesByProfessionalId,
+  
 };

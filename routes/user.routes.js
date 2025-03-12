@@ -26,5 +26,8 @@ router.post("/change-password", authController.changePassword);
 // Get user profile
 router.get("/profile/:userId", userController.getUserProfile);
 
+// Update user profile
+router.put('/users/:userId/update-isgratings', userController.updateIsgratings);
+
 
 module.exports = router;

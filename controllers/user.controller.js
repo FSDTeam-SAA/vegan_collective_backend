@@ -29,6 +29,8 @@ exports.registerUser = async (req, res) => {
       password: hashedPassword,
       accountType: role === "vendor" ? accountType : null, // Set accountType based on role
       verifyEmail: false,
+      isgratings: false,
+      isVerified: "pending",
     });
 
     // Handle referral logic if `ref` is provided
@@ -86,29 +88,27 @@ exports.registerUser = async (req, res) => {
     };
     await sendEmail(mailOption);
 
-    // Return the user object in the desired format
-    const responseUser = {
-      _id: user._id,
-      role: user.role,
-      fullName: user.fullName,
-      email: user.email,
-      verifyEmail: user.verifyEmail,
-    
-    };
-
-    return res.status(201).json({
-      status: true,
-      message: "User created successfully. Please check your email to verify your account.",
-      data: responseUser,
-      
-    });
-  } catch (error) {
-    return res.status(500).json({
-      status: false,
-      message: "Something went wrong",
-      error: error.message,
-    });
-  }
+// Return the response with the user data
+res.status(201).json({
+  status: true,
+  message: "User created successfully. Please check your email to verify your account.",
+  data: {
+    _id: user._id,
+    role: user.role,
+    fullName: user.fullName,
+    email: user.email,
+    verifyEmail: user.verifyEmail,
+    isgratings: user.isgratings, // Ensure this is included
+    isVerified: user.isVerified, // Ensure this is included
+  },
+});
+} catch (error) {
+res.status(500).json({
+  status: false,
+  message: "An error occurred while registering the user.",
+  error: error.message,
+});
+}
 };
 
 // Verify email
@@ -296,6 +296,8 @@ exports.getUserProfile = async (req, res) => {
         accountType: user.accountType,
         token,
         paymentAdded: user.paymentAdded,
+        isgratings: user.isgratings,
+        isVerified: user.isVerified,
       },
     })
   } catch (error) {
@@ -306,3 +308,45 @@ exports.getUserProfile = async (req, res) => {
     })
   }
 }
+
+
+exports.updateIsgratings = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { isgratings } = req.body;
+
+    // Find the user by ID and update the isgratings field
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { isgratings: isgratings },
+      { new: true } // Return the updated document
+    );
+
+    if (!updatedUser) {
+      return res.status(404).json({
+        status: false,
+        message: "User not found.",
+      });
+    }
+
+    // Return the updated user data
+    res.status(200).json({
+      status: true,
+      message: "isgratings updated successfully.",
+      data: {
+        _id: updatedUser._id,
+        role: updatedUser.role,
+        fullName: updatedUser.fullName,
+        email: updatedUser.email,
+        verifyEmail: updatedUser.verifyEmail,
+        isgratings: updatedUser.isgratings,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: false,
+      message: "An error occurred while updating isgratings.",
+      error: error.message,
+    });
+  }
+};

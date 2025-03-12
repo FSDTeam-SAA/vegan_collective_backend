@@ -46,46 +46,15 @@ const userSchema = new mongoose.Schema(
       default: false,
     },
 
-    organizationInfo: [
-      {
-        organizationName: {
-          type: String,
-          required: true,
-        },
-        address: {
-          type: String,
-        },
-        missionStatement: {
-          type: String,
-        },
-        aboutUs: {
-          type: String,
-        },
-        experienceAndCertifications: {
-          type: String,
-        },
-        websiteURL: {
-          type: String,
-        },
-        governmentIssuedID: {
-          type: String,
-          required: true,
-        },
-        charityRegistrationNumber: {
-          type: String,
-          required: true,
-        },
-        photoWithID: {
-          type: String,
-          required: true,
-        },
-        verificationStatus: {
-          type: String,
-          enum: ['verified', 'not verified'],
-          default: 'not verified',
-        },
-      },
-    ],
+    isgratings: {
+      type: Boolean,
+      default: false,
+    },
+    isVerified:{
+      type: String,
+      enum:["approved","declined","pending"],
+      default:"pending",
+    }
   },
   {
     timestamps: true,

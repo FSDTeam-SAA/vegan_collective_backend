@@ -17,4 +17,7 @@ router.put("/merchantProductsreviews/:reviewID", merchantProductsReviewControlle
 // Delete a review
 router.delete("/merchantProductsreviews/:reviewID", merchantProductsReviewController.deleteReview);
 
+// Get top merchant products sorted by average rating
+router.get("/topmerchantProducts", merchantProductsReviewController.getTopMerchantProducts);
+
 module.exports = router;
