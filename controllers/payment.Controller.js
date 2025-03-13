@@ -94,13 +94,13 @@ const purchaseMethod = async (req, res) => {
 
     // Validate required fields
     if (!userID || !amount) {
-      return res.status(400).json({ error: 'Missing required fields' })
+      return res.status(400).json({status: false, error: 'Missing required fields' })
     }
 
     // Find user
     const user = await User.findById(userID)
     if (!user) {
-      return res.status(404).json({ error: 'User not found' })
+      return res.status(404).json({ status: false, error: 'User not found' })
     }
 
     // Check user payment method
@@ -108,7 +108,7 @@ const purchaseMethod = async (req, res) => {
     if (!userPayment) {
       return res
         .status(400)
-        .json({ error: 'User does not have a valid payment method' })
+        .json({ status: false,error: 'User does not have a valid payment method' })
     }
 
     const { customerId, paymentMethodId } = userPayment
@@ -126,12 +126,12 @@ const purchaseMethod = async (req, res) => {
       seller = await Organizationinfo.findById(organizationID)
       sellerType = 'Organization'
     } else {
-      return res.status(400).json({ error: 'No valid seller ID provided' })
+      return res.status(400).json({ status: false, error: 'No valid seller ID provided' })
     }
 
     // Validate seller existence
     if (!seller) {
-      return res.status(404).json({ error: `${sellerType} not found` })
+      return res.status(404).json({ status: false, error: `${sellerType} not found` })
     }
 
     sellerID = seller._id
@@ -140,7 +140,7 @@ const purchaseMethod = async (req, res) => {
     if (!sellerStripeAccountId) {
       return res
         .status(400)
-        .json({
+        .json({status: false,
           error: `${sellerType} does not have a connected Stripe account`,
         })
     }
@@ -171,7 +171,7 @@ const purchaseMethod = async (req, res) => {
       if (bookingTime && isNaN(bookingTime.getTime())) {
         return res
           .status(400)
-          .json({ error: 'Invalid service booking time format' })
+          .json({ status: false, error: 'Invalid service booking time format' })
       }
 
       // Save transaction record
@@ -190,7 +190,7 @@ const purchaseMethod = async (req, res) => {
       await newPaymentRecord.save()
 
       return res.status(200).json({
-        success: true,
+        status: true,
         message: 'Payment processed and transferred successfully',
         paymentIntentId: paymentIntent.id,
         transferId: transfer.id,
@@ -201,13 +201,13 @@ const purchaseMethod = async (req, res) => {
         bookingTime: bookingTime,
       })
     } else {
-      return res.status(400).json({ error: 'Payment failed' })
+      return res.status(400).json({ status: false, error: 'Payment failed' })
     }
   } catch (error) {
     console.error('Error processing payment:', error)
     return res
       .status(500)
-      .json({ error: 'Payment processing failed', details: error.message })
+      .json({ status: false, error: 'Payment processing failed', details: error.message })
   }
 }
 
