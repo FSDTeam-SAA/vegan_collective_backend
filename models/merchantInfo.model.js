@@ -25,7 +25,6 @@ const merchantInfoSchema = new mongoose.Schema(
       type: String,
     },
     stripeAccountId: {
-      // <- Change this to lowercase
       type: String,
     },
     businessHours: [

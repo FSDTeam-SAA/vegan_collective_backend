@@ -23,7 +23,7 @@ const organizationInfoSchema = new mongoose.Schema(
     shortDescriptionOfOrganization: {
       type: String,
     },
-    StripeAccountId: {
+    stripeAccountId: {
       type: String,
     },
     experience: [
