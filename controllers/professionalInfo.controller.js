@@ -62,6 +62,22 @@ exports.createProfessionalInfo = async (req, res) => {
         }
       }
 
+
+         let parsedCertifications = []
+         if (experience) {
+           try {
+             // If experience is a JSON string, parse it
+             parsedCertifications = JSON.parse(certifications)
+           } catch (parseError) {
+             // If it's not JSON, split by commas to create an array
+             parsedCertifications = certifications
+               .split(',')
+               .map((item) => item.trim())
+           }
+         }
+
+    
+
       const profilePhotoUrl = req.file ? req.file.path : null;
 
       // ✅ Use correct `userId` field name
@@ -74,14 +90,14 @@ exports.createProfessionalInfo = async (req, res) => {
         address,
         about,
         highlightedStatement: parsedHighlightedStatement,
-        experience: parsedExperience, 
-        certifications,
+        experience: parsedExperience,
+        certifications: parsedCertifications,
         websiteURL,
         governmentIssuedID,
         professionalCertification,
         photoWithID,
         isVerified,
-      });
+      })
 
       const savedProfessionalInfo = await newProfessionalInfo.save();
 
@@ -251,6 +267,13 @@ exports.updateProfessionalInfo = [
       if (updateData.experience) {
         updateData.experience = parseJSONField(updateData.experience);
       }
+
+         if (updateData.certifications) {
+           updateData.certifications = parseJSONField(updateData.certifications)
+         }
+
+
+
 
       // ✅ Update the professional info
       const updatedInfo = await Professionalinfo.findByIdAndUpdate(id, updateData, {
