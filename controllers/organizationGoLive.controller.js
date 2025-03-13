@@ -55,53 +55,53 @@ exports.createEvent = async (req, res) => {
   }
 };
 
-// Get events based on type (upcoming/past) and organizationID
-exports.getEvents = async (req, res) => {
-  try {
-    const { type, organizationID } = req.query;
+// Get events based on type  and organizationID
+// exports.getEvents = async (req, res) => {
+//   try {
+//     const { type, organizationID } = req.query;
 
-    // Validate query parameters
-    if (!type || !["upcoming", "past"].includes(type)) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid or missing 'type' parameter. Must be 'upcoming' or 'past'.",
-      });
-    }
+//     // Validate query parameters
+//     if (!type || !["paid event", "free event"].includes(type)) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Invalid or missing 'type' parameter. Must be 'paid event' or 'free event'.",
+//       });
+//     }
 
-    if (!organizationID) {
-      return res.status(400).json({
-        success: false,
-        message: "Missing 'organizationID' parameter.",
-      });
-    }
+//     if (!organizationID) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Missing 'organizationID' parameter.",
+//       });
+//     }
 
-    // Fetch events based on type and organizationID
-    const today = new Date();
-    const query = {
-      organizationID: new mongoose.Types.ObjectId(organizationID),
-    };
+//     // Fetch events based on type and organizationID
+//     const today = new Date();
+//     const query = {
+//       organizationID: new mongoose.Types.ObjectId(organizationID),
+//     };
 
-    if (type === "upcoming") {
-      query.date = { $gte: today.toISOString().split("T")[0] }; // Events with date >= today
-    } else if (type === "past") {
-      query.date = { $lt: today.toISOString().split("T")[0] }; // Events with date < today
-    }
+//     if (type === "paid event") {
+//       query.date = { $gte: today.toISOString().split("T")[0] }; // Events with date >= today
+//     } else if (type === "free event") {
+//       query.date = { $lt: today.toISOString().split("T")[0] }; // Events with date < today
+//     }
 
-    const events = await Organizationgolive.find(query);
+//     const events = await Organizationgolive.find(query);
 
-    res.status(200).json({
-      success: true,
-      message: `Fetched ${type} events successfully.`,
-      data: events,
-    });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({
-      success: false,
-      message: "Internal server error.",
-    });
-  }
-};
+//     res.status(200).json({
+//       success: true,
+//       message: `Fetched ${type} events successfully.`,
+//       data: events,
+//     });
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).json({
+//       success: false,
+//       message: "Internal server error.",
+//     });
+//   }
+// };
 
 // Get event by ID
 exports.getEventById = async (req, res) => {
@@ -251,6 +251,40 @@ exports.getEventsByOrganizationAndType = async (req, res) => {
     res.status(200).json({
       success: true,
       message: `Fetched ${eventtype} events successfully.`,
+      data: events,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error.",
+    });
+  }
+};
+
+// Get all events by organizationID
+exports.getEventsByOrganizationgolive = async (req, res) => {
+  try {
+    const { organizationID } = req.query;
+
+    // Validate query parameter
+    if (!organizationID) {
+      return res.status(400).json({
+        success: false,
+        message: "Missing 'organizationID' parameter.",
+      });
+    }
+
+    // Fetch all events for the organization
+    const query = {
+      organizationID: new mongoose.Types.ObjectId(organizationID),
+    };
+
+    const events = await Organizationgolive.find(query);
+
+    res.status(200).json({
+      success: true,
+      message: "Fetched all events for the organization successfully.",
       data: events,
     });
   } catch (error) {
