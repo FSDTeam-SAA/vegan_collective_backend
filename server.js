@@ -123,6 +123,11 @@ app.use("/api/v1", founderVerificationManagement);
 //global routes
 app.use("/api/v1", userRoute);
 // app.use('/api/v1', require('./routes/globalfind'));
+
+// Root route
+app.get('/', (req, res) => {
+  res.send('Zoom Integration with Express.js');
+});
 app.use("/api/v1/auth/zoom", zoomRoutes);
 app.use("/api/v1", refferRoutes); // Base API route
 
