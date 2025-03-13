@@ -48,12 +48,10 @@ exports.createMerchantInfo = async (req, res) => {
 
       const existingMerchantInfo = await Merchantinfo.findOne({ userID })
       if (existingMerchantInfo) {
-        return res
-          .status(400)
-          .json({
-            success: false,
-            message: 'Merchant info already exists for this user',
-          })
+        return res.status(400).json({
+          success: false,
+          message: 'Merchant info already exists for this user',
+        })
       }
 
       let parsedBusinessHours = []
@@ -64,13 +62,11 @@ exports.createMerchantInfo = async (req, res) => {
         if (highlightedStatement)
           parsedHighlightedStatement = JSON.parse(highlightedStatement)
       } catch (parseError) {
-        return res
-          .status(400)
-          .json({
-            success: false,
-            message:
-              'Invalid JSON format for businessHours or highlightedStatement',
-          })
+        return res.status(400).json({
+          success: false,
+          message:
+            'Invalid JSON format for businessHours or highlightedStatement',
+        })
       }
 
       const profilePhotoUrl = req.file ? req.file.path : null
@@ -93,22 +89,18 @@ exports.createMerchantInfo = async (req, res) => {
       })
 
       const savedMerchantInfo = await newMerchantInfo.save()
-      res
-        .status(201)
-        .json({
-          success: true,
-          message: 'Merchant info created successfully',
-          data: savedMerchantInfo,
-        })
+      res.status(201).json({
+        success: true,
+        message: 'Merchant info created successfully',
+        data: savedMerchantInfo,
+      })
     })
   } catch (error) {
-    res
-      .status(500)
-      .json({
-        success: false,
-        message: 'Error creating merchant info',
-        error: error.message,
-      })
+    res.status(500).json({
+      success: false,
+      message: 'Error creating merchant info',
+      error: error.message,
+    })
   }
 }
 
@@ -143,27 +135,23 @@ exports.getAllMerchantInfo = async (req, res) => {
     const totalDocuments = await Merchantinfo.countDocuments(filter)
     const totalPages = Math.ceil(totalDocuments / parseInt(limit))
 
-    return res
-      .status(200)
-      .json({
-        success: true,
-        message: 'Merchant info retrieved successfully',
-        data: merchantInfoList,
-        pagination: {
-          currentPage: parseInt(page),
-          totalPages,
-          totalItems: totalDocuments,
-          itemsPerPage: parseInt(limit),
-        },
-      })
+    return res.status(200).json({
+      success: true,
+      message: 'Merchant info retrieved successfully',
+      data: merchantInfoList,
+      pagination: {
+        currentPage: parseInt(page),
+        totalPages,
+        totalItems: totalDocuments,
+        itemsPerPage: parseInt(limit),
+      },
+    })
   } catch (error) {
-    res
-      .status(500)
-      .json({
-        success: false,
-        message: 'Error retrieving merchant info',
-        error: error.message,
-      })
+    res.status(500).json({
+      success: false,
+      message: 'Error retrieving merchant info',
+      error: error.message,
+    })
   }
 }
 
@@ -224,12 +212,10 @@ exports.updateMerchantInfo = [
         try {
           updateData.businessHours = JSON.parse(updateData.businessHours)
         } catch (error) {
-          return res
-            .status(400)
-            .json({
-              success: false,
-              message: 'Invalid JSON format for businessHours',
-            })
+          return res.status(400).json({
+            success: false,
+            message: 'Invalid JSON format for businessHours',
+          })
         }
       }
       if (updateData.highlightedStatement) {
@@ -238,12 +224,10 @@ exports.updateMerchantInfo = [
             updateData.highlightedStatement
           )
         } catch (error) {
-          return res
-            .status(400)
-            .json({
-              success: false,
-              message: 'Invalid JSON format for highlightedStatement',
-            })
+          return res.status(400).json({
+            success: false,
+            message: 'Invalid JSON format for highlightedStatement',
+          })
         }
       }
 
@@ -256,21 +240,17 @@ exports.updateMerchantInfo = [
           .status(404)
           .json({ success: false, message: 'Merchant info not found' })
       }
-      res
-        .status(200)
-        .json({
-          success: true,
-          message: 'Merchant info updated successfully',
-          data: updatedInfo,
-        })
+      res.status(200).json({
+        success: true,
+        message: 'Merchant info updated successfully',
+        data: updatedInfo,
+      })
     } catch (error) {
-      res
-        .status(500)
-        .json({
-          success: false,
-          message: 'Error updating merchant info',
-          error: error.message,
-        })
+      res.status(500).json({
+        success: false,
+        message: 'Error updating merchant info',
+        error: error.message,
+      })
     }
   },
 ]
@@ -291,13 +271,11 @@ exports.deleteMerchantInfo = async (req, res) => {
       .status(200)
       .json({ success: true, message: 'Merchant info deleted successfully' })
   } catch (error) {
-    res
-      .status(500)
-      .json({
-        success: false,
-        message: 'Error deleting merchant info',
-        error: error.message,
-      })
+    res.status(500).json({
+      success: false,
+      message: 'Error deleting merchant info',
+      error: error.message,
+    })
   }
 }
 
@@ -453,7 +431,9 @@ exports.checkAccountId = async (req, res) => {
     }
 
     // Find account info based on userID and check the availability of Stripe Account ID
-    let accountInfo = await model.findOne({ userID })
+    let accountInfo = await model.findOne({
+      $or: [{ userID }, { userId: userID }],
+    })
     if (!accountInfo || !accountInfo.stripeAccountId) {
       return res.status(404).json({
         status: false,
