@@ -75,7 +75,7 @@ const userGoLive = require("./routes/userGoLive.route.js");
 
 const paymentRoute = require("./routes/payment.Routes.js");
 const googleAuthRoute = require("./routes/googleAuth.js")
-
+const checkUserPaymentRoute = require("./routes/checkUserPayment.route.js")
 //endpoints for professional
 app.use("/api/v1", professionalBooking);
 app.use("/api/v1", professionalEvent);
@@ -128,7 +128,7 @@ app.use("/api/v1", refferRoutes); // Base API route
 
 // payment routes
 app.use("/api/v1/payment", paymentRoute);
-
+app.use('/api/v1/payment', checkUserPaymentRoute)
 // oauth
 app.use('/api/v1', googleAuthRoute)
 
