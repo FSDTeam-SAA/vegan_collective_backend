@@ -26,7 +26,7 @@ const professionalInfoSchema = new mongoose.Schema(
     about: {
       type: String,
     },
-    StripeAccountId: {
+    stripeAccountId: {
       type: String,
     },
     highlightedStatement: [
