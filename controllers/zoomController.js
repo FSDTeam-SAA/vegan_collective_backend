@@ -1,4 +1,10 @@
 const axios = require('axios');
+const dotenv = require('dotenv');
+dotenv.config();
+
+let accessToken = null;
+let refreshToken = null;
+let tokenExpiryTime = null;
 
 // Redirect to Zoom OAuth URL
 exports.getOAuthUrl = (req, res) => {
@@ -29,7 +35,15 @@ exports.handleCallback = async (req, res) => {
             }
         });
 
-        const accessToken = response.data.access_token;
+        accessToken = response.data.access_token;
+        refreshToken = response.data.refresh_token;
+        tokenExpiryTime = Date.now() + response.data.expires_in * 1000; // Convert to milliseconds
+
+        console.log('Initial Refresh Token:', refreshToken); // Log the initial refresh token
+
+        // Start the token refresh loop
+        startTokenRefreshLoop(response.data.expires_in * 1000);
+
         res.send(`Access Token: ${accessToken}`);
     } catch (error) {
         console.error('Error during Zoom OAuth callback:', error);
@@ -37,20 +51,59 @@ exports.handleCallback = async (req, res) => {
     }
 };
 
+// Function to refresh the access token
+const refreshAccessToken = async () => {
+    try {
+        const params = new URLSearchParams();
+        params.append('grant_type', 'refresh_token');
+        params.append('refresh_token', refreshToken);
+
+        const authHeader = `Basic ${Buffer.from(`${process.env.ZOOM_CLIENT_ID}:${process.env.ZOOM_CLIENT_SECRET}`).toString('base64')}`;
+        const response = await axios.post('https://zoom.us/oauth/token', params, {
+            headers: {
+                'Authorization': authHeader,
+                'Content-Type': 'application/x-www-form-urlencoded'
+            }
+        });
+
+        accessToken = response.data.access_token;
+        refreshToken = response.data.refresh_token;
+        tokenExpiryTime = Date.now() + response.data.expires_in * 1000; // Convert to milliseconds
+
+        console.log('Access token refreshed');
+        console.log('New Access Token:', accessToken); // Log the new access token
+        console.log('New Refresh Token:', refreshToken); // Log the new refresh token
+    } catch (error) {
+        console.error('Error refreshing access token:', error);
+    }
+};
+
+// Function to start the token refresh loop
+const startTokenRefreshLoop = (expiresIn) => {
+    setInterval(async () => {
+        if (Date.now() >= tokenExpiryTime - 60000) { // Refresh token 1 minute before expiry
+            await refreshAccessToken();
+        }
+    }, expiresIn - 60000); // Check every (expiresIn - 1 minute)
+};
+
+// Middleware to ensure the access token is valid
+const ensureValidToken = async (req, res, next) => {
+    if (!accessToken || Date.now() >= tokenExpiryTime) {
+        await refreshAccessToken();
+    }
+    next();
+};
+
 // Example: Create a Zoom meeting
 exports.createMeeting = async (req, res) => {
-    const accessToken = req.headers.authorization?.split(' ')[1]; // Get token from Authorization header
-    if (!accessToken) {
-        return res.status(401).send('Access token is required');
-    }
-
     try {
         const meetingData = {
-            topic: 'My Zoom Meeting',
+            topic: req.body.topic || 'My Zoom Meeting',
             type: 2, // Scheduled meeting
-            start_time: '2023-10-15T10:00:00',
-            duration: 60,
-            timezone: 'UTC',
+            start_time: req.body.start_time || '2023-10-15T10:00:00',
+            duration: req.body.duration || 60,
+            timezone: req.body.timezone || 'UTC',
         };
 
         const response = await axios.post('https://api.zoom.us/v2/users/me/meetings', meetingData, {
