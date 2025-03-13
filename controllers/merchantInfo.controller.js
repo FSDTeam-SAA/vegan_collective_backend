@@ -305,7 +305,7 @@ exports.removeAccountIdController = async (req, res) => {
 // check the vendor's Stripe Account ID availability
 exports.checkAccountId = async (req, res) => {
   try {
-    const { userID } = req.body
+    const { userID } = req.params 
 
     if (!userID) {
       return res.status(400).json({

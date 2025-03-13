@@ -26,6 +26,6 @@ router.post('/stripe/account-id', merchantInfoController.addAccountIdController)
 
 router.post('/remove/account-id', merchantInfoController.removeAccountIdController)
 
-router.post('/checkAccountId', merchantInfoController.checkAccountId)
+router.get('/checkAccountId/:userID', merchantInfoController.checkAccountId)
 
 module.exports = router;
