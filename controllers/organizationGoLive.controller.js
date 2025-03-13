@@ -218,3 +218,46 @@ exports.getEventById = async (req, res) => {
       });
     }
   };
+
+  // Get events by organizationID and eventType
+// Get events by organizationID and eventType (paid/free)
+exports.getEventsByOrganizationAndType = async (req, res) => {
+  try {
+    const { organizationID, eventtype } = req.query;
+
+    // Validate query parameters
+    if (!organizationID) {
+      return res.status(400).json({
+        success: false,
+        message: "Missing 'organizationID' parameter.",
+      });
+    }
+
+    if (!eventtype || !["paid event", "free event"].includes(eventtype)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid or missing 'eventtype' parameter. Must be 'paid event' or 'free event'.",
+      });
+    }
+
+    // Fetch events based on organizationID and eventType
+    const query = {
+      organizationID: new mongoose.Types.ObjectId(organizationID),
+      eventType: eventtype,
+    };
+
+    const events = await Organizationgolive.find(query);
+
+    res.status(200).json({
+      success: true,
+      message: `Fetched ${eventtype} events successfully.`,
+      data: events,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error.",
+    });
+  }
+};
