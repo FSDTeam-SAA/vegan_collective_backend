@@ -1,7 +1,7 @@
-const mongoose = require("mongoose");
-const Merchantinfo = require("../models/merchantInfo.model");
-const User = require("../models/user.model");
-const upload = require("../utils/multerConfig");
+const mongoose = require('mongoose')
+const Merchantinfo = require('../models/merchantInfo.model')
+const User = require('../models/user.model')
+const upload = require('../utils/multerConfig')
 const Professionalinfo = require('../models/professionalInfo.model')
 const Organizationinfo = require('../models/organizationInfo.model')
 
@@ -10,39 +10,70 @@ const Organizationinfo = require('../models/organizationInfo.model')
  */
 exports.createMerchantInfo = async (req, res) => {
   try {
-    upload.single("profilePhoto")(req, res, async (err) => {
+    upload.single('profilePhoto')(req, res, async (err) => {
       if (err) {
-        return res.status(500).json({ error: "Error uploading file to Cloudinary" });
+        return res
+          .status(500)
+          .json({ error: 'Error uploading file to Cloudinary' })
       }
 
-      let { userID, fullName, businessName, address, about, shortDescriptionOfStore, businessHours, highlightedStatement, websiteURL, governmentIssuedID, professionalCertification, photoWithID, isVerified } = req.body;
+      let {
+        userID,
+        fullName,
+        businessName,
+        address,
+        about,
+        shortDescriptionOfStore,
+        businessHours,
+        highlightedStatement,
+        websiteURL,
+        governmentIssuedID,
+        professionalCertification,
+        photoWithID,
+        isVerified,
+      } = req.body
 
       if (!mongoose.Types.ObjectId.isValid(userID)) {
-        return res.status(400).json({ success: false, message: "Invalid userID format" });
+        return res
+          .status(400)
+          .json({ success: false, message: 'Invalid userID format' })
       }
 
-      const userExists = await User.findById(userID);
+      const userExists = await User.findById(userID)
       if (!userExists) {
-        return res.status(404).json({ success: false, message: "User does not exist" });
+        return res
+          .status(404)
+          .json({ success: false, message: 'User does not exist' })
       }
 
-      const existingMerchantInfo = await Merchantinfo.findOne({ userID });
+      const existingMerchantInfo = await Merchantinfo.findOne({ userID })
       if (existingMerchantInfo) {
-        return res.status(400).json({ success: false, message: "Merchant info already exists for this user" });
+        return res
+          .status(400)
+          .json({
+            success: false,
+            message: 'Merchant info already exists for this user',
+          })
       }
 
-      let parsedBusinessHours = [];
-      let parsedHighlightedStatement = [];
-      
-      
+      let parsedBusinessHours = []
+      let parsedHighlightedStatement = []
+
       try {
-        if (businessHours) parsedBusinessHours = JSON.parse(businessHours);
-        if (highlightedStatement) parsedHighlightedStatement = JSON.parse(highlightedStatement);
+        if (businessHours) parsedBusinessHours = JSON.parse(businessHours)
+        if (highlightedStatement)
+          parsedHighlightedStatement = JSON.parse(highlightedStatement)
       } catch (parseError) {
-        return res.status(400).json({ success: false, message: "Invalid JSON format for businessHours or highlightedStatement" });
+        return res
+          .status(400)
+          .json({
+            success: false,
+            message:
+              'Invalid JSON format for businessHours or highlightedStatement',
+          })
       }
 
-      const profilePhotoUrl = req.file ? req.file.path : null;
+      const profilePhotoUrl = req.file ? req.file.path : null
 
       const newMerchantInfo = new Merchantinfo({
         userID,
@@ -59,40 +90,82 @@ exports.createMerchantInfo = async (req, res) => {
         professionalCertification,
         photoWithID,
         isVerified,
-      });
+      })
 
-      const savedMerchantInfo = await newMerchantInfo.save();
-      res.status(201).json({ success: true, message: "Merchant info created successfully", data: savedMerchantInfo });
-    });
+      const savedMerchantInfo = await newMerchantInfo.save()
+      res
+        .status(201)
+        .json({
+          success: true,
+          message: 'Merchant info created successfully',
+          data: savedMerchantInfo,
+        })
+    })
   } catch (error) {
-    res.status(500).json({ success: false, message: "Error creating merchant info", error: error.message });
+    res
+      .status(500)
+      .json({
+        success: false,
+        message: 'Error creating merchant info',
+        error: error.message,
+      })
   }
-};
+}
 
 /**
  * Get all merchant info entries with filtering, pagination, and sorting
  */
 exports.getAllMerchantInfo = async (req, res) => {
   try {
-    const { page = 1, limit = 6, sortBy = "fullName", order = "asc", fullName, businessName, address } = req.query;
+    const {
+      page = 1,
+      limit = 6,
+      sortBy = 'fullName',
+      order = 'asc',
+      fullName,
+      businessName,
+      address,
+    } = req.query
 
-    const filter = {};
-    if (fullName) filter.fullName = { $regex: fullName, $options: "i" };
-    if (businessName) filter.businessName = { $regex: businessName, $options: "i" };
-    if (address) filter.address = { $regex: address, $options: "i" };
+    const filter = {}
+    if (fullName) filter.fullName = { $regex: fullName, $options: 'i' }
+    if (businessName)
+      filter.businessName = { $regex: businessName, $options: 'i' }
+    if (address) filter.address = { $regex: address, $options: 'i' }
 
-    const sortOptions = { [sortBy]: order === "asc" ? 1 : -1 };
-    const skip = (parseInt(page) - 1) * parseInt(limit);
+    const sortOptions = { [sortBy]: order === 'asc' ? 1 : -1 }
+    const skip = (parseInt(page) - 1) * parseInt(limit)
 
-    const merchantInfoList = await Merchantinfo.find(filter).sort(sortOptions).skip(skip).limit(parseInt(limit));
-    const totalDocuments = await Merchantinfo.countDocuments(filter);
-    const totalPages = Math.ceil(totalDocuments / parseInt(limit));
+    const merchantInfoList = await Merchantinfo.find(filter)
+      .sort(sortOptions)
+      .skip(skip)
+      .limit(parseInt(limit))
+    const totalDocuments = await Merchantinfo.countDocuments(filter)
+    const totalPages = Math.ceil(totalDocuments / parseInt(limit))
 
-    return res.status(200).json({ success: true, message: "Merchant info retrieved successfully", data: merchantInfoList, pagination: { currentPage: parseInt(page), totalPages, totalItems: totalDocuments, itemsPerPage: parseInt(limit) } });
+    return res
+      .status(200)
+      .json({
+        success: true,
+        message: 'Merchant info retrieved successfully',
+        data: merchantInfoList,
+        pagination: {
+          currentPage: parseInt(page),
+          totalPages,
+          totalItems: totalDocuments,
+          itemsPerPage: parseInt(limit),
+        },
+      })
   } catch (error) {
-    res.status(500).json({ success: false, message: "Error retrieving merchant info", error: error.message });
+    res
+      .status(500)
+      .json({
+        success: false,
+        message: 'Error retrieving merchant info',
+        error: error.message,
+      })
   }
-};
+}
 
 /**
  * Get a single merchant info entry by ID
@@ -102,88 +175,131 @@ exports.getAllMerchantInfo = async (req, res) => {
  */
 exports.getMerchantInfoByMerchantID = async (req, res) => {
   try {
-    const { merchantID } = req.params; // Extract merchantID from request parameters
+    const { merchantID } = req.params // Extract merchantID from request parameters
 
     // Query the database using findOne and filter by merchantID
-    const merchantInfo = await Merchantinfo.findOne({ merchantID });
+    const merchantInfo = await Merchantinfo.findOne({ merchantID })
 
     // If no merchant info is found, return a 404 error
     if (!merchantInfo) {
-      return res.status(404).json({ success: false, message: "Merchant info not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: 'Merchant info not found' })
     }
 
     // Return the retrieved merchant info with a success response
     res.status(200).json({
       success: true,
-      message: "Merchant info retrieved successfully",
+      message: 'Merchant info retrieved successfully',
       data: merchantInfo,
-    });
+    })
   } catch (error) {
     // Handle any errors that occur during the process
     res.status(500).json({
       success: false,
-      message: "Error retrieving merchant info",
+      message: 'Error retrieving merchant info',
       error: error.message,
-    });
+    })
   }
-};
+}
 
 /**
  * Update merchant info by ID
  */
 exports.updateMerchantInfo = [
-  upload.single("profilePhoto"),
+  upload.single('profilePhoto'),
   async (req, res) => {
     try {
-      const { id } = req.params;
+      const { id } = req.params
       if (!mongoose.Types.ObjectId.isValid(id)) {
-        return res.status(400).json({ success: false, message: "Invalid merchant info ID format" });
+        return res
+          .status(400)
+          .json({ success: false, message: 'Invalid merchant info ID format' })
       }
 
-      const updateData = { ...req.body };
-      if (req.file) updateData.profilePhoto = req.file.path;
+      const updateData = { ...req.body }
+      if (req.file) updateData.profilePhoto = req.file.path
 
       if (updateData.businessHours) {
         try {
-          updateData.businessHours = JSON.parse(updateData.businessHours);
+          updateData.businessHours = JSON.parse(updateData.businessHours)
         } catch (error) {
-          return res.status(400).json({ success: false, message: "Invalid JSON format for businessHours" });
+          return res
+            .status(400)
+            .json({
+              success: false,
+              message: 'Invalid JSON format for businessHours',
+            })
         }
       }
       if (updateData.highlightedStatement) {
         try {
-          updateData.highlightedStatement = JSON.parse(updateData.highlightedStatement);
+          updateData.highlightedStatement = JSON.parse(
+            updateData.highlightedStatement
+          )
         } catch (error) {
-          return res.status(400).json({ success: false, message: "Invalid JSON format for highlightedStatement" });
+          return res
+            .status(400)
+            .json({
+              success: false,
+              message: 'Invalid JSON format for highlightedStatement',
+            })
         }
       }
 
-      const updatedInfo = await Merchantinfo.findByIdAndUpdate(id, updateData, { new: true, runValidators: true });
+      const updatedInfo = await Merchantinfo.findByIdAndUpdate(id, updateData, {
+        new: true,
+        runValidators: true,
+      })
       if (!updatedInfo) {
-        return res.status(404).json({ success: false, message: "Merchant info not found" });
+        return res
+          .status(404)
+          .json({ success: false, message: 'Merchant info not found' })
       }
-      res.status(200).json({ success: true, message: "Merchant info updated successfully", data: updatedInfo });
+      res
+        .status(200)
+        .json({
+          success: true,
+          message: 'Merchant info updated successfully',
+          data: updatedInfo,
+        })
     } catch (error) {
-      res.status(500).json({ success: false, message: "Error updating merchant info", error: error.message });
+      res
+        .status(500)
+        .json({
+          success: false,
+          message: 'Error updating merchant info',
+          error: error.message,
+        })
     }
   },
-];
+]
 
 /**
  * Delete merchant info by ID
  */
 exports.deleteMerchantInfo = async (req, res) => {
   try {
-    const { id } = req.params;
-    const deletedInfo = await Merchantinfo.findByIdAndDelete(id);
+    const { id } = req.params
+    const deletedInfo = await Merchantinfo.findByIdAndDelete(id)
     if (!deletedInfo) {
-      return res.status(404).json({ success: false, message: "Merchant info not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: 'Merchant info not found' })
     }
-    res.status(200).json({ success: true, message: "Merchant info deleted successfully" });
+    res
+      .status(200)
+      .json({ success: true, message: 'Merchant info deleted successfully' })
   } catch (error) {
-    res.status(500).json({ success: false, message: "Error deleting merchant info", error: error.message });
+    res
+      .status(500)
+      .json({
+        success: false,
+        message: 'Error deleting merchant info',
+        error: error.message,
+      })
   }
-};
+}
 
 // add the Account Id
 exports.addAccountIdController = async (req, res) => {
@@ -202,7 +318,6 @@ exports.addAccountIdController = async (req, res) => {
     if (!user) {
       return res.status(404).json({ status: false, message: 'User not found' })
     }
-
     let model
     if (user.accountType === 'merchant') {
       model = Merchantinfo
@@ -217,13 +332,10 @@ exports.addAccountIdController = async (req, res) => {
       })
     }
 
-    // Find and update the correct model
-    let accountInfo = await model.findOne({  userID })
-    if (!accountInfo) {
-      return res
-        .status(404)
-        .json({ status: false, message: 'Account not found' })
-    }
+    // Find the account info with both possible key names
+    let accountInfo = await model.findOne({
+      $or: [{ userID }, { userId: userID }],
+    })
 
     accountInfo.stripeAccountId = stripeAccountId
     await accountInfo.save()
@@ -242,7 +354,7 @@ exports.addAccountIdController = async (req, res) => {
   }
 }
 
-// remove account id 
+// remove account id
 exports.removeAccountIdController = async (req, res) => {
   try {
     const { userID } = req.body
@@ -277,8 +389,11 @@ exports.removeAccountIdController = async (req, res) => {
       })
     }
 
-    // Find the account info based on userID and remove the Stripe Account ID
-    let accountInfo = await model.findOne({ userID })
+    // Find the account info with both possible key names
+    let accountInfo = await model.findOne({
+      $or: [{ userID }, { userId: userID }],
+    })
+
     if (!accountInfo) {
       return res.status(404).json({
         status: false,
@@ -305,7 +420,7 @@ exports.removeAccountIdController = async (req, res) => {
 // check the vendor's Stripe Account ID availability
 exports.checkAccountId = async (req, res) => {
   try {
-    const { userID } = req.params 
+    const { userID } = req.params
 
     if (!userID) {
       return res.status(400).json({
