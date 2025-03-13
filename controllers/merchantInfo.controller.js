@@ -301,3 +301,61 @@ exports.removeAccountIdController = async (req, res) => {
     })
   }
 }
+
+// check the vendor's Stripe Account ID availability
+exports.checkAccountId = async (req, res) => {
+  try {
+    const { userID } = req.body
+
+    if (!userID) {
+      return res.status(400).json({
+        status: false,
+        message: 'User ID is required',
+      })
+    }
+
+    // Find user to determine account type
+    const user = await User.findById(userID)
+    if (!user) {
+      return res.status(404).json({
+        status: false,
+        message: 'User not found',
+      })
+    }
+
+    let model
+    if (user.accountType === 'merchant') {
+      model = Merchantinfo
+    } else if (user.accountType === 'professional') {
+      model = Professionalinfo
+    } else if (user.accountType === 'organization') {
+      model = Organizationinfo
+    } else {
+      return res.status(400).json({
+        status: false,
+        message: 'Invalid account type',
+      })
+    }
+
+    // Find account info based on userID and check the availability of Stripe Account ID
+    let accountInfo = await model.findOne({ userID })
+    if (!accountInfo || !accountInfo.stripeAccountId) {
+      return res.status(404).json({
+        status: false,
+        message: 'Stripe Account ID not available',
+      })
+    }
+
+    res.status(200).json({
+      status: true,
+      message: 'Stripe Account ID is available',
+      stripeAccountId: accountInfo.stripeAccountId,
+    })
+  } catch (error) {
+    res.status(500).json({
+      status: false,
+      message: 'Error checking Stripe Account ID',
+      error: error.message,
+    })
+  }
+}
