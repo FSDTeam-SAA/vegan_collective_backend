@@ -4,10 +4,10 @@ const merchantInfoSchema = new mongoose.Schema(
   {
     userID: {
       type: mongoose.Types.ObjectId,
-      ref: "User",
+      ref: 'User',
     },
     profilePhoto: {
-      type: String, 
+      type: String,
     },
     fullName: {
       type: String,
@@ -24,8 +24,9 @@ const merchantInfoSchema = new mongoose.Schema(
     shortDescriptionOfStore: {
       type: String,
     },
-    StripeAccountId: {
-      type: String
+    stripeAccountId: {
+      // <- Change this to lowercase
+      type: String,
     },
     businessHours: [
       {
@@ -37,10 +38,12 @@ const merchantInfoSchema = new mongoose.Schema(
         },
       },
     ],
-    highlightedStatement: [{ 
-      title: { type: String },
-      description: { type: String }
-    }],
+    highlightedStatement: [
+      {
+        title: { type: String },
+        description: { type: String },
+      },
+    ],
     websiteURL: {
       type: String,
     },
@@ -53,16 +56,17 @@ const merchantInfoSchema = new mongoose.Schema(
     photoWithID: {
       type: String,
     },
-    isVerified:{
+    isVerified: {
       type: String,
-      enum:["approved","declined","pending"],
-      default:"pending",
-    }
+      enum: ['approved', 'declined', 'pending'],
+      default: 'pending',
+    },
   },
   {
     timestamps: true,
   }
-);
+)
+
 
 const Merchantinfo = mongoose.model("Merchantinfo", merchantInfoSchema);
 module.exports = Merchantinfo;

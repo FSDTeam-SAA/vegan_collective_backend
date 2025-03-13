@@ -192,7 +192,7 @@ exports.addAccountIdController = async (req, res) => {
 
     if (!userID || !stripeAccountId) {
       return res.status(400).json({
-        success: false,
+        status: false,
         message: 'User ID and Stripe Account ID are required',
       })
     }
@@ -200,7 +200,7 @@ exports.addAccountIdController = async (req, res) => {
     // Find user to determine account type
     const user = await User.findById(userID)
     if (!user) {
-      return res.status(404).json({ success: false, message: 'User not found' })
+      return res.status(404).json({ status: false, message: 'User not found' })
     }
 
     let model
@@ -212,30 +212,30 @@ exports.addAccountIdController = async (req, res) => {
       model = Organizationinfo
     } else {
       return res.status(400).json({
-        success: false,
+        status: false,
         message: 'Invalid account type',
       })
     }
 
     // Find and update the correct model
-    let accountInfo = await model.findOne({ userID })
+    let accountInfo = await model.findOne({  userID })
     if (!accountInfo) {
       return res
         .status(404)
-        .json({ success: false, message: 'Account not found' })
+        .json({ status: false, message: 'Account not found' })
     }
 
     accountInfo.stripeAccountId = stripeAccountId
     await accountInfo.save()
 
     res.status(200).json({
-      success: true,
+      status: true,
       message: 'Stripe Account ID added successfully',
       stripeAccountId: accountInfo.stripeAccountId,
     })
   } catch (error) {
     res.status(500).json({
-      success: false,
+      status: false,
       message: 'Error adding Stripe Account ID',
       error: error.message,
     })
@@ -249,7 +249,7 @@ exports.removeAccountIdController = async (req, res) => {
 
     if (!userID) {
       return res.status(400).json({
-        success: false,
+        status: false,
         message: 'User ID is required',
       })
     }
@@ -258,7 +258,7 @@ exports.removeAccountIdController = async (req, res) => {
     const user = await User.findById(userID)
     if (!user) {
       return res.status(404).json({
-        success: false,
+        status: false,
         message: 'User not found',
       })
     }
@@ -272,7 +272,7 @@ exports.removeAccountIdController = async (req, res) => {
       model = Organizationinfo
     } else {
       return res.status(400).json({
-        success: false,
+        status: false,
         message: 'Invalid account type',
       })
     }
@@ -281,7 +281,7 @@ exports.removeAccountIdController = async (req, res) => {
     let accountInfo = await model.findOne({ userID })
     if (!accountInfo) {
       return res.status(404).json({
-        success: false,
+        status: false,
         message: 'Account not found',
       })
     }
@@ -290,12 +290,12 @@ exports.removeAccountIdController = async (req, res) => {
     await accountInfo.save()
 
     res.status(200).json({
-      success: true,
+      status: true,
       message: 'Stripe account ID removed successfully',
     })
   } catch (error) {
     res.status(500).json({
-      success: false,
+      status: false,
       message: 'Error removing Stripe account ID',
       error: error.message,
     })
