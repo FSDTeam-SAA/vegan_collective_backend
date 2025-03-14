@@ -121,14 +121,14 @@ const purchaseMethod = async (req, res) => {
     let seller, sellerID, sellerType, sellerStripeAccountId
 
     if (merchantID) {
-      seller = await Merchantinfo.findById(merchantID)
+      seller = await Merchantinfo.findOne(merchantID)
       sellerType = 'Merchant'
     } else if (professionalID) {
       console.log("professionalID____", professionalID)
-      seller = await Professionalinfo.findById(professionalID)
+      seller = await Professionalinfo.findOne({userId:professionalID})
       sellerType = 'Professional'
     } else if (organizationID) {
-      seller = await Organizationinfo.findById(organizationID)
+      seller = await Organizationinfo.findOne(organizationID)
       sellerType = 'Organization'
     } else {
       return res
