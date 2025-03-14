@@ -82,9 +82,7 @@ const purchaseMethod = async (req, res) => {
     }
 
     // Find user
-    const user = await User.findOne({
-      $or: [{ _id: userID }, { userId: userID }],
-    })
+    const user = await User.findOne({ _id: userID })
 
     if (!user) {
       return res.status(404).json({ success: false, error: 'User not found' })
@@ -95,12 +93,13 @@ const purchaseMethod = async (req, res) => {
     if (!userPayment) {
       return res.status(400).json({
         success: false,
-        error: 'User does not have a valid payment method',
+        message: 'User does not have a valid payment method',
       })
     }
 
     const { customerId, paymentMethodId } = userPayment
 
+    console.log("customer payment info____",customerId, paymentMethodId)
     // Check if payment method is already attached to the customer
     const paymentMethod = await stripe.paymentMethods
       .retrieve(paymentMethodId)
@@ -125,6 +124,7 @@ const purchaseMethod = async (req, res) => {
       seller = await Merchantinfo.findById(merchantID)
       sellerType = 'Merchant'
     } else if (professionalID) {
+      console.log("professionalID____", professionalID)
       seller = await Professionalinfo.findById(professionalID)
       sellerType = 'Professional'
     } else if (organizationID) {
@@ -133,14 +133,14 @@ const purchaseMethod = async (req, res) => {
     } else {
       return res
         .status(400)
-        .json({ success: false, error: 'No valid seller ID provided' })
+        .json({ success: false, message: 'No valid seller ID provided' })
     }
 
     // Validate seller existence
     if (!seller) {
       return res
         .status(404)
-        .json({ success: false, error: `${sellerType} not found` })
+        .json({ success: false, message: `${sellerType} not found` })
     }
 
     sellerID = seller._id
@@ -149,7 +149,7 @@ const purchaseMethod = async (req, res) => {
     if (!sellerStripeAccountId) {
       return res.status(400).json({
         success: false,
-        error: `${sellerType} does not have a connected Stripe account`,
+        message: `${sellerType} does not have a connected Stripe account`,
       })
     }
 
@@ -179,7 +179,7 @@ const purchaseMethod = async (req, res) => {
       if (bookingTime && isNaN(bookingTime.getTime())) {
         return res.status(400).json({
           success: false,
-          error: 'Invalid service booking time format',
+          message: 'Invalid service booking time format',
         })
       }
 
@@ -210,18 +210,17 @@ const purchaseMethod = async (req, res) => {
         bookingTime: bookingTime,
       })
     } else {
-      return res.status(400).json({ success: false, error: 'Payment failed' })
+      return res.status(400).json({ success: false, message: 'Payment failed' })
     }
   } catch (error) {
     console.error('Error processing payment:', error)
     return res.status(500).json({
       success: false,
-      error: 'Payment processing failed',
+      message: 'Payment processing failed',
       details: error.message,
     })
   }
 }
-
 
 const chargeCustomer = async (customerId, paymentMethodId, amount) => {
   return await stripe.paymentIntents.create({
@@ -231,10 +230,9 @@ const chargeCustomer = async (customerId, paymentMethodId, amount) => {
     payment_method: paymentMethodId,
     confirm: true,
     off_session: true,
-    payment_method_types: ['card'], 
+    payment_method_types: ['card'],
   })
 }
-
 
 const removePaymentMethod = async (req, res) => {
   try {
