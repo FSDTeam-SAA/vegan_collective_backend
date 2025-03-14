@@ -61,24 +61,6 @@ const savePaymentMethod = async (req, res) => {
   }
 }
 
-const chargeCustomer = async (customerId, paymentMethodId, amount) => {
-  try {
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount: Math.round(amount * 100), // Convert to cents
-      currency: 'usd',
-      customer: customerId,
-      payment_method: paymentMethodId,
-      confirm: true,
-      return_url: 'https://yourwebsite.com/payment-success',
-    })
-
-    return paymentIntent
-  } catch (error) {
-    console.error('Error creating PaymentIntent:', error)
-    throw error
-  }
-}
-
 const purchaseMethod = async (req, res) => {
   try {
     const {
@@ -94,11 +76,16 @@ const purchaseMethod = async (req, res) => {
 
     // Validate required fields
     if (!userID || !amount) {
-      return res.status(400).json({success: false, error: 'Missing required fields' })
+      return res
+        .status(400)
+        .json({ success: false, error: 'Missing required fields' })
     }
 
     // Find user
-    const user = await User.findById(userID)
+    const user = await User.findOne({
+      $or: [{ _id: userID }, { userId: userID }],
+    })
+
     if (!user) {
       return res.status(404).json({ success: false, error: 'User not found' })
     }
@@ -106,15 +93,30 @@ const purchaseMethod = async (req, res) => {
     // Check user payment method
     const userPayment = await Userpayment.findOne({ userID })
     if (!userPayment) {
-      return res
-        .status(400)
-        .json({
-          success: false,
-          error: 'User does not have a valid payment method',
-        })
+      return res.status(400).json({
+        success: false,
+        error: 'User does not have a valid payment method',
+      })
     }
 
     const { customerId, paymentMethodId } = userPayment
+
+    // Check if payment method is already attached to the customer
+    const paymentMethod = await stripe.paymentMethods
+      .retrieve(paymentMethodId)
+      .catch(() => null)
+
+    if (!paymentMethod || paymentMethod.customer !== customerId) {
+      // Reattach the payment method if needed
+      await stripe.paymentMethods.attach(paymentMethodId, {
+        customer: customerId,
+      })
+
+      // Set the default payment method for the customer
+      await stripe.customers.update(customerId, {
+        invoice_settings: { default_payment_method: paymentMethodId },
+      })
+    }
 
     // Determine seller type and ID
     let seller, sellerID, sellerType, sellerStripeAccountId
@@ -145,12 +147,10 @@ const purchaseMethod = async (req, res) => {
     sellerStripeAccountId = seller.stripeAccountId
 
     if (!sellerStripeAccountId) {
-      return res
-        .status(400)
-        .json({
-          success: false,
-          error: `${sellerType} does not have a connected Stripe account`,
-        })
+      return res.status(400).json({
+        success: false,
+        error: `${sellerType} does not have a connected Stripe account`,
+      })
     }
 
     // Charge the customer
@@ -159,7 +159,7 @@ const purchaseMethod = async (req, res) => {
       paymentMethodId,
       amount
     )
-    console.log(paymentIntent, 'paymentIntent created')
+    console.log(paymentIntent, 'PaymentIntent created')
 
     if (paymentIntent.status === 'succeeded') {
       const vendorAmount = Math.round(amount * 0.9 * 100) // Vendor gets 90%
@@ -177,12 +177,10 @@ const purchaseMethod = async (req, res) => {
         ? new Date(serviceBookingTime)
         : null
       if (bookingTime && isNaN(bookingTime.getTime())) {
-        return res
-          .status(400)
-          .json({
-            success: false,
-            error: 'Invalid service booking time format',
-          })
+        return res.status(400).json({
+          success: false,
+          error: 'Invalid service booking time format',
+        })
       }
 
       // Save transaction record
@@ -201,7 +199,7 @@ const purchaseMethod = async (req, res) => {
       await newPaymentRecord.save()
 
       return res.status(200).json({
-        status: true,
+        success: true,
         message: 'Payment processed and transferred successfully',
         paymentIntentId: paymentIntent.id,
         transferId: transfer.id,
@@ -216,16 +214,26 @@ const purchaseMethod = async (req, res) => {
     }
   } catch (error) {
     console.error('Error processing payment:', error)
-    return res
-      .status(500)
-      .json({
-        success: false,
-        error: 'Payment processing failed',
-        details: error.message,
-      })
+    return res.status(500).json({
+      success: false,
+      error: 'Payment processing failed',
+      details: error.message,
+    })
   }
 }
 
+
+const chargeCustomer = async (customerId, paymentMethodId, amount) => {
+  return await stripe.paymentIntents.create({
+    amount: amount * 100, // Convert to cents
+    currency: 'usd',
+    customer: customerId,
+    payment_method: paymentMethodId,
+    confirm: true,
+    off_session: true,
+    payment_method_types: ['card'], 
+  })
+}
 
 
 const removePaymentMethod = async (req, res) => {
