@@ -78,14 +78,14 @@ const purchaseMethod = async (req, res) => {
     if (!userID || !amount) {
       return res
         .status(400)
-        .json({ success: false, error: 'Missing required fields' })
+        .json({ success: false, message: 'Missing required fields' })
     }
 
     // Find user
     const user = await User.findOne({ _id: userID })
 
     if (!user) {
-      return res.status(404).json({ success: false, error: 'User not found' })
+      return res.status(404).json({ success: false, message: 'User not found' })
     }
 
     // Check user payment method
@@ -173,15 +173,15 @@ const purchaseMethod = async (req, res) => {
       })
 
       // Validate service booking time
-      const bookingTime = serviceBookingTime
-        ? new Date(serviceBookingTime)
-        : null
-      if (bookingTime && isNaN(bookingTime.getTime())) {
-        return res.status(400).json({
-          success: false,
-          message: 'Invalid service booking time format',
-        })
-      }
+      // const bookingTime = serviceBookingTime
+      //   ? new Date(serviceBookingTime)
+      //   : null
+      // if (bookingTime && isNaN(bookingTime.getTime())) {
+      //   return res.status(400).json({
+      //     success: false,
+      //     message: 'Invalid service booking time format',
+      //   })
+      // }
 
       // Save transaction record
       const newPaymentRecord = new Userpayment({
@@ -194,7 +194,7 @@ const purchaseMethod = async (req, res) => {
         amount,
         productId: productId || [],
         professionalServicesId: professionalServicesId || null,
-        serviceBookingTime: bookingTime,
+        serviceBookingTime: serviceBookingTime,
       })
       await newPaymentRecord.save()
 
@@ -207,7 +207,7 @@ const purchaseMethod = async (req, res) => {
         transferredAmount: vendorAmount / 100,
         purchasedProducts: productId,
         bookedService: professionalServicesId,
-        bookingTime: bookingTime,
+        bookingTime: serviceBookingTime,
       })
     } else {
       return res.status(400).json({ success: false, message: 'Payment failed' })
