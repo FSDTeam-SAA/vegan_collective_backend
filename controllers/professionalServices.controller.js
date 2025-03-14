@@ -168,9 +168,8 @@ const updateService = async (req, res) => {
 
     console.log("Existing Service:", existingService);
 
-    // Destructure the request body
+    // Destructure the request body (exclude userID)
     const {
-      userID,
       serviceName,
       metaDescription,
       serviceDescription,
@@ -232,11 +231,10 @@ const updateService = async (req, res) => {
       formattedDate = new Date().toISOString(); // Default to current date-time if not provided
     }
 
-    // Update the service in the database
+    // Update the service in the database (exclude userID)
     const updatedService = await Professionalservices.findByIdAndUpdate(
       id,
       {
-        userID,
         serviceName,
         metaDescription,
         serviceDescription,
@@ -251,7 +249,7 @@ const updateService = async (req, res) => {
         timeSlots: formattedTimeSlots,
         date: formattedDate,
       },
-      { new: true } // Return the updated service
+      { new: true } // Return the updated document
     );
 
     console.log("Updated Service:", updatedService);
@@ -267,6 +265,7 @@ const updateService = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
 
 
 // Delete service
