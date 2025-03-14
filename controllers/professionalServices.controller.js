@@ -189,15 +189,15 @@ const updateService = async (req, res) => {
 
     // Handle file uploads for images and videos
     if (req.files?.serviceImage) {
-      console.log("Uploading service image...");
+      // console.log("Uploading service image...");
       serviceImage = await uploadToCloudinary(req.files.serviceImage[0]);
-      console.log("Uploaded Image URL:", serviceImage);
+      // console.log("Uploaded Image URL:", serviceImage);
     }
 
     if (req.files?.serviceVideo) {
-      console.log("Uploading service video...");
+      // console.log("Uploading service video...");
       serviceVideo = await uploadToCloudinary(req.files.serviceVideo[0]);
-      console.log("Uploaded Video URL:", serviceVideo);
+      // console.log("Uploaded Video URL:", serviceVideo);
     }
 
     // Ensure keywords is an array of strings
@@ -252,7 +252,7 @@ const updateService = async (req, res) => {
       { new: true } // Return the updated document
     );
 
-    console.log("Updated Service:", updatedService);
+    // console.log("Updated Service:", updatedService);
 
     // Return success response
     res.status(200).json({

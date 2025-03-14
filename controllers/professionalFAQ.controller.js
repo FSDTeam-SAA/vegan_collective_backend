@@ -94,22 +94,34 @@ exports.getFAQsByUserID = async (req, res) => {
 
 // Update an FAQ by userID and FAQ ID
 // Update FAQs by User ID
-exports.updateFAQsByUserID = async (req, res) => {
+exports.updateFAQsByID = async (req, res) => {
   try {
-    const { userID } = req.params;
+    const { id } = req.params; // Assuming `id` represents the `_id` of the FAQ document
     const { question, answer } = req.body;
 
-    if (!mongoose.Types.ObjectId.isValid(userID)) {
-      return res.status(400).json({ success: false, message: "Invalid User ID format" });
+    // Validate if the provided `id` is a valid MongoDB ObjectId
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ success: false, message: "Invalid FAQ ID format" });
     }
 
-    const updatedFAQs = await professionalFAQ.updateMany({ userID }, { $set: { question, answer } });
+    // Update the FAQ document by its `_id`
+    const updatedFAQ = await professionalFAQ.findByIdAndUpdate(
+      id, // Use the `_id` to find the document
+      { $set: { question, answer } }, // Update the fields
+      { new: true } // Return the updated document
+    );
 
-    if (updatedFAQs.matchedCount === 0) {
-      return res.status(404).json({ success: false, message: "No FAQs found for this user" });
+    // If no document was found with the given `_id`
+    if (!updatedFAQ) {
+      return res.status(404).json({ success: false, message: "No FAQ found with this ID" });
     }
 
-    return res.status(200).json({ success: true, message: "FAQs updated successfully" });
+    // Return success response with the updated FAQ
+    return res.status(200).json({
+      success: true,
+      message: "FAQ updated successfully",
+      data: updatedFAQ,
+    });
   } catch (error) {
     console.error(error);
     return res.status(500).json({ success: false, message: "Internal server error" });
@@ -117,22 +129,29 @@ exports.updateFAQsByUserID = async (req, res) => {
 };
 
 // Delete an FAQ by ID
-// Delete FAQs by User ID
-exports.deleteFAQsByUserID = async (req, res) => {
+exports.deleteFAQsByID = async (req, res) => {
   try {
-    const { userID } = req.params;
+    const { id } = req.params;
 
-    if (!mongoose.Types.ObjectId.isValid(userID)) {
-      return res.status(400).json({ success: false, message: "Invalid User ID format" });
+    // Validate if the provided `id` is a valid MongoDB ObjectId
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ success: false, message: "Invalid FAQ ID format" });
     }
 
-    const deletedFAQs = await professionalFAQ.deleteMany({ userID });
+    // Delete the FAQ document by its `_id`
+    const deletedFAQ = await professionalFAQ.findByIdAndDelete(id);
 
-    if (deletedFAQs.deletedCount === 0) {
-      return res.status(404).json({ success: false, message: "No FAQs found for this user" });
+    // If no document was found with the given `_id`
+    if (!deletedFAQ) {
+      return res.status(404).json({ success: false, message: "No FAQ found with this ID" });
     }
 
-    return res.status(200).json({ success: true, message: "FAQs deleted successfully" });
+    // Return success response
+    return res.status(200).json({
+      success: true,
+      message: "FAQ deleted successfully",
+      data: deletedFAQ,
+    });
   } catch (error) {
     console.error(error);
     return res.status(500).json({ success: false, message: "Internal server error" });
