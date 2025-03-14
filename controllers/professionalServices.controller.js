@@ -1,5 +1,6 @@
 const Professionalservices = require("../models/professionalServices.model");
 const cloudinary = require("../config/cloudinary.config");
+const mongoose = require("mongoose");
 
 // Upload file to Cloudinary
 const uploadToCloudinary = async (file) => {
@@ -153,12 +154,21 @@ const getLiveServices = async (req, res) => {
 const updateService = async (req, res) => {
   try {
     const { id } = req.params;
-    const existingService = await Professionalservices.findById(id);
 
+    // Validate the ID format
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ success: false, message: "Invalid service ID" });
+    }
+
+    // Fetch the existing service
+    const existingService = await Professionalservices.findById(id);
     if (!existingService) {
       return res.status(404).json({ success: false, message: "Service not found" });
     }
 
+    console.log("Existing Service:", existingService);
+
+    // Destructure the request body
     const {
       userID,
       serviceName,
@@ -174,17 +184,24 @@ const updateService = async (req, res) => {
       date,
     } = req.body;
 
+    // Default service images and videos
     let serviceImage = existingService.serviceImage;
     let serviceVideo = existingService.serviceVideo;
 
+    // Handle file uploads for images and videos
     if (req.files?.serviceImage) {
+      console.log("Uploading service image...");
       serviceImage = await uploadToCloudinary(req.files.serviceImage[0]);
-    }
-    if (req.files?.serviceVideo) {
-      serviceVideo = await uploadToCloudinary(req.files.serviceVideo[0]);
+      console.log("Uploaded Image URL:", serviceImage);
     }
 
-  
+    if (req.files?.serviceVideo) {
+      console.log("Uploading service video...");
+      serviceVideo = await uploadToCloudinary(req.files.serviceVideo[0]);
+      console.log("Uploaded Video URL:", serviceVideo);
+    }
+
+    // Ensure keywords is an array of strings
     const keywordsArray =
       typeof keyWords === "string"
         ? JSON.parse(keyWords)
@@ -192,29 +209,30 @@ const updateService = async (req, res) => {
         ? keyWords
         : [];
 
-        // Ensure timeSlots is stored as an array of strings
-   const formattedTimeSlots =
-   typeof timeSlots === "string"
-     ? JSON.parse(timeSlots) // If received as a stringified array
-     : Array.isArray(timeSlots)
-     ? timeSlots.map(slot => slot.toString().trim()) // Ensure it's an array of strings
-     : [];
+    // Ensure timeSlots is stored as an array of strings
+    const formattedTimeSlots =
+      typeof timeSlots === "string"
+        ? JSON.parse(timeSlots) // If received as a stringified array
+        : Array.isArray(timeSlots)
+        ? timeSlots.map((slot) => slot.toString().trim()) // Ensure it's an array of strings
+        : [];
 
-     // Ensure date is in the correct format
-     let formattedDate;
-     if (typeof date === "string") {
-       try {
-         formattedDate = new Date(date).toISOString(); // Convert to ISO 8601 format
-       } catch (error) {
-         return res.status(400).json({
-           success: false,
-           message: "Invalid date format. Please provide a valid ISO 8601 date.",
-         });
-       }
-     } else {
-       formattedDate = new Date().toISOString(); // Default to current date-time if not provided
-     }
+    // Ensure date is in the correct format
+    let formattedDate;
+    if (typeof date === "string") {
+      try {
+        formattedDate = new Date(date).toISOString(); // Convert to ISO 8601 format
+      } catch (error) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid date format. Please provide a valid ISO 8601 date.",
+        });
+      }
+    } else {
+      formattedDate = new Date().toISOString(); // Default to current date-time if not provided
+    }
 
+    // Update the service in the database
     const updatedService = await Professionalservices.findByIdAndUpdate(
       id,
       {
@@ -228,19 +246,28 @@ const updateService = async (req, res) => {
         serviceImage,
         serviceVideo,
         sessionType,
-        isLiveStream: isLiveStream === "true",
+        isLiveStream: isLiveStream === "true", // Convert to boolean
         visibility,
         timeSlots: formattedTimeSlots,
         date: formattedDate,
       },
-      { new: true }
+      { new: true } // Return the updated service
     );
 
-    res.status(200).json({ success: true, message: "Service updated successfully!", service: updatedService });
+    console.log("Updated Service:", updatedService);
+
+    // Return success response
+    res.status(200).json({
+      success: true,
+      message: "Service updated successfully!",
+      service: updatedService,
+    });
   } catch (error) {
+    console.error("Error during update:", error);
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
 
 // Delete service
 const deleteService = async (req, res) => {

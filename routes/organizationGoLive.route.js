@@ -8,13 +8,15 @@ const {
   getEventById,
   updateEvent,
   deleteEvent,
+  getEventsByOrganizationAndType,
+  getEventsByOrganizationgolive,
 } = require("../controllers/organizationGoLive.controller");
 
 // Route to create a new event
 router.post("/organizationGoLive", createEvent);
 
 // Route to get events (upcoming or past) based on query parameters
-router.get("/organizationGoLive", getEvents);
+// router.get("/organizationGoLive", getEvents);
 
 // Route to get a specific event by ID
 router.get("/organizationGoLive/:id", getEventById);
@@ -22,5 +24,11 @@ router.get("/organizationGoLive/:id", getEventById);
 router.put("/organizationGoLive/:id", updateEvent);
 // Route to delete an event by ID
 router.delete("/organizationGoLive/:id", deleteEvent);
+
+// New route to get events by organizationID and eventType (paid/free)
+router.get("/byOrganizationAndType", getEventsByOrganizationAndType)
+
+// get all
+router.get("/organizationGoLive", getEventsByOrganizationgolive );
 
 module.exports = router;
