@@ -3,44 +3,45 @@ const Userpayment = require('../models/userPayment.model')
 // for customer booking details
 const getUserPaymentsByService = async (req, res) => {
   try {
-    const { userID, professionalServicesId } = req.body
+    const { userID, professionalServicesId } = req.query; 
 
     if (!userID || !professionalServicesId) {
       return res.status(400).json({
         success: false,
         message: 'userID and professionalServicesId are required',
-      })
+      });
     }
 
     const payments = await Userpayment.find({ userID, professionalServicesId })
       .populate('professionalServicesId')
-      .populate('userID')
+      .populate('userID');
 
-    res.status(200).json({ success: true, data: payments })
+    res.status(200).json({ success: true, data: payments });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message })
+    res.status(500).json({ success: false, message: error.message });
   }
-}
+};
+
 
 //for Professionals with
 const getProfessionalPaymentsWithBooking = async (req, res) => {
   try {
-    const { userID } = req.body
-    const { page = 1, limit = 10 } = req.query
+    const { userID } = req.query; 
+    const { page = 1, limit = 10 } = req.query;
 
     if (!userID) {
-      return res.status(400).json({ message: 'userID is required' })
+      return res.status(400).json({ message: 'userID is required' });
     }
 
-    const pageNumber = parseInt(page, 10)
-    const limitNumber = parseInt(limit, 10)
-    const skip = (pageNumber - 1) * limitNumber
+    const pageNumber = parseInt(page, 10);
+    const limitNumber = parseInt(limit, 10);
+    const skip = (pageNumber - 1) * limitNumber;
 
     const totalItems = await Userpayment.countDocuments({
       userID,
       sellerType: 'Professional',
       serviceBookingTime: { $ne: null },
-    })
+    });
 
     const payments = await Userpayment.find({
       userID,
@@ -50,9 +51,9 @@ const getProfessionalPaymentsWithBooking = async (req, res) => {
       .populate('userID')
       .populate('professionalServicesId')
       .skip(skip)
-      .limit(limitNumber)
+      .limit(limitNumber);
 
-    const totalPages = Math.ceil(totalItems / limitNumber)
+    const totalPages = Math.ceil(totalItems / limitNumber);
 
     res.status(200).json({
       success: true,
@@ -63,9 +64,9 @@ const getProfessionalPaymentsWithBooking = async (req, res) => {
         totalItems,
         itemsPerPage: limitNumber,
       },
-    })
+    });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message })
+    res.status(500).json({ success: false, error: error.message });
   }
 }
 

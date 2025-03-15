@@ -6,15 +6,17 @@ const {
   updatePaymentStatus,
 } = require('../controllers/userPaymentDetails.controller')
 
-// for professional service
-router.post('/payments/by-service', getUserPaymentsByService)
+// Route to get user payments by service
+router.get(
+  '/payments/user-bookings',
+  getUserPaymentsByService
+);
 
 // Route to get payments for Professionals with serviceBookingTime
-router.post(
+router.get(
   '/payments/professional-bookings',
   getProfessionalPaymentsWithBooking
-)
-
+);
 // Route to update payment status
 router.patch('/payments/update-status', updatePaymentStatus)
 
