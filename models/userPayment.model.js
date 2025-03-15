@@ -41,6 +41,11 @@ const userPaymentSchema = new mongoose.Schema(
         ref: 'MerchantProducts',
       },
     ],
+    status: {
+      type: String,
+      enum: ['cancel', 'confirmed'],
+      default: 'confirmed',
+    },
   },
   {
     timestamps: true,
