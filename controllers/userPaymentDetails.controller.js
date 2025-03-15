@@ -3,24 +3,54 @@ const Userpayment = require('../models/userPayment.model')
 // for customer booking details
 const getUserPaymentsByService = async (req, res) => {
   try {
-    const { userID, professionalServicesId } = req.query; 
+    const { userID, page = 1, limit = 10 } = req.query
 
-    if (!userID || !professionalServicesId) {
+    if (!userID) {
       return res.status(400).json({
         success: false,
-        message: 'userID and professionalServicesId are required',
-      });
+        message: 'userID is required',
+      })
     }
 
-    const payments = await Userpayment.find({ userID, professionalServicesId })
-      .populate('professionalServicesId')
-      .populate('userID');
+    const pageNum = parseInt(page)
+    const limitNum = parseInt(limit)
 
-    res.status(200).json({ success: true, data: payments });
+    const skip = (pageNum - 1) * limitNum
+
+    // Fetch the payments for the user, but filter out records where professionalServicesId is null
+    const payments = await Userpayment.find({
+      userID,
+      professionalServicesId: { $ne: null }, // Filter out null professionalServicesId
+    })
+      .skip(skip) 
+      .limit(limitNum)
+      .populate('professionalServicesId')
+      .populate('userID')
+
+    // Get total count of payments for pagination information
+    const totalPayments = await Userpayment.countDocuments({
+      userID,
+      professionalServicesId: { $ne: null },
+    })
+
+    // Calculate total number of pages
+    const totalPages = Math.ceil(totalPayments / limitNum)
+
+    res.status(200).json({
+      success: true,
+      data: payments,
+      pagination: {
+        page: pageNum,
+        totalPages,
+        totalResults: totalPayments,
+      },
+    })
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ success: false, message: error.message })
   }
-};
+}
+
+
 
 
 //for Professionals with
