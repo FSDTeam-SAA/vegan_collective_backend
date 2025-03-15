@@ -544,42 +544,73 @@ const confirmBooking = async (req, res) => {
 };
 
 // GET: Get Booking Details by User ID
-const getBookingDetails = async (req, res) => {
+const getBookingDetailsByUserID = async (req, res) => {
   try {
-    const { userID } = req.params;
+    const { userID } = req.params; // Get userID from URL parameters
 
-    // Validate required fields
     if (!userID) {
-      return res.status(400).json({ success: false, message: 'Missing user ID' });
+      return res.status(400).json({ success: false, message: 'User ID is required' });
     }
 
-    // Find all bookings for the user
+    // Find all bookings for the user and populate professional service details
     const bookings = await Userpayment.find({ userID }).populate('professionalServicesId');
 
-    if (!bookings || bookings.length === 0) {
+    if (!bookings.length) {
       return res.status(404).json({ success: false, message: 'No bookings found for this user' });
     }
 
-    // Extract relevant details
-    const bookingDetails = bookings.map((booking) => ({
-      serviceName: booking.professionalServicesId.name,
-      serviceBookingTime: booking.serviceBookingTime,
-    }));
+    // Format response while checking for missing professionalServicesId
+    const bookingDetails = bookings
+      .filter(booking => booking.professionalServicesId) // Exclude bookings with missing services
+      .map(booking => ({
+        // bookingID: booking._id,
+        serviceBookingTime: booking.serviceBookingTime,
+        amountPaid: booking.amountPaid || 0,
+        status: booking.status || 'Pending',
+        professionalService: {
+          // _id: booking.professionalServicesId._id,
+          serviceName: booking.professionalServicesId.serviceName,
+          // metaDescription: booking.professionalServicesId.metaDescription,
+          // serviceDescription: booking.professionalServicesId.serviceDescription,
+          // keyWords: booking.professionalServicesId.keyWords,
+          // paymentType: booking.professionalServicesId.paymentType,
+          // price: booking.professionalServicesId.price,
+          // serviceImage: booking.professionalServicesId.serviceImage,
+          // serviceVideo: booking.professionalServicesId.serviceVideo,
+          sessionType: booking.professionalServicesId.sessionType,
+          // isLiveStream: booking.professionalServicesId.isLiveStream,
+          // visibility: booking.professionalServicesId.visibility,
+          timeSlots: booking.professionalServicesId.timeSlots,
+          date: booking.professionalServicesId.date, // ✅ Include the date field
+          // createdAt: booking.professionalServicesId.createdAt,
+          // updatedAt: booking.professionalServicesId.updatedAt,
+        },
+      }));
+
+    if (!bookingDetails.length) {
+      return res.status(404).json({
+        success: false,
+        message: 'No valid bookings found (some services may have been deleted).',
+      });
+    }
 
     return res.status(200).json({
       success: true,
-      message: 'Booking details retrieved successfully',
+      message: 'Bookings retrieved successfully',
       bookings: bookingDetails,
     });
   } catch (error) {
-    console.error('Error retrieving booking details:', error);
+    console.error('Error fetching bookings:', error);
     return res.status(500).json({
       success: false,
-      message: 'Failed to retrieve booking details',
+      message: 'Failed to retrieve bookings',
       details: error.message,
     });
   }
 };
+
+
+
 
 
 
@@ -594,6 +625,6 @@ module.exports = {
   webhookController,
   removePaymentMethod,
   confirmBooking,
-  getBookingDetails,
+  getBookingDetailsByUserID,
   
 }
