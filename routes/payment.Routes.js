@@ -5,7 +5,7 @@ const {
   webhookController,
   removePaymentMethod,
   confirmBooking,
-  getBookingDetails,
+  getBookingDetailsByUserID,
 
 } = require('../controllers/payment.Controller')
 
@@ -19,7 +19,7 @@ route.post(
   webhookController
 )
 route.post('/confirm-booking', confirmBooking)
-route.get('/booking-details', getBookingDetails)
+route.get('/booking-details/:userID', getBookingDetailsByUserID)
 
 route.post('/remove-payment-method', removePaymentMethod)
 
