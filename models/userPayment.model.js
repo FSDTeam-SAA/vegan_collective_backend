@@ -7,6 +7,10 @@ const userPaymentSchema = new mongoose.Schema(
       ref: 'User',
       required: true,
     },
+
+    
+
+
     customerId: {
       type: String,
     },
