@@ -76,6 +76,9 @@ const userGoLive = require("./routes/userGoLive.route.js");
 const paymentRoute = require("./routes/payment.Routes.js");
 const googleAuthRoute = require("./routes/googleAuth.js")
 const checkUserPaymentRoute = require("./routes/checkUserPayment.route.js")
+const userPaymentDetailsRoute = require("./routes/userPaymentDetails.route.js")
+
+
 //endpoints for professional
 app.use("/api/v1", professionalBooking);
 app.use("/api/v1", professionalEvent);
@@ -119,6 +122,8 @@ app.use("/api/v1", userGoLive);
 //endpoints for founder
 app.use("/api/v1", founderVendorManagement);
 app.use("/api/v1", founderVerificationManagement);
+
+app.use('/api/v1', userPaymentDetailsRoute)
 
 //global routes
 app.use("/api/v1", userRoute);
