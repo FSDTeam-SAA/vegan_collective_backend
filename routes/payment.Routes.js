@@ -4,6 +4,8 @@ const {
   purchaseMethod,
   webhookController,
   removePaymentMethod,
+  confirmBooking,
+  getBookingDetails,
 
 } = require('../controllers/payment.Controller')
 
@@ -16,6 +18,8 @@ route.post(
   express.raw({ type: 'application/json' }),
   webhookController
 )
+route.post('/confirm-booking', confirmBooking)
+route.get('/booking-details', getBookingDetails)
 
 route.post('/remove-payment-method', removePaymentMethod)
 

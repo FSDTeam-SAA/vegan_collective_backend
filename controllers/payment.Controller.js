@@ -3,6 +3,8 @@ const Professionalinfo = require('../models/professionalInfo.model')
 const Organizationinfo = require('../models/organizationInfo.model')
 const User = require('../models/user.model')
 const Userpayment = require('../models/userPayment.model')
+const ProfessionalServices = require('../models/professionalServices.model');
+const nodemailer = require('nodemailer');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY)
 
 const savePaymentMethod = async (req, res) => {
@@ -462,9 +464,136 @@ const webhookController = async (req, res) => {
   res.status(200).send()
 }
 
+// Email transporter configuration
+const transporter = nodemailer.createTransport({
+  service: 'gmail', // Use your email service
+  auth: {
+    user: process.env.EMAIL_USER, // Your email
+    pass: process.env.EMAIL_PASS, // Your email password
+  },
+});
+
+// POST: Confirm Booking
+const confirmBooking = async (req, res) => {
+  try {
+    const { userID, serviceID } = req.body;
+
+    // Validate required fields
+    if (!userID || !serviceID) {
+      return res.status(400).json({ success: false, message: 'Missing required fields' });
+    }
+
+    // Find user
+    const user = await User.findOne({ _id: userID });
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    // Find the booking record
+    const booking = await Userpayment.findOne({ professionalServicesId: serviceID, userID });
+    if (!booking) {
+      return res.status(404).json({ success: false, message: 'Booking not found' });
+    }
+
+    // Find the professional service details
+    const professionalService = await ProfessionalServices.findOne({ _id: booking.professionalServicesId });
+    if (!professionalService) {
+      return res.status(404).json({ success: false, message: 'Service not found' });
+    }
+
+    // Send email reminder 30 minutes before the service time
+    const email = user.email;
+    const serviceName = professionalService.name;
+    const serviceBookingTime = booking.serviceBookingTime;
+
+    // Calculate the reminder time (30 minutes before the booking time)
+    const reminderTime = new Date(serviceBookingTime);
+    reminderTime.setMinutes(reminderTime.getMinutes() - 30);
+
+    // Schedule the email reminder
+    const timeUntilReminder = reminderTime - Date.now();
+    if (timeUntilReminder > 0) {
+      setTimeout(async () => {
+        const mailOptions = {
+          from: process.env.EMAIL_USER,
+          to: email,
+          subject: 'Booking Reminder',
+          text: `Reminder: Your ${serviceName} service is scheduled at ${serviceBookingTime}.`,
+        };
+
+        await transporter.sendMail(mailOptions);
+        console.log('Reminder email sent successfully');
+      }, timeUntilReminder);
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: 'Booking confirmed and reminder scheduled',
+      email,
+      serviceName,
+      serviceBookingTime,
+    });
+  } catch (error) {
+    console.error('Error confirming booking:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Booking confirmation failed',
+      details: error.message,
+    });
+  }
+};
+
+// GET: Get Booking Details by User ID
+const getBookingDetails = async (req, res) => {
+  try {
+    const { userID } = req.params;
+
+    // Validate required fields
+    if (!userID) {
+      return res.status(400).json({ success: false, message: 'Missing user ID' });
+    }
+
+    // Find all bookings for the user
+    const bookings = await Userpayment.find({ userID }).populate('professionalServicesId');
+
+    if (!bookings || bookings.length === 0) {
+      return res.status(404).json({ success: false, message: 'No bookings found for this user' });
+    }
+
+    // Extract relevant details
+    const bookingDetails = bookings.map((booking) => ({
+      serviceName: booking.professionalServicesId.name,
+      serviceBookingTime: booking.serviceBookingTime,
+    }));
+
+    return res.status(200).json({
+      success: true,
+      message: 'Booking details retrieved successfully',
+      bookings: bookingDetails,
+    });
+  } catch (error) {
+    console.error('Error retrieving booking details:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to retrieve booking details',
+      details: error.message,
+    });
+  }
+};
+
+
+
+
+
+
+
+
 module.exports = {
   savePaymentMethod,
   purchaseMethod,
   webhookController,
   removePaymentMethod,
+  confirmBooking,
+  getBookingDetails,
+  
 }
