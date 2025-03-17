@@ -7,10 +7,6 @@ const userPaymentSchema = new mongoose.Schema(
       ref: 'User',
       required: true,
     },
-
-    
-
-
     customerId: {
       type: String,
     },
@@ -49,6 +45,11 @@ const userPaymentSchema = new mongoose.Schema(
       type: String,
       enum: ['cancel', 'confirmed'],
       default: 'confirmed',
+    },
+    bookingID: {
+      type: String,
+      unique: true,
+      default: null,
     },
   },
   {
