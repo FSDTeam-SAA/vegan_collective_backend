@@ -7,6 +7,7 @@ const authenticateToken = require("./middleware/auth.middleware");
 const refferRoutes = require("./routes/refferRoutes");
 const session = require('express-session')
 const passport = require('passport')
+const smsRoutes = require("./routes/smsRoutes.js");
 
 const zoomRoutes = require("./routes/zoomRoutes");
 
@@ -135,6 +136,8 @@ app.get('/', (req, res) => {
 });
 app.use("/api/v1/auth/zoom", zoomRoutes);
 app.use("/api/v1", refferRoutes); // Base API route
+
+app.use("/api/v1/sms", smsRoutes);
 
 // payment routes
 app.use("/api/v1/payment", paymentRoute);
