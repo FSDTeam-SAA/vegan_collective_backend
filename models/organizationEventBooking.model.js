@@ -23,6 +23,10 @@ const organizationEventBookingSchema = new mongoose.Schema(
         specialRequirement: {
           type: String,
         },
+        userID: {
+          type: mongoose.Types.ObjectId,
+          ref: "User",
+        },
         skillAndExperience: {
           type: String,
         },

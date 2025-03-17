@@ -5,7 +5,7 @@ const Organizationeventmanagement = require("../models/organizationEventManageme
 const createBooking = async (req, res) => {
   try {
     const { organizationEventID, attendeeDetail } = req.body;
-
+    
     // Check if the event exists
     const event = await Organizationeventmanagement.findById(organizationEventID);
     if (!event) {
@@ -14,20 +14,31 @@ const createBooking = async (req, res) => {
         message: "Event not found",
       });
     }
-
-    // Create a new booking
+    
+    // Check if userID is provided when required
+    if (event.requiresUser && !attendeeDetail.userID) {
+      return res.status(400).json({
+        success: false,
+        message: "User ID is required for this event",
+      });
+    }
+    
+    // Create a new booking with the attendeeDetail including userID
     const newBooking = new Organizationeventbooking({
       organizationEventID,
-      attendeeDetail,
+      attendeeDetail: {
+        ...attendeeDetail, // Spread the existing attendeeDetail
+        userID: attendeeDetail.userID // Ensure userID is included
+      },
     });
-
+    
     // Save the booking to the database
     const savedBooking = await newBooking.save();
-
+    
     // Increment the Attendees count in the corresponding event
     event.Attendees += 1;
     await event.save();
-
+    
     // Send success response
     res.status(201).json({
       success: true,
