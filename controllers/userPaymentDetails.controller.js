@@ -4,19 +4,18 @@ const Userpayment = require('../models/userPayment.model')
 
 // const getUserPaymentsByService = async (req, res) => {
 //   try {
-//     const { userID, page = 1, limit = 10 } = req.query
+//     const { userID, page = 1, limit = 10 } = req.query;
 
 //     if (!userID) {
 //       return res.status(400).json({
 //         success: false,
-//         message: 'userID is required',
-//       })
+//         message: "userID is required",
+//       });
 //     }
 
-//     const pageNum = parseInt(page)
-//     const limitNum = parseInt(limit)
-
-//     const skip = (pageNum - 1) * limitNum
+//     const pageNum = parseInt(page);
+//     const limitNum = parseInt(limit);
+//     const skip = (pageNum - 1) * limitNum;
 
 //     // Fetch the payments for the user, but filter out records where professionalServicesId is null
 //     const payments = await Userpayment.find({
@@ -25,16 +24,16 @@ const Userpayment = require('../models/userPayment.model')
 //     })
 //       .skip(skip)
 //       .limit(limitNum)
-//       .populate('professionalServicesId')
-//       .populate('userID')
+//       .populate("professionalServicesId")
+//       .populate("userID");
 
-//     // Generate and update booking IDs for filtered records if they don't already have one
+//     // Generate and update unique booking IDs if they don't already have one
 //     for (let payment of payments) {
 //       if (!payment.bookingID) {
-//         const count = await Userpayment.countDocuments()
-//         const formattedCount = String(count + 1).padStart(4, '0') // Ensure it's always 4 digits
-//         payment.bookingID = `Bok-${formattedCount}`
-//         await payment.save()
+//         // Use the unique ObjectId from MongoDB to create a unique Booking ID
+//         const uniqueId = payment._id.toString().slice(-6); // Use last 6 characters of _id
+//         payment.bookingID = `Bok-${uniqueId}`;
+//         await payment.save();
 //       }
 //     }
 
@@ -42,10 +41,10 @@ const Userpayment = require('../models/userPayment.model')
 //     const totalPayments = await Userpayment.countDocuments({
 //       userID,
 //       professionalServicesId: { $ne: null },
-//     })
+//     });
 
 //     // Calculate total number of pages
-//     const totalPages = Math.ceil(totalPayments / limitNum)
+//     const totalPages = Math.ceil(totalPayments / limitNum);
 
 //     res.status(200).json({
 //       success: true,
@@ -55,14 +54,15 @@ const Userpayment = require('../models/userPayment.model')
 //         totalPages,
 //         totalResults: totalPayments,
 //       },
-//     })
+//     });
 //   } catch (error) {
-//     res.status(500).json({ success: false, message: error.message })
+//     res.status(500).json({ success: false, message: error.message });
 //   }
-// }
+// };
+
 const getUserPaymentsByService = async (req, res) => {
   try {
-    const { userID, page = 1, limit = 10 } = req.query
+    const { userID, page = 1, limit = 10, filter = 'All' } = req.query
 
     if (!userID) {
       return res.status(400).json({
@@ -75,11 +75,18 @@ const getUserPaymentsByService = async (req, res) => {
     const limitNum = parseInt(limit)
     const skip = (pageNum - 1) * limitNum
 
-    // Fetch the payments for the user, but filter out records where professionalServicesId is null
-    const payments = await Userpayment.find({
+    let query = {
       userID,
-      professionalServicesId: { $ne: null }, // Filter out null professionalServicesId
-    })
+      professionalServicesId: { $ne: null },
+    }
+
+    // Filter upcoming bookings
+    if (filter === 'UpcomingBookings') {
+      const currentDate = new Date()
+      query.serviceBookingTime = { $gte: currentDate } // Only fetch future bookings
+    }
+
+    const payments = await Userpayment.find(query)
       .skip(skip)
       .limit(limitNum)
       .populate('professionalServicesId')
@@ -88,20 +95,13 @@ const getUserPaymentsByService = async (req, res) => {
     // Generate and update unique booking IDs if they don't already have one
     for (let payment of payments) {
       if (!payment.bookingID) {
-        // Use the unique ObjectId from MongoDB to create a unique Booking ID
-        const uniqueId = payment._id.toString().slice(-6) // Use last 6 characters of _id
+        const uniqueId = payment._id.toString().slice(-6)
         payment.bookingID = `Bok-${uniqueId}`
         await payment.save()
       }
     }
 
-    // Get total count of payments for pagination information
-    const totalPayments = await Userpayment.countDocuments({
-      userID,
-      professionalServicesId: { $ne: null },
-    })
-
-    // Calculate total number of pages
+    const totalPayments = await Userpayment.countDocuments(query)
     const totalPages = Math.ceil(totalPayments / limitNum)
 
     res.status(200).json({
