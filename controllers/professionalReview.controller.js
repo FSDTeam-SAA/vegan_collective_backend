@@ -182,10 +182,21 @@ exports.getAllReviews = async (req, res) => {
 };
 
 
-
-// Controller to get top professionals based on average ratings
 exports.getTopProfessionals = async (req, res) => {
   try {
+    // Get the rating filter from query params
+    const ratingFilter = parseFloat(req.query.ratting);
+    
+    // Define min and max rating for filtering
+    let minRating = 0;
+    let maxRating = 5;
+    
+    // If rating filter is provided, set the range (e.g., for 4, range is 3.1-4.0)
+    if (!isNaN(ratingFilter)) {
+      maxRating = ratingFilter;
+      minRating = maxRating - 0.9; // For range like 3.1 to 4.0
+    }
+
     // Step 1: Aggregate reviews to calculate average ratings and total reviews
     const professionalsWithRatings = await Review.aggregate([
       {
@@ -195,21 +206,25 @@ exports.getTopProfessionals = async (req, res) => {
           totalReviews: { $sum: 1 }, // Count total reviews for each professional
         },
       },
+      { 
+        $match: { 
+          averageRating: { 
+            $gte: minRating, 
+            $lte: maxRating 
+          } 
+        } 
+      },
       { $sort: { averageRating: -1 } }, // Sort by rating descending
     ]);
 
     // Step 2: Extract professional IDs (which are actually userId values)
     const professionalUserIDs = professionalsWithRatings.map(prof => new mongoose.Types.ObjectId(prof._id));
 
-    // console.log("Extracted Professional User IDs:", professionalUserIDs);
-
     // Step 3: Fetch professional details using userId instead of _id
     const professionals = await Professionalinfo.find(
       { userId: { $in: professionalUserIDs } }, // Match userId, not _id
       "userId profilePhoto businessName about address"
     ).lean();
-
-    // console.log("Fetched Professional Data:", professionals);
 
     // Step 4: Combine review data with professional details
     const result = professionalsWithRatings.map(professionalWithRating => {
@@ -232,12 +247,14 @@ exports.getTopProfessionals = async (req, res) => {
       success: true,
       message: "Top professionals fetched successfully.",
       data: result,
+      // filterApplied: ratingFilter ? `${minRating.toFixed(1)} to ${maxRating.toFixed(1)}` : "None"
     });
   } catch (error) {
     console.error("Error fetching top professionals:", error);
     return res.status(500).json({
       success: false,
       message: "Internal server error while fetching top professionals.",
+      error: error.message
     });
   }
 };
