@@ -10,6 +10,9 @@ const passport = require('passport')
 const smsRoutes = require("./routes/smsRoutes.js");
 
 const zoomRoutes = require("./routes/zoomRoutes");
+const organizationVolunteerRoutes = require("./routes/organizationVolunteer.route.js");
+
+
 
 require('dotenv').config();
 console.log('ZOOM_API_KEY:', process.env.ZOOM_API_KEY);
@@ -144,6 +147,9 @@ app.use("/api/v1/payment", paymentRoute);
 app.use('/api/v1/payment', checkUserPaymentRoute)
 // oauth
 app.use('/api/v1', googleAuthRoute)
+
+//volunteer routes
+app.use("/api/v1", organizationVolunteerRoutes);
 
 app.get("/api/v1/", (req, res) => {
   res.status(201).json({

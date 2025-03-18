@@ -151,8 +151,11 @@ const getBookingsByEventId = async (req, res) => {
 };
 
 
+
+
 module.exports = {
   createBooking,
   getAllBookings,
   getBookingsByEventId, // Add the new function
+
 };
