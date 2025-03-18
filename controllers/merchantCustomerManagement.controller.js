@@ -78,44 +78,59 @@ exports.getCustomerById = async (req, res) => {
   }
 };
 
-// Update a customer
-exports.updateCustomer = async (req, res) => {
+exports.getCustomerByMerchantID = async (req, res) => {
   try {
-    const { id } = req.params;
-    const { merchantID, email, whatsApp, messenger } = req.body;
-
-    // Validate ID
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({ success: false, message: 'Invalid ID' });
-    }
+    const { merchantID } = req.params;
 
     // Validate merchantID
-    if (merchantID && !mongoose.Types.ObjectId.isValid(merchantID)) {
+    if (!mongoose.Types.ObjectId.isValid(merchantID)) {
       return res.status(400).json({ success: false, message: 'Invalid merchantID' });
     }
 
-    const updatedCustomer = await MerchantCustomerManagement.findByIdAndUpdate(
-      id,
-      {  email, whatsApp, messenger },
-      { new: true, runValidators: true }
-    );
+    const customers = await MerchantCustomerManagement.find({ merchantID });
 
-    if (!updatedCustomer) {
-      return res.status(404).json({ success: false, message: 'Customer not found' });
+    if (customers.length === 0) {
+      return res.status(404).json({ success: false, message: 'No customers found for this merchantID' });
     }
 
-    // Wrap data in an array
     res.status(200).json({ 
       success: true, 
-      message: 'Customer updated successfully', 
-      data: {updatedCustomer}// Ensure data is an array
+      message: 'Customers retrieved successfully', 
+      data: customers 
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
 };
 
-// Delete a customer
+exports.updateCustomer = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { email, whatsApp, messenger } = req.body;  
+    const updatedCustomer = await MerchantCustomerManagement.findByIdAndUpdate(
+      id,
+      { email, whatsApp, messenger },
+      { new: true }
+    );
+    if (!updatedCustomer) {
+      return res.status(404).json({ success: false, message: 'Customer not found' });
+    }
+    res.status(200).json({
+      success: true,
+      message: 'Customer updated successfully',
+      data: [updatedCustomer]
+    });
+    } catch (error) {
+      res.status(500).json({ success: false, message: error.message });
+    }
+}
+
+
+
+
+
+
+//delete customer by id
 exports.deleteCustomer = async (req, res) => {
   try {
     const { id } = req.params;
