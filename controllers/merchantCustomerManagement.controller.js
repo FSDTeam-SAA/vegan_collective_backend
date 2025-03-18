@@ -51,32 +51,32 @@ exports.getAllCustomers = async (req, res) => {
 };
 
 // Get a single customer by ID
-exports.getCustomerById = async (req, res) => {
-  try {
-    const { id } = req.params;
+// exports.getCustomerById = async (req, res) => {
+//   try {
+//     const { id } = req.params;
 
-    // Validate ID
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({ success: false, message: 'Invalid ID' });
-    }
+//     // Validate ID
+//     if (!mongoose.Types.ObjectId.isValid(id)) {
+//       return res.status(400).json({ success: false, message: 'Invalid ID' });
+//     }
 
 
-    const customer = await MerchantCustomerManagement.findById(id);
+//     const customer = await MerchantCustomerManagement.findById(id);
 
-    if (!customer) {
-      return res.status(404).json({ success: false, message: 'Customer not found' });
-    }
+//     if (!customer) {
+//       return res.status(404).json({ success: false, message: 'Customer not found' });
+//     }
 
-    // Wrap data in an array
-    res.status(200).json({ 
-      success: true, 
-      message: 'Customer fetched successfully', 
-      data: { customer } // Ensure data is an array
-    });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
-};
+//     // Wrap data in an array
+//     res.status(200).json({ 
+//       success: true, 
+//       message: 'Customer fetched successfully', 
+//       data: { customer } // Ensure data is an array
+//     });
+//   } catch (error) {
+//     res.status(500).json({ success: false, message: error.message });
+//   }
+// };
 
 exports.getCustomerByMerchantID = async (req, res) => {
   try {
