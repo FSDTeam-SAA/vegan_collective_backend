@@ -87,16 +87,18 @@ exports.getCustomerByMerchantID = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Invalid merchantID' });
     }
 
-    const customers = await MerchantCustomerManagement.find({ merchantID });
+    // Find a single customer for the given merchantID
+    const customer = await MerchantCustomerManagement.findOne({ merchantID });
 
-    if (customers.length === 0) {
-      return res.status(404).json({ success: false, message: 'No customers found for this merchantID' });
+    if (!customer) {
+      return res.status(404).json({ success: false, message: 'No customer found for this merchantID' });
     }
 
+    // Return the single customer object
     res.status(200).json({ 
       success: true, 
-      message: 'Customers retrieved successfully', 
-      data: customers 
+      message: 'Customer retrieved successfully', 
+      data: customer 
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
