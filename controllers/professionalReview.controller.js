@@ -45,132 +45,74 @@ exports.addReview = async (req, res) => {
   }
 };
 
-// Controller to update a review
-exports.updateReview = async (req, res) => {
-  try {
-    const { reviewID } = req.params;
-    const { rating, comment } = req.body;
 
-    // Validate required fields
-    if (!reviewID) {
-      return res.status(400).json({
-        success: false,
-        message: "Review ID is required.",
-      });
-    }
-
-    // Find the review by ID
-    const review = await Review.findById(reviewID);
-    if (!review) {
-      return res.status(404).json({
-        success: false,
-        message: "Review not found.",
-      });
-    }
-
-    // Update the review fields
-    if (rating !== undefined) review.rating = rating;
-    if (comment !== undefined) review.comment = comment;
-
-    // Save the updated review
-    await review.save();
-
-    // Recalculate the average rating for the professional
-    const reviews = await Review.find({ professionalID: review.professionalID });
-    const totalRating = reviews.reduce((sum, rev) => sum + rev.rating, 0);
-    const averageRating = (totalRating / reviews.length).toFixed(2);
-
-    // Return the response in the desired structure
-    return res.status(200).json({
-      success: true,
-      message: "Review updated successfully.",
-      data: [
-        {
-          ...review.toObject(), // Spread the updated review object
-          averageRating, // Add the recalculated average rating
-        },
-      ],
-    });
-  } catch (error) {
-    console.error(error);
-    return res.status(500).json({
-      success: false,
-      message: "Internal server error while updating review.",
-    });
-  }
-};
-
-// Controller to get the average rating of a professional
-exports.getAverageRating = async (req, res) => {
-  try {
-    const { professionalID } = req.params;
-
-    // Validate professionalID
-    if (!professionalID) {
-      return res.status(400).json({
-        success: false,
-        message: "Professional ID is required.",
-      });
-    }
-
-    // Fetch all reviews for the professional
-    const reviews = await Review.find({ professionalID });
-
-    if (reviews.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: "No reviews found for this professional.",
-      });
-    }
-
-    // Calculate the average rating
-    const totalRating = reviews.reduce((sum, review) => sum + review.rating, 0);
-    const averageRating = (totalRating / reviews.length).toFixed(2);
-
-    return res.status(200).json({
-      success: true,
-      message: "Average rating fetched successfully.",
-      data: {
-        professionalID,
-        averageRating,
-      },
-    });
-  } catch (error) {
-    console.error(error);
-    return res.status(500).json({
-      success: false,
-      message: "Internal server error while fetching average rating.",
-    });
-  }
-};
-
-// Controller to get all reviews
+//get all reviews
 exports.getAllReviews = async (req, res) => {
   try {
-    // Fetch all reviews from the database and populate related fields
-    const reviews = await Review.find()
-      .select('rating comment professionalID') // Select only the required fields
-      .populate('userID', 'name email') // Populate user details if needed
-      // .populate('professionalID', 'name'); // Populate professional details
+    // Fetch all reviews
+    const reviews = await Review.find();
 
-    // If no reviews are found, return a 404 response
-    if (reviews.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: "No reviews found.",
-      });
-    }
-
-    // Return the reviews as an array of objects with the desired structure
     return res.status(200).json({
       success: true,
-      message: "All reviews fetched successfully.",
+      message: "Reviews fetched successfully.",
+      data: reviews,
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error while fetching reviews.",
+    });
+  }
+};
+
+//get all reviews of a professional ID with pagination and filtering by Highest rating, lowest rating and most relevant , most recent
+//get all reviews of a professional ID with pagination and filtering by Highest rating, lowest rating and most relevant , most recent
+exports.getReviewsOfProfessional = async (req, res) => {
+  try {
+    const { professionalID } = req.params;
+    const { page = 1, limit = 10, sort = 'desc', filter = 'highest' } = req.query;
+
+    let query = { professionalID };
+    let sortObj = {};
+
+    if (filter === 'highest') {
+      sortObj = { rating: -1 };
+    } else if (filter === 'lowest') {
+      sortObj = { rating: 1 };
+    } else if (filter === 'mostRecent') {
+      sortObj = { createdAt: -1 };
+    } else if (filter === 'mostRelevant') {
+      // You can implement your own logic for most relevant reviews
+      // For example, you can sort by rating and then by createdAt
+      sortObj = { rating: -1, createdAt: -1 };
+    }
+
+    const reviews = await Review.find(query)
+      .sort(sortObj)
+      .skip((page - 1) * limit)
+      .limit(Number(limit))
+      .populate('userID', 'fullName'); // Populate the userID field with the fullName field
+
+    const totalReviews = await Review.countDocuments(query);
+    const totalPages = Math.ceil(totalReviews / limit);
+
+    const pagination = {
+      currentPage: page,
+      totalPages: totalPages,
+      totalItems: totalReviews,
+      itemsPerPage: limit,
+    };
+
+    return res.status(200).json({
+      success: true,
+      message: "Reviews fetched successfully.",
       data: reviews.map(review => ({
-        professionalID: review.professionalID?._id || null, // Include professionalID (_id)
-        // professionalName: review.professionalID?.name || null, // Include professional name
-        rating: review.rating,
-        comment: review.comment,
-      })), // Format the response to include only the required fields
+        ...review.toObject(),
+        userID: review.userID._id,
+        fullName: review.userID.fullName,
+      })),
+      pagination,
     });
   } catch (error) {
     console.error(error);
@@ -182,8 +124,32 @@ exports.getAllReviews = async (req, res) => {
 };
 
 
+
+
+
+
+
 exports.getTopProfessionals = async (req, res) => {
-  try {
+/*************  ✨ Codeium Command ⭐  *************/
+/**
+ * Retrieves reviews for a specific professional with pagination and sorting options.
+ * 
+ * @param {Object} req - The request object containing parameters and query.
+ * @param {Object} req.params - The parameters object.
+ * @param {string} req.params.professionalID - The ID of the professional whose reviews are to be fetched.
+ * @param {Object} req.query - The query object containing pagination and sorting information.
+ * @param {number} [req.query.page=1] - The page number for pagination.
+ * @param {number} [req.query.limit=10] - The number of reviews per page.
+ * @param {string} [req.query.sort='desc'] - The sort order for reviews based on creation date ("asc" or "desc").
+ * @param {string} [req.query.filter='highest'] - The filter criteria (currently not used in logic).
+ * 
+ * @param {Object} res - The response object used to send back the desired HTTP response.
+ * 
+ * @returns {void} Responds with a JSON object containing success status, message, and list of reviews.
+ * On error, responds with a JSON object containing success status and error message.
+ */
+
+/******  5459dc2b-5525-4fce-97c9-395a6fc6383c  *******/  try {
     // Get the rating filter from query params
     const ratingFilter = parseFloat(req.query.ratting);
     

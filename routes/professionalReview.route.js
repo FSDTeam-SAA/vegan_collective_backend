@@ -5,16 +5,19 @@ const reviewController = require('../controllers/professionalReview.controller')
 // Route to add a review
 router.post('/professionalReview', reviewController.addReview);
 
-// Route to update a review
-router.put('/updateprofessionalReview/:reviewID', reviewController.updateReview);
-
-
-// Route to get the average rating of a professional
-router.get('/professionalReview/:professionalID', reviewController.getAverageRating);
-
+// Route to get all reviews
 router.get('/professionalReview', reviewController.getAllReviews);
+
+// Route to get reviews of a professional by professionalID
+router.get('/professionalReview/:professionalID', reviewController.getReviewsOfProfessional);
+
+
+
+// router.get('/professionalReview', reviewController.getAllReviews);
 
 // Route to get top professionals based on average ratings
 
 router.get('/top-professionals', reviewController.getTopProfessionals);
+
+
 module.exports = router;
