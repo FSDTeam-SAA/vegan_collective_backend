@@ -1,5 +1,7 @@
 const { default: mongoose } = require("mongoose");
 const Organizationreview = require("../models/organizationReview.model");
+const Organizationinfo = require("../models/organizationInfo.model");
+const Storereview = require("../models/storeReview.model");
 
 const createOrganizationReview = async (req, res) => {
     try {
@@ -106,4 +108,37 @@ const getAllReviewsForSpecificOrganization = async (req, res) => {
     }
 };
 
-module.exports = {createOrganizationReview, getAverageRating, getAllReviewsForSpecificOrganization};
+const getTopOrganizationBasedOnReview = async (req, res) => {
+    try {
+        const topOrganizations = await Organizationreview.aggregate([
+            {
+                $group: {
+                    _id: "$organizationID", 
+                    avgRating: { $avg: "$rating" }, 
+                    totalReviews: { $sum: 1 } 
+                }
+            },
+            { $sort: { avgRating: -1 } }, 
+            { $limit: 10 } 
+        ]);
+
+        return res.status(200).json({
+            success: true,
+            topOrganizations: topOrganizations.map(org => ({
+                organizationID: org._id,
+                avgRating: org.avgRating.toFixed(2), 
+                totalReviews: org.totalReviews
+            }))
+        });
+
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+};
+
+
+
+module.exports = {createOrganizationReview, getAverageRating, getAllReviewsForSpecificOrganization, getTopOrganizationBasedOnReview};
