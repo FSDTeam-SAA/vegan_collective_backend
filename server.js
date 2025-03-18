@@ -73,6 +73,8 @@ const organizationSupport = require("./routes/organizationSupport.route.js");
 const organizationGoLive = require("./routes/organizationGoLive.route.js");
 const organizationFundraisingManagement = require("./routes/organizationFundraisingManagement.route.js");
 
+const organizationReview = require("./routes/organizationReview.route.js"); //ADNAN
+
 //routes for users
 const userProductWishlist = require("./routes/userProductWishlist.route.js");
 const userProfile = require("./routes/userProfile.route.js");
@@ -121,6 +123,8 @@ app.use("/api/v1", organizationEventBooking);
 app.use("/api/v1", organizationSupport);
 app.use("/api/v1", organizationGoLive);
 app.use("/api/v1", organizationFundraisingManagement);
+
+app.use("/api/v1", organizationReview); //ADNAN
 
 //endpoints for user
 app.use("/api/v1", userProductWishlist);
