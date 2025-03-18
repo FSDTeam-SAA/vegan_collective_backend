@@ -59,6 +59,7 @@ const merchantSupport = require("./routes/merchantSupport.routes.js");
 const merchantGoLive = require("./routes/merchantGoLive.route.js");
 
 const merchantGraph = require("./routes/merchantGraph.route.js"); //ADNAN
+const storeReviewForMerchant = require("./routes/storeReviewForMerchant.route.js"); //ADNAN
 
 const merchantPolicies = require("./routes/merchantPolicies.route.js");
 const merchantStripe = require("./routes/merchantStripe.route.js")
@@ -109,6 +110,7 @@ app.use("/api/v1", merchantPolicies);
 app.use('/api/v1', merchantStripe)
 
 app.use('/api/v1', merchantGraph); //ADNAN
+app.use('/api/v1', storeReviewForMerchant); //ADNAN
 
 //endpoints for organization
 app.use("/api/v1", organizationInfo);
