@@ -660,6 +660,7 @@ const getCalendarData = async (req, res) => {
         title: booking.professionalServicesId.serviceName, // Service name as the title
         datetime: serviceDate.toISOString(), // Convert date to ISO string
         type: "booking", // Static type for all events
+        serviceBookingTime: booking.serviceBookingTime, // Include the service booking time
       };
     });
 
@@ -677,7 +678,6 @@ const getCalendarData = async (req, res) => {
     });
   }
 };
-
 
 
 
