@@ -170,26 +170,7 @@ exports.getReviewsOfProfessional = async (req, res) => {
 
 
 exports.getTopProfessionals = async (req, res) => {
-/*************  ✨ Codeium Command ⭐  *************/
-/**
- * Retrieves reviews for a specific professional with pagination and sorting options.
- * 
- * @param {Object} req - The request object containing parameters and query.
- * @param {Object} req.params - The parameters object.
- * @param {string} req.params.professionalID - The ID of the professional whose reviews are to be fetched.
- * @param {Object} req.query - The query object containing pagination and sorting information.
- * @param {number} [req.query.page=1] - The page number for pagination.
- * @param {number} [req.query.limit=10] - The number of reviews per page.
- * @param {string} [req.query.sort='desc'] - The sort order for reviews based on creation date ("asc" or "desc").
- * @param {string} [req.query.filter='highest'] - The filter criteria (currently not used in logic).
- * 
- * @param {Object} res - The response object used to send back the desired HTTP response.
- * 
- * @returns {void} Responds with a JSON object containing success status, message, and list of reviews.
- * On error, responds with a JSON object containing success status and error message.
- */
-
-/******  5459dc2b-5525-4fce-97c9-395a6fc6383c  *******/  try {
+  try {
     // Get the rating filter from query params
     const ratingFilter = parseFloat(req.query.ratting);
     
@@ -221,6 +202,7 @@ exports.getTopProfessionals = async (req, res) => {
         } 
       },
       { $sort: { averageRating: -1 } }, // Sort by rating descending
+      { $limit: 6 } // Limit to top 6 professionals
     ]);
 
     // Step 2: Extract professional IDs (which are actually userId values)
