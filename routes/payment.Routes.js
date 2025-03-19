@@ -7,6 +7,7 @@ const {
   confirmBooking,
   getBookingDetailsByUserID,
   getCalendarData,
+  getProfessionalCalendarData,
 
 } = require('../controllers/payment.Controller')
 
@@ -22,6 +23,9 @@ route.post(
 route.post('/confirm-booking', confirmBooking)
 route.get('/booking-details/:userID', getBookingDetailsByUserID)
 route.get('/calendar/:userID', getCalendarData);
+
+route.get("/calendar/professional/:professionalId", getProfessionalCalendarData);
+
 
 route.post('/remove-payment-method', removePaymentMethod)
 
