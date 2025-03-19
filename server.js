@@ -89,6 +89,8 @@ const googleAuthRoute = require("./routes/googleAuth.js")
 const checkUserPaymentRoute = require("./routes/checkUserPayment.route.js")
 const userPaymentDetailsRoute = require("./routes/userPaymentDetails.route.js")
 
+const newsletterRoutes = require("./routes/newsletterRoutes");
+
 
 //endpoints for professional
 app.use("/api/v1", professionalBooking);
@@ -164,6 +166,9 @@ app.use('/api/v1', googleAuthRoute)
 
 //volunteer routes
 app.use("/api/v1", organizationVolunteerRoutes);
+
+//newsletter routes
+app.use("/api/v1", newsletterRoutes);
 
 //event routes
 app.use("/api/v1", eventRoutes);
