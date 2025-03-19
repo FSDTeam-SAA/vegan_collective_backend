@@ -3,7 +3,8 @@ const Professionalinfo = require('../models/professionalInfo.model')
 const Organizationinfo = require('../models/organizationInfo.model')
 const User = require('../models/user.model')
 const Userpayment = require('../models/userPayment.model')
-const ProfessionalServices = require('../models/professionalServices.model');
+// const ProfessionalServices = require('../models/professionalServices.model');
+const Professionalservices = require("../models/professionalServices.model");
 const nodemailer = require('nodemailer');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY)
 
@@ -680,8 +681,156 @@ const getCalendarData = async (req, res) => {
 };
 
 
+// GET: Get Calendar Data by professional ID with Month and Year Filtering
+// const getProfessionalCalendarData = async (req, res) => {
+//   try {
+//     const { userID } = req.params; // Professional's userID
+//     const { month, year } = req.query; // Month and year from query parameters
 
+//     if (!userID) {
+//       return res.status(400).json({ success: false, message: "Professional ID is required" });
+//     }
 
+//     if (!month || !year) {
+//       return res.status(400).json({ success: false, message: "Month and year are required" });
+//     }
+
+//     // Find all professional services offered by this professional
+//     const professionalServices = await Professionalservices.find({ userID });
+    
+//     if (!professionalServices.length) {
+//       return res.status(200).json({
+//         success: true,
+//         message: "No services found for this professional",
+//         calendarData: [],
+//       });
+//     }
+
+//     // Extract service IDs
+//     const serviceIds = professionalServices.map(service => service._id);
+
+//     // Find bookings related to these services
+//     const bookings = await Userpayment.find({ professionalServicesId: { $in: serviceIds } }).populate('professionalServicesId userID');
+
+//     if (!bookings.length) {
+//       return res.status(200).json({
+//         success: true,
+//         message: "No bookings found for this professional",
+//         calendarData: [],
+//       });
+//     }
+
+//     // Filter bookings by month and year
+//     const filteredBookings = bookings.filter(booking => {
+//       if (!booking.professionalServicesId || !booking.professionalServicesId.date) return false;
+
+//       const serviceDate = new Date(booking.professionalServicesId.date);
+//       return serviceDate.getMonth() + 1 === parseInt(month) && serviceDate.getFullYear() === parseInt(year);
+//     });
+
+//     // Format response
+//     const calendarData = filteredBookings.map((booking, index) => ({
+//       id: (index + 1).toString(),
+//       professionalEmail: booking.professionalServicesId.userID.email, // Professional's email
+//       customerEmail: booking.userID.email, // Customer's email
+//       title: booking.professionalServicesId.serviceName, // Service name
+//       datetime: new Date(booking.professionalServicesId.date).toISOString(),
+//       type: "booking",
+//       serviceBookingTime: booking.serviceBookingTime,
+//     }));
+
+//     return res.status(200).json({
+//       success: true,
+//       message: "Calendar data retrieved successfully",
+//       calendarData,
+//     });
+//   } catch (error) {
+//     console.error("Error fetching professional calendar data:", error);
+//     return res.status(500).json({
+//       success: false,
+//       message: "Failed to retrieve calendar data",
+//       details: error.message,
+//     });
+//   }
+// };
+const getProfessionalCalendarData = async (req, res) => {
+  try {
+    const { professionalId } = req.params; // Get professionalId from URL parameters
+    const { month, year } = req.query; // Get month and year from query parameters
+
+    if (!professionalId) {
+      return res.status(400).json({ success: false, message: 'Professional ID is required' });
+    }
+
+    // Validate month and year
+    if (!month || !year) {
+      return res.status(400).json({ success: false, message: 'Month and year are required' });
+    }
+
+    // Find all services provided by the professional
+    const professionalServices = await Professionalservices.find({ userID: professionalId });
+
+    if (!professionalServices.length) {
+      return res.status(200).json({
+        success: true,
+        message: 'No services found for this professional',
+        calendarData: [], // Return empty array
+      });
+    }
+
+    // Extract service IDs from the professional services
+    const serviceIds = professionalServices.map(service => service._id);
+
+    // Find all payments (bookings) associated with these services
+    const bookings = await Userpayment.find({ professionalServicesId: { $in: serviceIds } }).populate('professionalServicesId');
+
+    if (!bookings.length) {
+      return res.status(200).json({
+        success: true,
+        message: 'No bookings found for these services',
+        calendarData: [], // Return empty array
+      });
+    }
+
+    // Filter bookings by month and year
+    const filteredBookings = bookings.filter((booking) => {
+      if (!booking.professionalServicesId) return false; // Skip bookings with missing services
+
+      const serviceDate = new Date(booking.professionalServicesId.date);
+      const serviceMonth = serviceDate.getMonth() + 1; // getMonth() returns 0-11, so add 1
+      const serviceYear = serviceDate.getFullYear();
+
+      // Check if the booking matches the provided month and year
+      return serviceMonth === parseInt(month) && serviceYear === parseInt(year);
+    });
+
+    // Format response for calendar data
+    const calendarData = filteredBookings.map((booking, index) => {
+      const serviceDate = new Date(booking.professionalServicesId.date);
+
+      return {
+        id: (index + 1).toString(), // Generate a unique ID for each calendar event
+        title: booking.professionalServicesId.serviceName, // Service name as the title
+        datetime: serviceDate.toISOString(), // Convert date to ISO string
+        type: "booking", // Static type for all events
+        serviceBookingTime: booking.serviceBookingTime, // Include the service booking time
+      };
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: 'Professional calendar data retrieved successfully',
+      calendarData, // Will be an empty array if no bookings match
+    });
+  } catch (error) {
+    console.error('Error fetching professional calendar data:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to retrieve professional calendar data',
+      details: error.message,
+    });
+  }
+};
 
 
 
@@ -695,5 +844,6 @@ module.exports = {
   confirmBooking,
   getBookingDetailsByUserID,
   getCalendarData,
+  getProfessionalCalendarData
   
 }
