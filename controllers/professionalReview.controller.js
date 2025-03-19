@@ -16,6 +16,15 @@ exports.addReview = async (req, res) => {
       });
     }
 
+    // Check if the user has already reviewed the professional
+    const existingReview = await Review.findOne({ userID, professionalID });
+    if (existingReview) {
+      return res.status(400).json({
+        success: false,
+        message: "You have already reviewed this professional.",
+      });
+    }
+
     // Create a new review
     const newReview = new Review({ userID, professionalID, rating, comment });
     await newReview.save();
@@ -52,10 +61,32 @@ exports.getAllReviews = async (req, res) => {
     // Fetch all reviews
     const reviews = await Review.find();
 
+    // Calculate total reviews for each professional
+    const professionalReviews = reviews.reduce((acc, review) => {
+      if (!acc[review.professionalID]) {
+        acc[review.professionalID] = {
+          totalReviews: 0,
+          reviews: [],
+        };
+      }
+      acc[review.professionalID].totalReviews += 1;
+      acc[review.professionalID].reviews.push(review);
+      return acc;
+    }, {});
+
+    // Format the response
+    const response = Object.keys(professionalReviews).map((professionalID) => {
+      return {
+        professionalID,
+        totalReviews: professionalReviews[professionalID].totalReviews,
+        reviews: professionalReviews[professionalID].reviews,
+      };
+    });
+
     return res.status(200).json({
       success: true,
       message: "Reviews fetched successfully.",
-      data: reviews,
+      data: response,
     });
   } catch (error) {
     console.error(error);
@@ -66,7 +97,7 @@ exports.getAllReviews = async (req, res) => {
   }
 };
 
-//get all reviews of a professional ID with pagination and filtering by Highest rating, lowest rating and most relevant , most recent
+
 //get all reviews of a professional ID with pagination and filtering by Highest rating, lowest rating and most relevant , most recent
 exports.getReviewsOfProfessional = async (req, res) => {
   try {
@@ -76,6 +107,7 @@ exports.getReviewsOfProfessional = async (req, res) => {
     let query = { professionalID };
     let sortObj = {};
 
+    // Define sorting logic based on the filter
     if (filter === 'highest') {
       sortObj = { rating: -1 };
     } else if (filter === 'lowest') {
@@ -83,35 +115,43 @@ exports.getReviewsOfProfessional = async (req, res) => {
     } else if (filter === 'mostRecent') {
       sortObj = { createdAt: -1 };
     } else if (filter === 'mostRelevant') {
-      // You can implement your own logic for most relevant reviews
-      // For example, you can sort by rating and then by createdAt
+      // Custom logic for most relevant reviews
       sortObj = { rating: -1, createdAt: -1 };
     }
 
+    // Fetch reviews with pagination and sorting
     const reviews = await Review.find(query)
       .sort(sortObj)
       .skip((page - 1) * limit)
       .limit(Number(limit))
-      .populate('userID', 'fullName'); // Populate the userID field with the fullName field
+      .populate('userID', 'fullName'); // Populate user details
 
+    // Calculate total reviews for the professional
     const totalReviews = await Review.countDocuments(query);
+
+    // Calculate total pages for pagination
     const totalPages = Math.ceil(totalReviews / limit);
 
+    // Pagination metadata
     const pagination = {
-      currentPage: page,
+      currentPage: Number(page),
       totalPages: totalPages,
       totalItems: totalReviews,
-      itemsPerPage: limit,
+      itemsPerPage: Number(limit),
     };
 
+    // Return response with reviews, pagination, and total reviews
     return res.status(200).json({
       success: true,
       message: "Reviews fetched successfully.",
-      data: reviews.map(review => ({
-        ...review.toObject(),
-        userID: review.userID._id,
-        fullName: review.userID.fullName,
-      })),
+      data: {
+        totalReviews, // Add total reviews for the professional
+        reviews: reviews.map(review => ({
+          ...review.toObject(),
+          userID: review.userID._id,
+          fullName: review.userID.fullName,
+        })),
+      },
       pagination,
     });
   } catch (error) {
