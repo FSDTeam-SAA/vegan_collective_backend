@@ -48,6 +48,8 @@ const professionalServices = require("./routes/professionalServices.route.js");
 const support = require("./routes/support.route.js");
 const professionalInfo = require("./routes/professionalInfo.route.js");
 
+const getProfessionalGraph = require("./routes/professionalGraph.route.js"); //ADNAN
+
 //routes for merchant
 const merchantInfo = require("./routes/merchantInfo.route.js");
 const merchantProducts = require("./routes/merchantProducts.route.js");
@@ -98,6 +100,8 @@ app.use("/api/v1", professionalReview);
 app.use("/api/v1", professionalServices);
 app.use("/api/v1", support);
 app.use("/api/v1", professionalInfo);
+
+app.use("/api/v1", getProfessionalGraph); //ADNAN
 
 //endpoints for merchant
 app.use("/api/v1", merchantInfo);
