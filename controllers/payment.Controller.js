@@ -505,6 +505,7 @@ const confirmBooking = async (req, res) => {
     const email = user.email;
     const serviceName = professionalService.name;
     const serviceBookingTime = booking.serviceBookingTime;
+    
 
     // Calculate the reminder time (30 minutes before the booking time)
     const reminderTime = new Date(serviceBookingTime);
@@ -532,6 +533,7 @@ const confirmBooking = async (req, res) => {
       email,
       serviceName,
       serviceBookingTime,
+      
     });
   } catch (error) {
     console.error('Error confirming booking:', error);
@@ -552,6 +554,12 @@ const getBookingDetailsByUserID = async (req, res) => {
       return res.status(400).json({ success: false, message: 'User ID is required' });
     }
 
+    // Find the user to get their email
+    const user = await User.findOne({ _id: userID });
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
     // Find all bookings for the user and populate professional service details
     const bookings = await Userpayment.find({ userID }).populate('professionalServicesId');
 
@@ -563,27 +571,15 @@ const getBookingDetailsByUserID = async (req, res) => {
     const bookingDetails = bookings
       .filter(booking => booking.professionalServicesId) // Exclude bookings with missing services
       .map(booking => ({
-        // bookingID: booking._id,
         serviceBookingTime: booking.serviceBookingTime,
+        email: user.email, // Include the user's email in each booking object
         amountPaid: booking.amountPaid || 0,
         status: booking.status || 'Pending',
         professionalService: {
-          // _id: booking.professionalServicesId._id,
           serviceName: booking.professionalServicesId.serviceName,
-          // metaDescription: booking.professionalServicesId.metaDescription,
-          // serviceDescription: booking.professionalServicesId.serviceDescription,
-          // keyWords: booking.professionalServicesId.keyWords,
-          // paymentType: booking.professionalServicesId.paymentType,
-          // price: booking.professionalServicesId.price,
-          // serviceImage: booking.professionalServicesId.serviceImage,
-          // serviceVideo: booking.professionalServicesId.serviceVideo,
           sessionType: booking.professionalServicesId.sessionType,
-          // isLiveStream: booking.professionalServicesId.isLiveStream,
-          // visibility: booking.professionalServicesId.visibility,
           timeSlots: booking.professionalServicesId.timeSlots,
-          date: booking.professionalServicesId.date, // ✅ Include the date field
-          // createdAt: booking.professionalServicesId.createdAt,
-          // updatedAt: booking.professionalServicesId.updatedAt,
+          date: booking.professionalServicesId.date,
         },
       }));
 
@@ -597,7 +593,7 @@ const getBookingDetailsByUserID = async (req, res) => {
     return res.status(200).json({
       success: true,
       message: 'Bookings retrieved successfully',
-      bookings: bookingDetails,
+      bookings: bookingDetails, // The email is already included in each booking object
     });
   } catch (error) {
     console.error('Error fetching bookings:', error);
@@ -609,6 +605,78 @@ const getBookingDetailsByUserID = async (req, res) => {
   }
 };
 
+
+// GET: Get Calendar Data by User ID with Month and Year Filtering
+const getCalendarData = async (req, res) => {
+  try {
+    const { userID } = req.params; // Get userID from URL parameters
+    const { month, year } = req.query; // Get month and year from query parameters
+
+    if (!userID) {
+      return res.status(400).json({ success: false, message: 'User ID is required' });
+    }
+
+    // Validate month and year
+    if (!month || !year) {
+      return res.status(400).json({ success: false, message: 'Month and year are required' });
+    }
+
+    // Find the user to get their email
+    const user = await User.findOne({ _id: userID });
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    // Find all bookings for the user and populate professional service details
+    const bookings = await Userpayment.find({ userID }).populate('professionalServicesId');
+
+    if (!bookings.length) {
+      return res.status(200).json({
+        success: true,
+        message: 'No bookings found for this user',
+        calendarData: [], // Return empty array
+      });
+    }
+
+    // Filter bookings by month and year
+    const filteredBookings = bookings.filter((booking) => {
+      if (!booking.professionalServicesId) return false; // Skip bookings with missing services
+
+      const serviceDate = new Date(booking.professionalServicesId.date);
+      const serviceMonth = serviceDate.getMonth() + 1; // getMonth() returns 0-11, so add 1
+      const serviceYear = serviceDate.getFullYear();
+
+      // Check if the booking matches the provided month and year
+      return serviceMonth === parseInt(month) && serviceYear === parseInt(year);
+    });
+
+    // Format response for calendar data
+    const calendarData = filteredBookings.map((booking, index) => {
+      const serviceDate = new Date(booking.professionalServicesId.date);
+
+      return {
+        id: (index + 1).toString(), // Generate a unique ID for each calendar event
+        email: user.email, // User's email
+        title: booking.professionalServicesId.serviceName, // Service name as the title
+        datetime: serviceDate.toISOString(), // Convert date to ISO string
+        type: "booking", // Static type for all events
+      };
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: 'Calendar data retrieved successfully',
+      calendarData, // Will be an empty array if no bookings match
+    });
+  } catch (error) {
+    console.error('Error fetching calendar data:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to retrieve calendar data',
+      details: error.message,
+    });
+  }
+};
 
 
 
@@ -626,5 +694,6 @@ module.exports = {
   removePaymentMethod,
   confirmBooking,
   getBookingDetailsByUserID,
+  getCalendarData,
   
 }
