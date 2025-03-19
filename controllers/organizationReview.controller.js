@@ -74,9 +74,44 @@ const getAverageRating = async (req, res) => {
     }
 };
 
+// const getAllReviewsForSpecificOrganization = async (req, res) => {
+//     try {
+//         const { organizationID } = req.params;
+
+//         if (!organizationID) {
+//             return res.status(400).json({
+//                 success: false,
+//                 message: "organizationID is required",
+//             });
+//         }
+
+//         const reviews = await Organizationreview.find({ organizationID })
+//             .populate("userID", "fullName _id")
+//             .sort({ createdAt: -1 });
+
+//         return res.status(200).json({
+//             success: true,
+//             reviews: reviews.map(review => ({
+//                 userID: review.userID?._id,  
+//                 userName: review.userID?.fullName, 
+//                 rating: review.rating,
+//                 comment: review.comment,
+//                 createdAt: review.createdAt
+//             }))
+//         });
+
+//     } catch (error) {
+//         return res.status(500).json({
+//             success: false,
+//             message: error.message,
+//         });
+//     }
+// };
+
 const getAllReviewsForSpecificOrganization = async (req, res) => {
     try {
         const { organizationID } = req.params;
+        const { page = 1, limit = 10, sort = "highest" } = req.query;
 
         if (!organizationID) {
             return res.status(400).json({
@@ -85,19 +120,34 @@ const getAllReviewsForSpecificOrganization = async (req, res) => {
             });
         }
 
+        const itemsPerPage = parseInt(limit, 10);
+        const currentPage = parseInt(page, 10);
+        const sortOrder = sort === "lowest" ? 1 : -1;
+
+        const totalItems = await Organizationreview.countDocuments({ organizationID });
+        const totalPages = Math.ceil(totalItems / itemsPerPage);
+
         const reviews = await Organizationreview.find({ organizationID })
             .populate("userID", "fullName _id")
-            .sort({ createdAt: -1 });
+            .sort({ rating: sortOrder })
+            .skip((currentPage - 1) * itemsPerPage)
+            .limit(itemsPerPage);
 
         return res.status(200).json({
             success: true,
             reviews: reviews.map(review => ({
-                userID: review.userID?._id,  
-                userName: review.userID?.fullName, 
+                userID: review.userID?._id,
+                userName: review.userID?.fullName,
                 rating: review.rating,
                 comment: review.comment,
                 createdAt: review.createdAt
-            }))
+            })),
+            pagination: {
+                currentPage,
+                totalPages,
+                totalItems,
+                itemsPerPage
+            }
         });
 
     } catch (error) {
