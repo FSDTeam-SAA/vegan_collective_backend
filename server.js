@@ -11,7 +11,7 @@ const smsRoutes = require("./routes/smsRoutes.js");
 
 const zoomRoutes = require("./routes/zoomRoutes");
 const organizationVolunteerRoutes = require("./routes/organizationVolunteer.route.js");
-
+const eventRoutes = require('./routes/eventRoutes.js');
 
 
 require('dotenv').config();
@@ -160,6 +160,9 @@ app.use('/api/v1', googleAuthRoute)
 
 //volunteer routes
 app.use("/api/v1", organizationVolunteerRoutes);
+
+//event routes
+app.use("/api/v1", eventRoutes);
 
 app.get("/api/v1/", (req, res) => {
   res.status(201).json({
