@@ -45,19 +45,42 @@ exports.getByProductID = async (req, res) => {
 exports.getByMerchantID = async (req, res) => {
   try {
     const { merchantID } = req.params;
+    const { page = 1, limit = 10, sortByRating } = req.query; // Default page = 1, limit = 10
 
     if (!mongoose.Types.ObjectId.isValid(merchantID)) {
       return res.status(400).json({ success: false, message: "Invalid merchantID" });
     }
 
-    const reviews = await MerchantProductsReview.find({ merchantID })
+    // Convert page and limit to numbers
+    const pageNumber = parseInt(page, 10);
+    const limitNumber = parseInt(limit, 10);
+
+    // Calculate the number of documents to skip
+    const skip = (pageNumber - 1) * limitNumber;
+
+    // Build the query
+    let query = MerchantProductsReview.find({ merchantID })
       .populate("productID", "productName")
       .populate("userID", "fullName")
-      .lean();
+      .skip(skip)
+      .limit(limitNumber);
+
+    // Add sorting based on rating
+    if (sortByRating === "highest") {
+      query = query.sort({ rating: -1 }); // Sort by highest rating
+    } else if (sortByRating === "lowest") {
+      query = query.sort({ rating: 1 }); // Sort by lowest rating
+    }
+
+    const reviews = await query.lean();
 
     if (reviews.length === 0) {
       return res.status(404).json({ success: false, message: "No reviews found for this merchant" });
     }
+
+    // Get the total number of reviews for pagination
+    const totalItems = await MerchantProductsReview.countDocuments({ merchantID });
+    const totalPages = Math.ceil(totalItems / limitNumber);
 
     const reviewData = reviews.map((review) => ({
       _id: review._id,
@@ -69,12 +92,24 @@ exports.getByMerchantID = async (req, res) => {
       fullName: review.userID ? review.userID.fullName : "",
     }));
 
-    res.status(200).json({ success: true, message: "Reviews fetched successfully", reviews: reviewData });
+    // Pagination metadata
+    const pagination = {
+      currentPage: pageNumber,
+      totalPages,
+      totalItems,
+      itemsPerPage: limitNumber,
+    };
+
+    res.status(200).json({
+      success: true,
+      message: "Reviews fetched successfully",
+      reviews: reviewData,
+      pagination,
+    });
   } catch (error) {
     res.status(500).json({ success: false, message: "Internal Server Error", error: error.message });
   }
 };
-
 // Update a review
 exports.updateReview = async (req, res) => {
   try {
