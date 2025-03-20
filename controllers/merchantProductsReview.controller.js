@@ -7,35 +7,26 @@ exports.createReview = async (req, res) => {
   const { merchantID, userID, productID, rating, comment } = req.body;
 
   if (rating < 1 || rating > 5) {
-    return res.status(400).json({ error: "Rating must be between 1 and 5" });
+    return res.status(400).json({ success: false, message: "Rating must be between 1 and 5" });
   }
 
   try {
-    const existingReview = await MerchantProductsReview.findOne({
-      userID,
-      productID,
-    });
+    const existingReview = await MerchantProductsReview.findOne({ userID, productID });
 
     if (existingReview) {
-      return res.status(400).json({ error: "User can only submit one review per product" });
+      return res.status(400).json({ success: false, message: "User can only submit one review per product" });
     }
 
-    const review = new MerchantProductsReview({
-      merchantID,
-      userID,
-      productID,
-      rating,
-      comment,
-    });
+    const review = new MerchantProductsReview({ merchantID, userID, productID, rating, comment });
 
     await review.save();
-    res.status(201).json(review);
+    res.status(201).json({ success: true, message: "Review created successfully", review });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ success: false, message: "Internal Server Error", error: error.message });
   }
 };
 
-// Get all reviews for a specific product and show the avarage rating
+// Get all reviews for a specific product and show the average rating
 exports.getByProductID = async (req, res) => {
   try {
     const { productID } = req.params;
@@ -44,22 +35,13 @@ exports.getByProductID = async (req, res) => {
     // Calculate the average rating
     const avgRating = reviews.length > 0 ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length : 0;
 
-    res.status(200).json({
-      success: true,
-      reviews,
-      averageRating: avgRating.toFixed(2),
-    });
+    res.status(200).json({ success: true, message: "Reviews fetched successfully", reviews, averageRating: avgRating.toFixed(2) });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Internal Server Error",
-      error,
-    });
+    res.status(500).json({ success: false, message: "Internal Server Error", error: error.message });
   }
 };
 
 // Get all reviews for a specific merchant
-
 exports.getByMerchantID = async (req, res) => {
   try {
     const { merchantID } = req.params;
@@ -68,13 +50,10 @@ exports.getByMerchantID = async (req, res) => {
       return res.status(400).json({ success: false, message: "Invalid merchantID" });
     }
 
-    // Fetch reviews, including those with null productID
     const reviews = await MerchantProductsReview.find({ merchantID })
       .populate("productID", "productName")
-      .populate("userID", "fullName") // Fetch user fullName
+      .populate("userID", "fullName")
       .lean();
-
-    console.log("All Reviews:", reviews);
 
     if (reviews.length === 0) {
       return res.status(404).json({ success: false, message: "No reviews found for this merchant" });
@@ -86,21 +65,13 @@ exports.getByMerchantID = async (req, res) => {
       productName: review.productID ? review.productID.productName : "",
       rating: review.rating,
       comment: review.comment,
-  
-        userID: review.userID ? review.userID._id : null,
-        fullName: review.userID ? review.userID.fullName : "",
-        //userImage: review.userID ? review.userID.image : "",
-
+      userID: review.userID ? review.userID._id : null,
+      fullName: review.userID ? review.userID.fullName : "",
     }));
 
-    res.status(200).json({ success: true, reviews: reviewData });
+    res.status(200).json({ success: true, message: "Reviews fetched successfully", reviews: reviewData });
   } catch (error) {
-    console.error("Error in getByMerchantID:", error);
-    res.status(500).json({
-      success: false,
-      message: "Internal Server Error",
-      error: error.message,
-    });
+    res.status(500).json({ success: false, message: "Internal Server Error", error: error.message });
   }
 };
 
@@ -111,7 +82,7 @@ exports.updateReview = async (req, res) => {
     const { rating, comment } = req.body;
 
     if (rating < 1 || rating > 5) {
-      return res.status(400).json({ error: "Rating must be between 1 and 5" });
+      return res.status(400).json({ success: false, message: "Rating must be between 1 and 5" });
     }
 
     const updatedReview = await MerchantProductsReview.findByIdAndUpdate(
@@ -121,16 +92,16 @@ exports.updateReview = async (req, res) => {
     );
 
     if (!updatedReview) {
-      return res.status(404).json({ error: "Review not found" });
+      return res.status(404).json({ success: false, message: "Review not found" });
     }
 
-    res.status(200).json(updatedReview);
+    res.status(200).json({ success: true, message: "Review updated successfully", updatedReview });
   } catch (error) {
-    res.status(500).json({ error: error.message });
-  } 
-}
+    res.status(500).json({ success: false, message: "Internal Server Error", error: error.message });
+  }
+};
 
-//Delete a review
+// Delete a review
 exports.deleteReview = async (req, res) => {
   try {
     const { reviewID } = req.params;
@@ -138,14 +109,14 @@ exports.deleteReview = async (req, res) => {
     const deletedReview = await MerchantProductsReview.findByIdAndDelete(reviewID);
 
     if (!deletedReview) {
-      return res.status(404).json({ error: "Review not found" });
-    } 
-    res.status(200).json({ message: "Review deleted successfully" });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-}
+      return res.status(404).json({ success: false, message: "Review not found" });
+    }
 
+    res.status(200).json({ success: true, message: "Review deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Internal Server Error", error: error.message });
+  }
+};
 
 
 
