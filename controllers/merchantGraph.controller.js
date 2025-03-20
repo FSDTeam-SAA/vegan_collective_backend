@@ -6,6 +6,26 @@ const MerchantProducts = require("../models/merchantProducts.model"); // Import 
 const getMonthlySalesAndEarnings = async (req, res) => {
   try {
     const { userID } = req.params; // Assuming userID and merchantID are the same
+    const { filter } = req.query; // Get filter type (12months, 3months, 30days, 7days, 24days)
+
+    // Determine the date range based on filter
+    let startDate = new Date();
+    switch (filter) {
+      case "3months":
+        startDate.setMonth(startDate.getMonth() - 3);
+        break;
+      case "30days":
+        startDate.setDate(startDate.getDate() - 30);
+        break;
+      case "7days":
+        startDate.setDate(startDate.getDate() - 7);
+        break;
+      case "24days":
+        startDate.setDate(startDate.getDate() - 24);
+        break;
+      default:
+        startDate.setMonth(startDate.getMonth() - 12); // Default to 12 months
+    }
 
     // Fetch all products owned by the merchant (userID)
     const merchantProducts = await MerchantProducts.find({ merchantID: userID }).select("_id");
@@ -19,6 +39,7 @@ const getMonthlySalesAndEarnings = async (req, res) => {
             { sellerID: new mongoose.Types.ObjectId(userID), sellerType: "Merchant" }, // Direct sales
             { productId: { $in: merchantProductIds } }, // Sales of products owned by merchant
           ],
+          createdAt: { $gte: startDate },
         },
       },
       {
@@ -34,6 +55,7 @@ const getMonthlySalesAndEarnings = async (req, res) => {
       {
         $match: {
           creator: new mongoose.Types.ObjectId(userID), // Filter by creator (userID)
+          createdAt: { $gte: startDate },
         },
       },
       {
