@@ -166,26 +166,38 @@ const getTopOrganizations = async (req, res) => {
                     avgRating: { $round: ["$avgRating", 2] }, // Round the average rating to 2 decimal places
                     totalReviews: 1,
                     organizationName: "$organizationInfo.organizationName",
-                    profilePhoto: "$organizationInfo.profilePhoto"
+                    profilePhoto: "$organizationInfo.profilePhoto",
+                    address: "$organizationInfo.address",
+                    shortDescriptionOfOrganization: "$organizationInfo.shortDescriptionOfOrganization"
                 }
             }
         ]);
 
+        if (topOrganizations.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: "No organizations found with reviews.",
+            });
+        }
+
         return res.status(200).json({
             success: true,
+            message: "Top organizations fetched successfully.",
             topOrganizations: topOrganizations.map(org => ({
                 organizationID: org.organizationID,
                 avgRating: org.avgRating.toFixed(2), // Format the average rating to 2 decimal places
                 totalReviews: org.totalReviews,
                 organizationName: org.organizationName,
-                profilePhoto: org.profilePhoto
+                profilePhoto: org.profilePhoto,
+                address: org.address,
+                shortDescriptionOfOrganization: org.shortDescriptionOfOrganization
             }))
         });
 
     } catch (error) {
         return res.status(500).json({
             success: false,
-            message: error.message,
+            message: "Internal Server Error: " + error.message,
         });
     }
 };
