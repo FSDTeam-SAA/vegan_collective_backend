@@ -10,18 +10,19 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-// Subscribe a User
 exports.subscribe = async (req, res) => {
   const { email } = req.body;
   try {
     let subscriber = await Subscriber.findOne({ email });
-    if (subscriber) return res.status(400).json({ message: "Already subscribed" });
+    if (subscriber) {
+      return res.status(400).json({ success: false, message: "Already subscribed" });
+    }
 
     subscriber = new Subscriber({ email });
     await subscriber.save();
-    res.status(201).json({ message: "Subscribed successfully!" });
+    res.status(201).json({ success: true, message: "Subscribed successfully!" });
   } catch (error) {
-    res.status(500).json({ error: "Server error" });
+    res.status(500).json({ success: false, error: "Server error" });
   }
 };
 
@@ -30,11 +31,13 @@ exports.unsubscribe = async (req, res) => {
   const { email } = req.body;
   try {
     const subscriber = await Subscriber.findOneAndDelete({ email });
-    if (!subscriber) return res.status(400).json({ message: "Email not found" });
+    if (!subscriber) {
+      return res.status(400).json({ success: false, message: "Email not found" });
+    }
 
-    res.status(200).json({ message: "Unsubscribed successfully!" });
+    res.status(200).json({ success: true, message: "Unsubscribed successfully!" });
   } catch (error) {
-    res.status(500).json({ error: "Server error" });
+    res.status(500).json({ success: false, error: "Server error" });
   }
 };
 
@@ -43,7 +46,9 @@ exports.sendNewsletter = async (req, res) => {
   const { subject, message } = req.body;
   try {
     const subscribers = await Subscriber.find();
-    if (subscribers.length === 0) return res.status(400).json({ message: "No subscribers found" });
+    if (subscribers.length === 0) {
+      return res.status(400).json({ success: false, message: "No subscribers found" });
+    }
 
     const mailOptions = {
       from: process.env.EMAIL_USER,
@@ -53,8 +58,8 @@ exports.sendNewsletter = async (req, res) => {
     };
 
     await transporter.sendMail(mailOptions);
-    res.status(200).json({ message: "Newsletter sent successfully!" });
+    res.status(200).json({ success: true, message: "Newsletter sent successfully!" });
   } catch (error) {
-    res.status(500).json({ error: "Error sending email" });
+    res.status(500).json({ success: false, error: "Error sending email" });
   }
 };
