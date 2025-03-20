@@ -6,18 +6,16 @@ const merchantProductsReviewController = require("../controllers/merchantProduct
 router.post("/merchantProductsreviews", merchantProductsReviewController.createReview);
 
 // Get all reviews for a specific product
-router.get("/merchantProductsreviews/:productID", merchantProductsReviewController.getReviewsByProduct);
+router.get("/merchantProductsreviews/:productID", merchantProductsReviewController.getByProductID);
 
-// Get average rating for a specific product
-router.get("/merchantProductsreviews/:productID/average", merchantProductsReviewController.getAverageRating);
+// Get all reviews for a specific merchant
+router.get("/merchantProductsreviews/merchant/:merchantID", merchantProductsReviewController.getByMerchantID);
 
-// Update a review
+//update a review
 router.put("/merchantProductsreviews/:reviewID", merchantProductsReviewController.updateReview);
 
-// Delete a review
+//delete a review
 router.delete("/merchantProductsreviews/:reviewID", merchantProductsReviewController.deleteReview);
 
-// Get top merchant products sorted by average rating
-router.get("/topmerchantProducts", merchantProductsReviewController.getTopMerchantProducts);
 
 module.exports = router;
