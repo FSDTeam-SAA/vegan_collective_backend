@@ -7,6 +7,10 @@ router.post("/campaigns", organizationFundraisingManagementController.createCamp
 
 // Get all fundraising campaigns
 router.get("/campaigns", organizationFundraisingManagementController.getAllCampaigns);
+// Get all fundraising campaigns by organization ID
+router.get("/campaigns/:organizationID", organizationFundraisingManagementController.getCampaignsByOrganizationID);
+
+
 
 // Get a single fundraising campaign by ID
 router.get("/campaigns/:id", organizationFundraisingManagementController.getCampaignById);
