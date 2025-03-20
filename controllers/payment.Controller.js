@@ -64,166 +64,6 @@ const savePaymentMethod = async (req, res) => {
   }
 }
 
-// const purchaseMethod = async (req, res) => {
-//   try {
-//     const {
-//       userID,
-//       amount,
-//       merchantID,
-//       professionalID,
-//       organizationID,
-//       productId,
-//       professionalServicesId,
-//       serviceBookingTime,
-//     } = req.body
-
-//     // Validate required fields
-//     if (!userID || !amount) {
-//       return res
-//         .status(400)
-//         .json({ success: false, message: 'Missing required fields' })
-//     }
-
-//     // Find user
-//     const user = await User.findOne({ _id: userID })
-
-//     if (!user) {
-//       return res.status(404).json({ success: false, message: 'User not found' })
-//     }
-
-//     // Check user payment method
-//     const userPayment = await Userpayment.findOne({ userID })
-//     if (!userPayment) {
-//       return res.status(400).json({
-//         success: false,
-//         message: 'User does not have a valid payment method',
-//       })
-//     }
-
-//     const { customerId, paymentMethodId } = userPayment
-
-//     console.log("customer payment info____",customerId, paymentMethodId)
-//     // Check if payment method is already attached to the customer
-//     const paymentMethod = await stripe.paymentMethods
-//       .retrieve(paymentMethodId)
-//       .catch(() => null)
-
-//     if (!paymentMethod || paymentMethod.customer !== customerId) {
-//       // Reattach the payment method if needed
-//       await stripe.paymentMethods.attach(paymentMethodId, {
-//         customer: customerId,
-//       })
-
-//       // Set the default payment method for the customer
-//       await stripe.customers.update(customerId, {
-//         invoice_settings: { default_payment_method: paymentMethodId },
-//       })
-//     }
-
-//     // Determine seller type and ID
-//     let seller, sellerID, sellerType, sellerStripeAccountId
-
-//     if (merchantID) {
-//       seller = await Merchantinfo.findById(merchantID)
-//       sellerType = 'Merchant'
-//     } else if (professionalID) {
-//       console.log("professionalID____", professionalID)
-//       seller = await Professionalinfo.findOne({userId:professionalID})
-//       sellerType = 'Professional'
-//     } else if (organizationID) {
-//       seller = await Organizationinfo.findOne(organizationID)
-//       sellerType = 'Organization'
-//     } else {
-//       return res
-//         .status(400)
-//         .json({ success: false, message: 'No valid seller ID provided' })
-//     }
-
-//     // Validate seller existence
-//     if (!seller) {
-//       return res
-//         .status(404)
-//         .json({ success: false, message: `${sellerType} not found` })
-//     }
-
-//     sellerID = seller._id
-//     sellerStripeAccountId = seller.stripeAccountId
-
-//     if (!sellerStripeAccountId) {
-//       return res.status(400).json({
-//         success: false,
-//         message: `${sellerType} does not have a connected Stripe account`,
-//       })
-//     }
-
-//     // Charge the customer
-//     const paymentIntent = await chargeCustomer(
-//       customerId,
-//       paymentMethodId,
-//       amount
-//     )
-//     console.log(paymentIntent, 'PaymentIntent created')
-
-//     if (paymentIntent.status === 'succeeded') {
-//       const vendorAmount = Math.round(amount * 0.9 * 100) // Vendor gets 90%
-
-//       // Transfer money to the seller
-//       const transfer = await stripe.transfers.create({
-//         amount: vendorAmount,
-//         currency: 'usd',
-//         destination: sellerStripeAccountId,
-//         transfer_group: `ORDER_${paymentIntent.id}`,
-//       })
-
-//       // Validate service booking time
-//       // const bookingTime = serviceBookingTime
-//       //   ? new Date(serviceBookingTime)
-//       //   : null
-//       // if (bookingTime && isNaN(bookingTime.getTime())) {
-//       //   return res.status(400).json({
-//       //     success: false,
-//       //     message: 'Invalid service booking time format',
-//       //   })
-//       // }
-
-//       // Save transaction record
-//       const newPaymentRecord = new Userpayment({
-//         userID,
-//         customerId,
-//         paymentMethodId,
-//         sellerID,
-//         sellerType,
-//         sellerStripeAccountId,
-//         amount,
-//         productId: productId || [],
-//         professionalServicesId: professionalServicesId || null,
-//         serviceBookingTime: serviceBookingTime,
-//       })
-//       await newPaymentRecord.save()
-
-//       return res.status(200).json({
-//         success: true,
-//         message: 'Payment processed and transferred successfully',
-//         paymentIntentId: paymentIntent.id,
-//         transferId: transfer.id,
-//         amountReceived: paymentIntent.amount_received,
-//         transferredAmount: vendorAmount / 100,
-//         purchasedProducts: productId,
-//         bookedService: professionalServicesId,
-//         bookingTime: serviceBookingTime,
-//       })
-//     } else {
-//       return res.status(400).json({ success: false, message: 'Payment failed' })
-//     }
-//   } catch (error) {
-//     console.error('Error processing payment:', error)
-//     return res.status(500).json({
-//       success: false,
-//       message: 'Payment processing failed',
-//       details: error.message,
-//     })
-//   }
-// }
 
 const purchaseMethod = async (req, res) => {
   try {
@@ -236,6 +76,7 @@ const purchaseMethod = async (req, res) => {
       productId,
       professionalServicesId,
       serviceBookingTime,
+      goLiveID,
     } = req.body
 
     // Validate required fields
@@ -263,7 +104,7 @@ const purchaseMethod = async (req, res) => {
 
     const { customerId, paymentMethodId } = userPayment
 
-    console.log("customer payment info____",customerId, paymentMethodId)
+    // console.log("customer payment info____",customerId, paymentMethodId)
     // Check if payment method is already attached to the customer
     const paymentMethod = await stripe.paymentMethods
       .retrieve(paymentMethodId)
@@ -294,7 +135,8 @@ const purchaseMethod = async (req, res) => {
     } else if (organizationID) {
       seller = await Organizationinfo.findOne(organizationID)
       sellerType = 'Organization'
-    } else {
+    } 
+    else {
       return res
         .status(400)
         .json({ success: false, message: 'No valid seller ID provided' })
@@ -338,7 +180,7 @@ const purchaseMethod = async (req, res) => {
       paymentMethodId,
       amount
     )
-    console.log(paymentIntent, 'PaymentIntent created')
+    // console.log(paymentIntent, 'PaymentIntent created')
 
     if (paymentIntent.status === 'succeeded') {
       const vendorAmount = Math.round(amount * 0.9 * 100) // Vendor gets 90%
@@ -363,6 +205,7 @@ const purchaseMethod = async (req, res) => {
         productId: productId || [],
         professionalServicesId: professionalServicesId || null,
         serviceBookingTime: serviceBookingTime,
+        goLiveID,
       })
       await newPaymentRecord.save()
 
@@ -381,7 +224,7 @@ const purchaseMethod = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Payment failed' })
     }
   } catch (error) {
-    console.error('Error processing payment:', error)
+    // console.error('Error processing payment:', error)
     return res.status(500).json({
       success: false,
       message: 'Payment processing failed',

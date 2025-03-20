@@ -209,3 +209,23 @@ exports.deleteProduct = async (req, res) => {
     res.status(500).json({ success: false, message: error.message, data: [] });
   }
 };
+
+// get product by merchantID 
+exports.getProductsByMerchant = async (req, res) => {
+  try {
+    const { merchantID } = req.query
+
+    if (!merchantID) {
+      return res.status(400).json({ message: 'Merchant ID is required' })
+    }
+
+    const products = await MerchantProducts.find({ merchantID })
+      .select('productName _id') // Selecting only productName and _id
+      .exec()
+
+    res.status(200).json({success: true, message: "Successfully get product and Id and Product Name"
+      ,data:products })
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message })
+  }
+}

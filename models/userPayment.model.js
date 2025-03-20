@@ -51,6 +51,10 @@ const userPaymentSchema = new mongoose.Schema(
       unique: true,
       default: null,
     },
+    goLiveID: {
+      type:String,
+      default: null
+    },
   },
   {
     timestamps: true,
