@@ -4,7 +4,7 @@ const User = require('../models/user.model')
 const upload = require('../utils/multerConfig')
 const Professionalinfo = require('../models/professionalInfo.model')
 const Organizationinfo = require('../models/organizationInfo.model')
-
+const Userpayment = require ('../models/userPayment.model')
 /**
  * Create a new merchant info entry with profile photo upload
  */
@@ -452,5 +452,295 @@ exports.checkAccountId = async (req, res) => {
       message: 'Error checking Stripe Account ID',
       error: error.message,
     })
+  }
+}
+
+// Top merchant based on total sell
+
+// exports.getTopMerchants = async (req, res) => {
+//   try {
+//     // Get pagination params (default: page 1, limit 10)
+//     const page = parseInt(req.query.page) || 1
+//     const limit = parseInt(req.query.limit) || 10
+//     const skip = (page - 1) * limit
+
+//     const pipeline = [
+//       {
+//         $unwind: { path: '$productId', preserveNullAndEmptyArrays: true },
+//       },
+//       {
+//         $group: {
+//           _id: '$sellerID',
+//           merchantID: { $first: '$sellerID' }, // Preserve merchant ID
+//           totalSales: { $sum: '$amount' },
+//           totalOrders: { $sum: 1 },
+//         },
+//       },
+//       {
+//         $project: {
+//           merchantID: { $toObjectId: '$merchantID' }, // Convert to ObjectId for lookup
+//           totalSales: 1,
+//           totalOrders: 1,
+//         },
+//       },
+//       {
+//         $lookup: {
+//           from: 'users',
+//           localField: 'merchantID',
+//           foreignField: '_id',
+//           as: 'merchantInfo',
+//         },
+//       },
+//       {
+//         $unwind: { path: '$merchantInfo', preserveNullAndEmptyArrays: true },
+//       },
+//       {
+//         $project: {
+//           _id: 0, // Hide MongoDB default ID
+//           merchantID: 1,
+//           totalSales: 1,
+//           totalOrders: 1,
+//           merchantName: '$merchantInfo.name',
+//           merchantEmail: '$merchantInfo.email',
+//         },
+//       },
+//       {
+//         $sort: { totalSales: -1 },
+//       },
+//       {
+//         $skip: skip, // Apply pagination
+//       },
+//       {
+//         $limit: limit, // Apply limit
+//       },
+//     ]
+
+//     // Get total count of merchants for pagination
+//     const totalMerchants = await Userpayment.aggregate([
+//       { $group: { _id: '$sellerID' } },
+//       { $count: 'total' },
+//     ])
+
+//     const totalPages =
+//       totalMerchants.length > 0 ? Math.ceil(totalMerchants[0].total / limit) : 0
+
+//     const topMerchants = await Userpayment.aggregate(pipeline)
+
+//     res.status(200).json({
+//       success: true,
+//       data: topMerchants,
+//       pagination: {
+//         currentPage: page,
+//         totalPages: totalPages,
+//         totalMerchants: totalMerchants.length > 0 ? totalMerchants[0].total : 0,
+//         limit: limit,
+//       },
+//     })
+//   } catch (error) {
+//     console.error('Error fetching top merchants:', error)
+//     res.status(500).json({ success: false, message: 'Server error' })
+//   }
+// }
+
+// exports.getTopMerchants = async (req, res) => {
+//   try {
+//     // Get pagination params (default: page 1, limit 10)
+//     const page = parseInt(req.query.page) || 1
+//     const limit = parseInt(req.query.limit) || 10
+//     const skip = (page - 1) * limit
+
+//     const pipeline = [
+//       {
+//         $unwind: { path: '$productId', preserveNullAndEmptyArrays: true },
+//       },
+//       {
+//         $group: {
+//           _id: '$sellerID',
+//           merchantID: { $first: '$sellerID' }, // Preserve merchant ID
+//           totalSales: { $sum: '$amount' },
+//           totalOrders: { $sum: 1 },
+//         },
+//       },
+//       {
+//         $project: {
+//           merchantID: { $toObjectId: '$merchantID' }, // Convert to ObjectId for lookup
+//           totalSales: 1,
+//           totalOrders: 1,
+//         },
+//       },
+//       // Lookup merchant info from 'users'
+//       {
+//         $lookup: {
+//           from: 'users',
+//           localField: 'merchantID',
+//           foreignField: '_id',
+//           as: 'merchantInfo',
+//         },
+//       },
+//       {
+//         $unwind: { path: '$merchantInfo', preserveNullAndEmptyArrays: true },
+//       },
+//       // Lookup products from 'merchantproducts'
+//       {
+//         $lookup: {
+//           from: 'merchantproducts', // Collection name should be lowercase in MongoDB
+//           localField: 'merchantID',
+//           foreignField: 'merchantID',
+//           as: 'products',
+//         },
+//       },
+//       {
+//         $project: {
+//           _id: 0, // Hide MongoDB default ID
+//           merchantID: 1,
+//           totalSales: 1,
+//           totalOrders: 1,
+//           merchantName: '$merchantInfo.name',
+//           merchantEmail: '$merchantInfo.email',
+//           products: {
+//             productName: 1,
+//             description: 1,
+//             price: 1,
+//             stockQuantity: 1,
+//             category: 1,
+//           }, // Extract only needed fields
+//         },
+//       },
+//       {
+//         $sort: { totalSales: -1 },
+//       },
+//       {
+//         $skip: skip, // Apply pagination
+//       },
+//       {
+//         $limit: limit, // Apply limit
+//       },
+//     ]
+
+//     // Get total count of merchants for pagination
+//     const totalMerchants = await Userpayment.aggregate([
+//       { $group: { _id: '$sellerID' } },
+//       { $count: 'total' },
+//     ])
+
+//     const totalPages =
+//       totalMerchants.length > 0 ? Math.ceil(totalMerchants[0].total / limit) : 0
+
+//     const topMerchants = await Userpayment.aggregate(pipeline)
+
+//     res.status(200).json({
+//       success: true,
+//       data: topMerchants,
+//       pagination: {
+//         currentPage: page,
+//         totalPages: totalPages,
+//         totalMerchants: totalMerchants.length > 0 ? totalMerchants[0].total : 0,
+//         limit: limit,
+//       },
+//     })
+//   } catch (error) {
+//     console.error('Error fetching top merchants:', error)
+//     res.status(500).json({ success: false, message: 'Server error' })
+//   }
+// }
+
+exports.getTopMerchants = async (req, res) => {
+  try {
+    // Get pagination params (default: page 1, limit 10)
+    const page = parseInt(req.query.page) || 1
+    const limit = parseInt(req.query.limit) || 10
+    const skip = (page - 1) * limit
+
+    const pipeline = [
+      {
+        $unwind: { path: '$productId', preserveNullAndEmptyArrays: true },
+      },
+      {
+        $group: {
+          _id: '$sellerID',
+          merchantID: { $first: '$sellerID' }, // Preserve merchant ID
+          totalSales: { $sum: '$amount' },
+          totalOrders: { $sum: 1 },
+        },
+      },
+      {
+        $project: {
+          merchantID: { $toObjectId: '$merchantID' }, // Convert to ObjectId for lookup
+          totalSales: 1,
+          totalOrders: 1,
+        },
+      },
+      // Lookup merchant info from 'MerchantInfo' collection
+      {
+        $lookup: {
+          from: 'merchantinfos', // Correct collection name for merchant info
+          localField: 'merchantID',
+          foreignField: '_id', // Match the ObjectId of merchantID with _id in 'merchantinfos'
+          as: 'merchantInfo',
+        },
+      },
+      {
+        $unwind: { path: '$merchantInfo', preserveNullAndEmptyArrays: true }, // This ensures we get data if there's a match
+      },
+      // Lookup products from 'merchantproducts' collection (but we won't include it in the final response)
+      {
+        $lookup: {
+          from: 'merchantproducts', // Collection name should be lowercase in MongoDB
+          localField: 'merchantID',
+          foreignField: 'merchantID',
+          as: 'products',
+        },
+      },
+      {
+        $project: {
+          _id: 0, // Hide MongoDB default ID
+          merchantID: 1,
+          totalSales: 1,
+          totalOrders: 1,
+          businessName: '$merchantInfo.businessName',
+
+          profilePhoto: '$merchantInfo.profilePhoto',
+          about: '$merchantInfo.about',
+          shortDescriptionOfStore: '$merchantInfo.shortDescriptionOfStore',
+          address: '$merchantInfo.address',
+
+          // Exclude the 'products' field from the response
+        },
+      },
+      {
+        $sort: { totalSales: -1 }, // Sort by total sales in descending order
+      },
+      {
+        $skip: skip, // Apply pagination
+      },
+      {
+        $limit: limit, // Apply limit
+      },
+    ]
+
+    // Get total count of merchants for pagination
+    const totalMerchants = await Userpayment.aggregate([
+      { $group: { _id: '$sellerID' } },
+      { $count: 'total' },
+    ])
+
+    const totalPages =
+      totalMerchants.length > 0 ? Math.ceil(totalMerchants[0].total / limit) : 0
+
+    const topMerchants = await Userpayment.aggregate(pipeline)
+
+    res.status(200).json({
+      success: true,
+      data: topMerchants,
+      pagination: {
+        currentPage: page,
+        totalPages: totalPages,
+        totalMerchants: totalMerchants.length > 0 ? totalMerchants[0].total : 0,
+        limit: limit,
+      },
+    })
+  } catch (error) {
+    console.error('Error fetching top merchants:', error)
+    res.status(500).json({ success: false, message: 'Server error' })
   }
 }
