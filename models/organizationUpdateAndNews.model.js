@@ -18,6 +18,14 @@ const organizationUpdateAndNewsSchema = new mongoose.Schema(
       type: String,
     },
     comments: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Commentmanipulation' }],
+    likedBy: [
+      {
+       
+          type: mongoose.Types.ObjectId,
+          ref: "User",
+        
+      }
+    ],
   },
   {
     timestamps: true,

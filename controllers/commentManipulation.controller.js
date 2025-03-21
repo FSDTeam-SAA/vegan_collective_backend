@@ -103,8 +103,79 @@ const getCommentById = async (req, res) => {
   }
 };
 
+// Like an organization update
+const createLike = async (req, res) => {
+  try {
+      const { updateAndNewsID, userID } = req.body;
+
+      if (!updateAndNewsID || !userID) {
+          return res.status(400).json({
+              success: false,
+              message: "Both updateAndNewsID and userID are required",
+          });
+      }
+
+      // Check if the update exists
+      const update = await OrganizationUpdateAndNews.findById(updateAndNewsID);
+      if (!update) {
+          return res.status(404).json({
+              success: false,
+              message: "Organization update not found",
+          });
+      }
+
+      // Check if the user has already liked the update
+      const alreadyLiked = update.likedBy.some(
+          (like) => like.toString() === userID
+      );
+
+      if (alreadyLiked) {
+          return res.status(400).json({
+              success: false,
+              message: "User has already liked this update",
+          });
+      }
+
+      // Add the user's like to the likedBy array
+      update.likedBy.push(userID);
+      await update.save();
+
+      // Fetch the updated organization update and return only required fields
+      const updatedUpdate = await OrganizationUpdateAndNews.findById(updateAndNewsID)
+          .select("_id organizationID title image shortDescription statement comments likedBy createdAt updatedAt");
+
+      res.status(200).json({
+          success: true,
+          message: "Like added successfully",
+          data: {
+              _id: updatedUpdate._id,
+              organizationID: updatedUpdate.organizationID,
+              title: updatedUpdate.title,
+              image: updatedUpdate.image,
+              shortDescription: updatedUpdate.shortDescription,
+              statement: updatedUpdate.statement,
+              comments: updatedUpdate.comments,
+              likedBy: updatedUpdate.likedBy, // Now this will be an array of user IDs
+              createdAt: updatedUpdate.createdAt,
+              updatedAt: updatedUpdate.updatedAt
+          }
+      });
+  } catch (error) {
+      console.error("Error liking organization update:", error);
+      res.status(500).json({
+          success: false,
+          message: "Internal server error",
+      });
+  }
+};
+
+
+
+
 module.exports = {
   createComment,
   getCommentsByUpdateID,
   getCommentById,
+  createLike,
+
 };
