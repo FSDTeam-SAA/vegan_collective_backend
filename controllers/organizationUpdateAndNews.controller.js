@@ -45,13 +45,11 @@ const createOrganizationUpdate = async (req, res) => {
             .populate("likedBy", "_id") // Populate likedBy field
             .lean(); 
   
-        const formattedUpdates = updates.map(update => ({
-            ...update,
-            organizationID: update.organizationID?._id || update.organizationID, 
-            likedBy: update.likedBy.map(user => ({
-                userIDWhoLiked: user._id, // Format likedBy to an array of objects
-            })),
-        }));
+            const formattedUpdates = updates.map(update => ({
+                ...update,
+                organizationID: update.organizationID?._id || update.organizationID, 
+                likedBy: [],
+            }));
   
         res.status(200).json({ success: true, message: "Organization updates fetched successfully", data: formattedUpdates });
     } catch (error) {
@@ -76,13 +74,11 @@ const getAllOrganizationUpdatesByOrganizationID = async (req, res) => {
           .populate("likedBy", "_id") // Populate likedBy field
           .lean(); 
 
-      const formattedUpdates = updates.map(update => ({
-          ...update,
-          organizationID: update.organizationID?._id || update.organizationID, 
-          likedBy: update.likedBy.map(user => ({
-              userIDWhoLiked: user._id, // Format likedBy to match the required structure
-          })),
-      }));
+          const formattedUpdates = updates.map(update => ({
+            ...update,
+            organizationID: update.organizationID?._id || update.organizationID, 
+            likedBy: update.likedBy.map(user => user._id || user), 
+        }));
 
       res.status(200).json({ success: true, message: "Organization updates fetched successfully", data: formattedUpdates });
   } catch (error) {
