@@ -5,6 +5,7 @@ const upload = require('../utils/multerConfig')
 const Professionalinfo = require('../models/professionalInfo.model')
 const Organizationinfo = require('../models/organizationInfo.model')
 const Userpayment = require ('../models/userPayment.model')
+const Reffer = require( '../models/reffer.model')
 /**
  * Create a new merchant info entry with profile photo upload
  */
@@ -554,6 +555,109 @@ exports.getTopMerchants = async (req, res) => {
     })
   } catch (error) {
     console.error('Error fetching top merchants:', error)
+    res.status(500).json({ success: false, message: 'Server error' })
+  }
+}
+
+// top merchant based on the reffed
+exports.getTopMerchantsByReferral = async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1
+    const limit = parseInt(req.query.limit) || 10
+    const skip = (page - 1) * limit
+
+    const pipeline = [
+      {
+        $group: {
+          _id: '$creator',
+          merchantID: { $first: '$creator' }, // Keep the creator ID (userID)
+          totalParticipants: { $sum: { $size: '$participants' } }, // Count total participants
+          totalPaid: { $sum: '$paid' }, // Sum of paid amount
+          totalRemain: { $sum: '$remain' }, // Sum of remain amount
+        },
+      },
+      {
+        $project: {
+          merchantID: { $toObjectId: '$merchantID' }, // Convert to ObjectId for lookup
+          totalParticipants: 1,
+          totalPaid: 1,
+          totalRemain: 1,
+          totalAmount: { $add: ['$totalPaid', '$totalRemain'] }, // Calculate total amount
+        },
+      },
+      {
+        $lookup: {
+          from: 'merchantinfos',
+          localField: 'merchantID', // Match with userID in Merchantinfo
+          foreignField: 'userID',
+          as: 'merchantInfo',
+        },
+      },
+      {
+        $match: { 'merchantInfo.0': { $exists: true } }, // ✅ Ensure merchant exists in Merchantinfo
+      },
+      {
+        $unwind: '$merchantInfo',
+      },
+      {
+        $project: {
+          _id: 0,
+          merchantID: 1,
+          totalParticipants: 1,
+          totalPaid: 1,
+          totalRemain: 1,
+          totalAmount: 1,
+          businessName: '$merchantInfo.businessName',
+          profilePhoto: '$merchantInfo.profilePhoto',
+          about: '$merchantInfo.about',
+          shortDescriptionOfStore: '$merchantInfo.shortDescriptionOfStore',
+          address: '$merchantInfo.address',
+          fullName: '$merchantInfo.fullName',
+        },
+      },
+      {
+        $sort: { totalParticipants: -1 }, // Rank by total participants (descending)
+      },
+      {
+        $skip: skip,
+      },
+      {
+        $limit: limit,
+      },
+    ]
+
+    // Get total count of merchants
+    const totalMerchants = await Reffer.aggregate([
+      {
+        $lookup: {
+          from: 'merchantinfos',
+          localField: 'creator',
+          foreignField: 'userID',
+          as: 'merchantInfo',
+        },
+      },
+      { $match: { 'merchantInfo.0': { $exists: true } } }, // ✅ Only count merchants that exist in Merchantinfo
+      { $group: { _id: '$creator' } },
+      { $count: 'total' },
+    ])
+
+    const totalPages =
+      totalMerchants.length > 0 ? Math.ceil(totalMerchants[0].total / limit) : 0
+
+    const topMerchants = await Reffer.aggregate(pipeline)
+
+    res.status(200).json({
+      success: true,
+      data: topMerchants,
+      pagination: {
+        currentPage: page,
+        totalPages: totalPages,
+        totalMerchants: totalMerchants.length > 0 ? totalMerchants[0].total : 0,
+        limit: limit,
+      },
+    })
+  } catch (error) {
+    console.error('Error fetching top merchants by referral:', error)
     res.status(500).json({ success: false, message: 'Server error' })
   }
 }

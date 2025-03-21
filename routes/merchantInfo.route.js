@@ -31,4 +31,9 @@ router.get('/checkAccountId/:userID', merchantInfoController.checkAccountId)
 // top merchant
 router.get('/top-merchants', merchantInfoController.getTopMerchants)
 
+router.get(
+  '/top-merchants/byReferrals',
+  merchantInfoController.getTopMerchantsByReferral
+)
+
 module.exports = router;
