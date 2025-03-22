@@ -311,6 +311,64 @@ const getEventsByOrganization = async (req, res) => {
   }
 };
 
+
+const getEventsCountByOrganization = async (req, res) => {
+  try {
+    const { organizationID } = req.params; // Extract organizationID from URL params
+
+    // Ensure organizationID is provided
+    if (!organizationID) {
+      return res.status(400).json({
+        success: false,
+        message: "organizationID is required",
+      });
+    }
+
+    // Ensure organizationID is a valid ObjectId
+    if (!mongoose.Types.ObjectId.isValid(organizationID)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid organizationID",
+      });
+    }
+
+    // Aggregate to count events based on eventType
+    const eventCounts = await Organizationeventmanagement.aggregate([
+      { $match: { organizationID: new mongoose.Types.ObjectId(organizationID) } }, // Match events by organizationID
+      { $group: { _id: "$eventType", count: { $sum: 1 } } } // Group by eventType and count
+    ]);
+
+    // Initialize counts with default values
+    const counts = {
+      "Free events": 0,
+      "Paid events": 0,
+      "Volunteer events": 0,
+    };
+
+    // Update counts based on the aggregation result
+    eventCounts.forEach((item) => {
+      if (item._id === "free event") counts["Free events"] = item.count;
+      if (item._id === "paid event") counts["Paid events"] = item.count;
+      if (item._id === "volunteer event") counts["Volunteer events"] = item.count;
+    });
+
+    // Send response
+    res.status(200).json({
+      success: true,
+      message: "Event counts fetched successfully",
+      data: counts,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Error fetching event counts",
+      error: error.message,
+    });
+  }
+};
+
+
+
 const getEventsByTypeBoth = async (req, res) => {
   try {
     const { page = 1, limit = 10,  organizationID } = req.query;
@@ -368,6 +426,7 @@ module.exports = {
   deleteEvent,
   getAllEvents,
   getEventsByOrganization,
+  getEventsCountByOrganization,
   getEventsByTypeBoth, // New function
 };
 
