@@ -100,10 +100,10 @@ const getAllOrganizationUpdatesByOrganizationID = async (req, res) => {
             .populate("organizationID", "name") // Populate organization details
             .populate({
                 path: "comments", // Populate the comments array
-                select: "userID comment", // Only include userID and comment fields
+                select: "userID comment createdAt", // Include createdAt from the comment
                 populate: {
                     path: "userID", // Populate the userID inside each comment
-                    select: "fullName", // Fetch fullName instead of just ID
+                    select: "fullName profilePhoto", // Fetch fullName and profilePhoto
                 },
             });
 
@@ -116,7 +116,10 @@ const getAllOrganizationUpdatesByOrganizationID = async (req, res) => {
             ...update.toObject(), // Convert Mongoose document to a plain object
             comments: update.comments.map((comment) => ({
                 userID: comment.userID._id, // Include userID
+                fullName: comment.userID.fullName, // Include fullName
+                profilePhoto: comment.userID.profilePhoto, // Include profilePhoto
                 comment: comment.comment, // Include comment text
+                createdAt: comment.createdAt, // Include createdAt from the comment
             })),
         };
 
@@ -126,5 +129,4 @@ const getAllOrganizationUpdatesByOrganizationID = async (req, res) => {
         res.status(500).json({ success: false, message: "Internal server error" });
     }
 };
-
 module.exports = { createOrganizationUpdate, getAllOrganizationUpdates,getAllOrganizationUpdatesByOrganizationID, getOrganizationUpdateById };
