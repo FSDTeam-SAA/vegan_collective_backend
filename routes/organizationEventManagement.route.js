@@ -23,6 +23,9 @@ router.get('/organizationevents', eventController.getAllEvents);
 // get events by organization
 router.get('/organizationeventsbyorganization/:organizationID', eventController.getEventsByOrganization);
 
+// Route to get event counts by organization ID
+router.get("/events/count/:organizationID", eventController.getEventsCountByOrganization);
+
 // get events by type
 router.get('/organizationeventsbytype/:eventType', eventController.getEventsByTypeBoth);
 
