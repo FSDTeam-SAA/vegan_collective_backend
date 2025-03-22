@@ -8,6 +8,7 @@ const {
   getBookingDetailsByUserID,
   getCalendarData,
   getProfessionalCalendarData,
+  checkPaymentMethodAddOrNot,
 
 } = require('../controllers/payment.Controller')
 
@@ -26,7 +27,9 @@ route.get('/calendar/:userID', getCalendarData);
 
 route.get("/calendar/professional/:professionalId", getProfessionalCalendarData);
 
-
 route.post('/remove-payment-method', removePaymentMethod)
+
+route.get('/check-payment-method/:userId', checkPaymentMethodAddOrNot)
+
 
 module.exports = route

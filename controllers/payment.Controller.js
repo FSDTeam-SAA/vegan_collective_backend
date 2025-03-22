@@ -524,78 +524,6 @@ const getCalendarData = async (req, res) => {
 };
 
 
-// GET: Get Calendar Data by professional ID with Month and Year Filtering
-// const getProfessionalCalendarData = async (req, res) => {
-//   try {
-//     const { userID } = req.params; // Professional's userID
-//     const { month, year } = req.query; // Month and year from query parameters
-
-//     if (!userID) {
-//       return res.status(400).json({ success: false, message: "Professional ID is required" });
-//     }
-
-//     if (!month || !year) {
-//       return res.status(400).json({ success: false, message: "Month and year are required" });
-//     }
-
-//     // Find all professional services offered by this professional
-//     const professionalServices = await Professionalservices.find({ userID });
-    
-//     if (!professionalServices.length) {
-//       return res.status(200).json({
-//         success: true,
-//         message: "No services found for this professional",
-//         calendarData: [],
-//       });
-//     }
-
-//     // Extract service IDs
-//     const serviceIds = professionalServices.map(service => service._id);
-
-//     // Find bookings related to these services
-//     const bookings = await Userpayment.find({ professionalServicesId: { $in: serviceIds } }).populate('professionalServicesId userID');
-
-//     if (!bookings.length) {
-//       return res.status(200).json({
-//         success: true,
-//         message: "No bookings found for this professional",
-//         calendarData: [],
-//       });
-//     }
-
-//     // Filter bookings by month and year
-//     const filteredBookings = bookings.filter(booking => {
-//       if (!booking.professionalServicesId || !booking.professionalServicesId.date) return false;
-
-//       const serviceDate = new Date(booking.professionalServicesId.date);
-//       return serviceDate.getMonth() + 1 === parseInt(month) && serviceDate.getFullYear() === parseInt(year);
-//     });
-
-//     // Format response
-//     const calendarData = filteredBookings.map((booking, index) => ({
-//       id: (index + 1).toString(),
-//       professionalEmail: booking.professionalServicesId.userID.email, // Professional's email
-//       customerEmail: booking.userID.email, // Customer's email
-//       title: booking.professionalServicesId.serviceName, // Service name
-//       datetime: new Date(booking.professionalServicesId.date).toISOString(),
-//       type: "booking",
-//       serviceBookingTime: booking.serviceBookingTime,
-//     }));
-
-//     return res.status(200).json({
-//       success: true,
-//       message: "Calendar data retrieved successfully",
-//       calendarData,
-//     });
-//   } catch (error) {
-//     console.error("Error fetching professional calendar data:", error);
-//     return res.status(500).json({
-//       success: false,
-//       message: "Failed to retrieve calendar data",
-//       details: error.message,
-//     });
-//   }
-// };
 const getProfessionalCalendarData = async (req, res) => {
   try {
     const { professionalId } = req.params; // Get professionalId from URL parameters
@@ -675,9 +603,27 @@ const getProfessionalCalendarData = async (req, res) => {
   }
 };
 
+// check user payment method save or not
+const checkPaymentMethodAddOrNot = async (req, res) => {
+    try {
+        const { userId } = req.params;
 
+        // Find user record
+        const user = await User.findById(userId);
 
+        if (!user) {
+            return res.status(404).json({ success: false, message: 'User not found' });
+        }
 
+        res.status(200).json({ 
+            success: true, 
+            message: user.paymentAdded ? 'Payment method exists' : 'No payment method found', 
+            paymentAdded: user.paymentAdded 
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'Internal server error', error: error.message });
+    }
+}
 
 module.exports = {
   savePaymentMethod,
@@ -687,6 +633,6 @@ module.exports = {
   confirmBooking,
   getBookingDetailsByUserID,
   getCalendarData,
-  getProfessionalCalendarData
-  
+  getProfessionalCalendarData,
+  checkPaymentMethodAddOrNot,
 }
