@@ -97,7 +97,6 @@ const getAllOrganizationUpdatesByOrganizationID = async (req, res) => {
 
         // Fetch the organization update and populate the comments field
         const update = await OrganizationUpdateAndNews.findById(id)
-            .populate("organizationID", "name") // Populate organization details
             .populate({
                 path: "comments", // Populate the comments array
                 select: "userID comment createdAt", // Include createdAt from the comment
@@ -112,18 +111,19 @@ const getAllOrganizationUpdatesByOrganizationID = async (req, res) => {
         }
 
         // Transform the comments array into the correct structure
-        const transformedUpdate = {
-            ...update.toObject(), // Convert Mongoose document to a plain object
-            comments: update.comments.map((comment) => ({
-                userID: comment.userID._id, // Include userID
-                fullName: comment.userID.fullName, // Include fullName
-                profilePhoto: comment.userID.profilePhoto, // Include profilePhoto
-                comment: comment.comment, // Include comment text
-                createdAt: comment.createdAt, // Include createdAt from the comment
-            })),
-        };
+        const transformedComments = update.comments.map((comment) => ({
+            userID: comment.userID._id, // Include userID
+            fullName: comment.userID.fullName, // Include fullName
+            comment: comment.comment, // Include comment text
+            createdAt: comment.createdAt, // Include createdAt from the comment
+        }));
 
-        res.status(200).json({ success: true, message: "Organization update fetched successfully", data: transformedUpdate });
+        // Return only the comments array
+        res.status(200).json({ 
+            success: true, 
+            message: "Organization update fetched successfully", 
+            data: transformedComments 
+        });
     } catch (error) {
         console.error("Error fetching organization update by ID:", error);
         res.status(500).json({ success: false, message: "Internal server error" });
