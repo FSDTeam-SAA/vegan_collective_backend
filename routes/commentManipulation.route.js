@@ -6,7 +6,9 @@ const {
   createLike,
 
   getCommentById,
-} = require("../controllers/commentManipulation.controller");
+  likeComment,
+  getCommentLikes,
+} = require('../controllers/commentManipulation.controller')
 
 // Create a new comment
 router.post("/commentManipulation", createComment);
@@ -21,5 +23,8 @@ router.get("/commentManipulation/comment/:id", getCommentById);
 
 // Create a like for update and news
 router.post("/commentManipulation/like", createLike);
+
+router.post('/like/:commentId', likeComment)
+router.get('/likes/:commentId', getCommentLikes)
 
 module.exports = router;

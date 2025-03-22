@@ -104,7 +104,7 @@ const getCommentById = async (req, res) => {
 };
 
 // Like an organization update
-const createLike = async (req, res) => {
+const createLike = async (req, res) => { 
   try {
       const { updateAndNewsID, userID } = req.body;
 
@@ -170,6 +170,62 @@ const createLike = async (req, res) => {
 };
 
 
+// like the comment
+const likeComment = async (req, res) => {
+  try {
+    const { commentId } = req.params
+    const userId = req.body.userId
+
+    if (!userId) {
+      return res.status(400).json({ success: false , message: 'User ID is required' })
+    }
+
+    const comment = await CommentManipulation.findById(commentId)
+    if (!comment) {
+      return res.status(404).json({  success: false, message: 'Comment not found' })
+    }
+
+    const index = comment.likedBy.indexOf(userId)
+
+    if (index === -1) {
+      // Like the comment
+      comment.likedBy.push(userId)
+    } else {
+      // Unlike the comment
+      comment.likedBy.splice(index, 1)
+    }
+
+    await comment.save()
+
+    return res.status(200).json({  success: true, message: 'Like status updated', comment })
+  } catch (error) {
+    return res
+      .status(500)
+      .json({  success: false, message: 'Server error', error: error.message })
+  }
+}
+
+// Get API to Retrieve Like Count
+const getCommentLikes = async (req, res) => {
+  try {
+    const { commentId } = req.params
+
+    const comment = await CommentManipulation.findById(commentId)
+    if (!comment) {
+      return res.status(404).json({  success: false, message: 'Comment not found' })
+    }
+
+    return res.status(200).json({  success: true,
+      commentId: comment._id,
+      totalLikes: comment.likedBy.length,
+      likedByUsers: comment.likedBy,
+    })
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ success: false, message: 'Server error', error: error.message })
+  }
+}
 
 
 module.exports = {
@@ -177,5 +233,6 @@ module.exports = {
   getCommentsByUpdateID,
   getCommentById,
   createLike,
-
-};
+  likeComment,
+  getCommentLikes,
+}
