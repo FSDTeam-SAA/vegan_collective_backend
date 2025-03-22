@@ -106,70 +106,134 @@ const getCommentById = async (req, res) => {
 // Like an organization update
 const createLike = async (req, res) => {
   try {
-      const { updateAndNewsID, userID } = req.body;
+    const { updateAndNewsID, userID } = req.body
 
-      if (!updateAndNewsID || !userID) {
-          return res.status(400).json({
-              success: false,
-              message: "Both updateAndNewsID and userID are required",
-          });
-      }
+    if (!updateAndNewsID || !userID) {
+      return res.status(400).json({
+        success: false,
+        message: 'Both updateAndNewsID and userID are required',
+      })
+    }
 
-      // Check if the update exists
-      const update = await OrganizationUpdateAndNews.findById(updateAndNewsID);
-      if (!update) {
-          return res.status(404).json({
-              success: false,
-              message: "Organization update not found",
-          });
-      }
+    // Check if the update exists
+    const update = await OrganizationUpdateAndNews.findById(updateAndNewsID)
+    if (!update) {
+      return res.status(404).json({
+        success: false,
+        message: 'Organization update not found',
+      })
+    }
 
-      // Check if the user has already liked the update
-      const alreadyLiked = update.likedBy.some(
-          (like) => like.toString() === userID
-      );
+    // Check if the user has already liked the update
+    const likeIndex = update.likedBy.indexOf(userID)
 
-      if (alreadyLiked) {
-          return res.status(400).json({
-              success: false,
-              message: "User has already liked this update",
-          });
-      }
-
-      // Add the user's like to the likedBy array
-      update.likedBy.push(userID);
-      await update.save();
-
-      // Fetch the updated organization update and return only required fields
-      const updatedUpdate = await OrganizationUpdateAndNews.findById(updateAndNewsID)
-          .select("_id organizationID title image shortDescription statement comments likedBy createdAt updatedAt");
-
-      res.status(200).json({
-          success: true,
-          message: "Like added successfully",
-          data: {
-              _id: updatedUpdate._id,
-              organizationID: updatedUpdate.organizationID,
-              title: updatedUpdate.title,
-              image: updatedUpdate.image,
-              shortDescription: updatedUpdate.shortDescription,
-              statement: updatedUpdate.statement,
-              comments: updatedUpdate.comments,
-              likedBy: updatedUpdate.likedBy, // Now this will be an array of user IDs
-              createdAt: updatedUpdate.createdAt,
-              updatedAt: updatedUpdate.updatedAt
-          }
-      });
+    if (likeIndex === -1) {
+      // User hasn't liked yet, so add like
+      update.likedBy.push(userID)
+      await update.save()
+      return res.status(200).json({
+        success: true,
+        message: 'Like added successfully',
+        data: {
+          _id: update._id,
+          organizationID: update.organizationID,
+          title: update.title,
+          image: update.image,
+          shortDescription: update.shortDescription,
+          statement: update.statement,
+          comments: update.comments,
+          likedBy: update.likedBy, // Now this will be an array of user IDs
+          createdAt: update.createdAt,
+          updatedAt: update.updatedAt,
+        },
+      })
+    } else {
+      // User has already liked, so remove the like
+      update.likedBy.splice(likeIndex, 1)
+      await update.save()
+      return res.status(200).json({
+        success: true,
+        message: 'Like removed successfully',
+        data: {
+          _id: update._id,
+          organizationID: update.organizationID,
+          title: update.title,
+          image: update.image,
+          shortDescription: update.shortDescription,
+          statement: update.statement,
+          comments: update.comments,
+          likedBy: update.likedBy, // Updated likedBy array
+          createdAt: update.createdAt,
+          updatedAt: update.updatedAt,
+        },
+      })
+    }
   } catch (error) {
-      console.error("Error liking organization update:", error);
-      res.status(500).json({
-          success: false,
-          message: "Internal server error",
-      });
+    console.error('Error liking/unliking organization update:', error)
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error',
+    })
   }
-};
+}
 
 
+// like the comment
+const likeComment = async (req, res) => {
+  try {
+    const { commentId } = req.params
+    const userId = req.body.userId
+
+    if (!userId) {
+      return res.status(400).json({ success: false , message: 'User ID is required' })
+    }
+
+    const comment = await CommentManipulation.findById(commentId)
+    if (!comment) {
+      return res.status(404).json({  success: false, message: 'Comment not found' })
+    }
+
+    const index = comment.likedBy.indexOf(userId)
+
+    if (index === -1) {
+      // Like the comment
+      comment.likedBy.push(userId)
+    } else {
+      // Unlike the comment
+      comment.likedBy.splice(index, 1)
+    }
+
+    await comment.save()
+
+    return res.status(200).json({  success: true, message: 'Like status updated', comment })
+  } catch (error) {
+    return res
+      .status(500)
+      .json({  success: false, message: 'Server error', error: error.message })
+  }
+}
+
+// Get API to Retrieve Like Count
+const getCommentLikes = async (req, res) => {
+  try {
+    const { commentId } = req.params
+
+    const comment = await CommentManipulation.findById(commentId)
+    if (!comment) {
+      return res.status(404).json({  success: false, message: 'Comment not found' })
+    }
+
+    return res.status(200).json({  success: true,
+      commentId: comment._id,
+      totalLikes: comment.likedBy.length,
+      likedByUsers: comment.likedBy,
+    })
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ success: false, message: 'Server error', error: error.message })
+  }
+}
 
 
 module.exports = {
@@ -177,5 +241,6 @@ module.exports = {
   getCommentsByUpdateID,
   getCommentById,
   createLike,
-
-};
+  likeComment,
+  getCommentLikes,
+}
