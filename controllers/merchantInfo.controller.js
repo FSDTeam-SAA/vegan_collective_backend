@@ -6,9 +6,7 @@ const Professionalinfo = require('../models/professionalInfo.model')
 const Organizationinfo = require('../models/organizationInfo.model')
 const Userpayment = require ('../models/userPayment.model')
 const Reffer = require( '../models/reffer.model')
-/**
- * Create a new merchant info entry with profile photo upload
- */
+const Merchantproductsreview = require('../models/merchantProductsReview.model')
 exports.createMerchantInfo = async (req, res) => {
   try {
     upload.single('profilePhoto')(req, res, async (err) => {
@@ -105,9 +103,7 @@ exports.createMerchantInfo = async (req, res) => {
   }
 }
 
-/**
- * Get all merchant info entries with filtering, pagination, and sorting
- */
+
 exports.getAllMerchantInfo = async (req, res) => {
   try {
     const {
@@ -156,41 +152,37 @@ exports.getAllMerchantInfo = async (req, res) => {
   }
 }
 
-/**
- * Get a single merchant info entry by ID
- */
-/**
- * Get a single merchant info entry by merchantID
- */
+// Get merchant info by merchant ID
 exports.getMerchantInfoByMerchantID = async (req, res) => {
   try {
-    const { merchantID } = req.params // Extract merchantID from request parameters
+    const { userID } = req.params; // userID is the merchantID
 
-    // Query the database using findOne and filter by merchantID
-    const merchantInfo = await Merchantinfo.findOne({ merchantID })
+    // Fetch merchant info
+    const merchant = await Merchantinfo.findOne({ userID }).populate("userID");
 
-    // If no merchant info is found, return a 404 error
-    if (!merchantInfo) {
-      return res
-        .status(404)
-        .json({ success: false, message: 'Merchant info not found' })
+    if (!merchant) {
+      return res.status(404).json({ message: "Merchant not found" });
     }
 
-    // Return the retrieved merchant info with a success response
-    res.status(200).json({
-      success: true,
-      message: 'Merchant info retrieved successfully',
-      data: merchantInfo,
-    })
+    // Fetch merchant product reviews
+    const reviews = await Merchantproductsreview.find({ merchantID: userID });
+
+    // Calculate total rating and count of reviews
+    const totalReviews = reviews.length;
+    const totalRating = totalReviews > 0
+      ? reviews.reduce((sum, review) => sum + review.rating, 0) / totalReviews
+      : 0;
+
+    res.status(200).json({ 
+      merchant, 
+      totalReviews, 
+      totalRating: parseFloat(totalRating.toFixed(2)) // Keeping it to 2 decimal places
+    });
   } catch (error) {
-    // Handle any errors that occur during the process
-    res.status(500).json({
-      success: false,
-      message: 'Error retrieving merchant info',
-      error: error.message,
-    })
+    console.error(error);
+    res.status(500).json({ message: "Server error" });
   }
-}
+};
 
 /**
  * Update merchant info by ID
