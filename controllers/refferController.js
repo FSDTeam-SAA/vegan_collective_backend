@@ -111,7 +111,6 @@ const getRefferByCreator = async (req, res) => {
   }
 };
 
-// Function to get top professionals based on totalReferrals
 // const getTopProfessionals = async (req, res) => {
 //   try {
 //     // Fetch all referral entries with non-empty participants arrays
@@ -230,9 +229,128 @@ const getTopProfessionals = async (req, res) => {
 };
 
 
+const getTopReferrersByArea = async (req, res) => {
+  const { areaType, areaValue } = req.query; // areaType: 'local', 'regional', 'national'
+
+  try {
+    // Validate areaType
+    if (!['local', 'regional', 'national'].includes(areaType)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid area type. Must be 'local', 'regional', or 'national'.",
+      });
+    }
+
+    // Validate areaValue
+    if (!areaValue || typeof areaValue !== 'string') {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid area value. Must be a non-empty string.",
+      });
+    }
+
+    // Fetch all referral entries with non-empty participants arrays
+    const referrals = await Reffer.find({ participants: { $exists: true, $not: { $size: 0 } } })
+      .limit(100); // Fetch up to 100 documents for in-memory sorting
+
+    // Transform the data to include totalReferrals, remain, and amount
+    const topReferrers = await Promise.all(referrals.map(async (referral) => {
+      const creatorId = referral.creator;
+
+      // Check if the creator exists in Professionalinfo
+      const professionalInfo = await Professionalinfo.findOne({ userId: creatorId });
+      if (professionalInfo) {
+        return {
+          creator: creatorId,
+          totalReferrals: Array.isArray(referral.participants) ? referral.participants.length : 0,
+          amount: (referral.paid || 0) + (referral.remain || 0), // Calculate amount
+          type: 'Professional',
+          fullName: professionalInfo.fullName,
+          designation: professionalInfo.designation,
+          address: professionalInfo.address, // Include address for filtering
+        };
+      }
+
+      // Check if the creator exists in Merchantinfo
+      const merchantInfo = await Merchantinfo.findOne({ userID: creatorId });
+      if (merchantInfo) {
+        return {
+          creator: creatorId,
+          totalReferrals: Array.isArray(referral.participants) ? referral.participants.length : 0,
+          amount: (referral.paid || 0) + (referral.remain || 0), // Calculate amount
+          type: 'Merchant',
+          fullName: merchantInfo.fullName,
+          shortDescriptionOfStore: merchantInfo.shortDescriptionOfStore,
+          address: merchantInfo.address, // Include address for filtering
+        };
+      }
+
+      // Check if the creator exists in Organizationinfo
+      const organizationInfo = await Organizationinfo.findOne({ userID: creatorId });
+      if (organizationInfo) {
+        return {
+          creator: creatorId,
+          totalReferrals: Array.isArray(referral.participants) ? referral.participants.length : 0,
+          amount: (referral.paid || 0) + (referral.remain || 0), // Calculate amount
+          type: 'Organization',
+          organizationName: organizationInfo.organizationName,
+          shortDescriptionOfOrganization: organizationInfo.shortDescriptionOfOrganization,
+          address: organizationInfo.address, // Include address for filtering
+        };
+      }
+
+      // If no matching record is found, return basic data
+      return {
+        creator: creatorId,
+        totalReferrals: Array.isArray(referral.participants) ? referral.participants.length : 0,
+        amount: (referral.paid || 0) + (referral.remain || 0), // Calculate amount
+        type: 'Unknown',
+        address: null,
+      };
+    }));
+
+    // Filter top referrers based on areaType and areaValue
+    const filteredTopReferrers = topReferrers.filter((referrer) => {
+      if (!referrer.address) return false;
+
+      const addressParts = referrer.address.split(',').map(part => part.trim());
+      switch (areaType) {
+        case 'local':
+          return addressParts[0].toLowerCase() === areaValue.toLowerCase(); // City/Municipality
+        case 'regional':
+          return addressParts[1].toLowerCase() === areaValue.toLowerCase(); // State/Province
+        case 'national':
+          return addressParts[2].toLowerCase() === areaValue.toLowerCase(); // Country
+        default:
+          return false;
+      }
+    });
+
+    // Sort by totalReferrals in descending order and limit to top 10 referrers
+    const sortedTopReferrers = filteredTopReferrers
+      .sort((a, b) => b.totalReferrals - a.totalReferrals)
+      .slice(0, 10);
+
+    return res.status(200).json({
+      success: true,
+      message: `Top referrers in ${areaType} area fetched successfully.`,
+      data: sortedTopReferrers,
+    });
+  } catch (error) {
+    console.error("Error in getTopReferrersByArea:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+    });
+  }
+};
+
+
 module.exports = {
   findOrCreateReffer,
   getRefferByCreator,
   getTopProfessionals,
+  getTopReferrersByArea
+  
 };
 
