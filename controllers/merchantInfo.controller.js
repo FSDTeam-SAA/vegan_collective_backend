@@ -153,6 +153,37 @@ exports.getAllMerchantInfo = async (req, res) => {
 }
 
 // Get merchant info by merchant ID
+// exports.getMerchantInfoByMerchantID = async (req, res) => {
+//   try {
+//     const { userID } = req.params; // userID is the merchantID
+
+//     // Fetch merchant info
+//     const merchant = await Merchantinfo.findOne({ userID }).populate("userID");
+
+//     if (!merchant) {
+//       return res.status(404).json({ message: "Merchant not found" });
+//     }
+
+//     // Fetch merchant product reviews
+//     const reviews = await Merchantproductsreview.find({ merchantID: userID });
+
+//     // Calculate total rating and count of reviews
+//     const totalReviews = reviews.length;
+//     const totalRating = totalReviews > 0
+//       ? reviews.reduce((sum, review) => sum + review.rating, 0) / totalReviews
+//       : 0;
+
+//     res.status(200).json({ 
+//       merchant, 
+//       totalReviews, 
+//       totalRating: parseFloat(totalRating.toFixed(2)) // Keeping it to 2 decimal places
+//     });
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).json({ message: "Server error" });
+//   }
+// };
+
 exports.getMerchantInfoByMerchantID = async (req, res) => {
   try {
     const { userID } = req.params; // userID is the merchantID
@@ -161,7 +192,7 @@ exports.getMerchantInfoByMerchantID = async (req, res) => {
     const merchant = await Merchantinfo.findOne({ userID }).populate("userID");
 
     if (!merchant) {
-      return res.status(404).json({ message: "Merchant not found" });
+      return res.status(404).json({ success: false, message: "Merchant not found" });
     }
 
     // Fetch merchant product reviews
@@ -174,15 +205,18 @@ exports.getMerchantInfoByMerchantID = async (req, res) => {
       : 0;
 
     res.status(200).json({ 
+      success: true,
+      message: "Merchant data retrieved successfully",
       merchant, 
       totalReviews, 
       totalRating: parseFloat(totalRating.toFixed(2)) // Keeping it to 2 decimal places
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ success: false, message: "Server error" });
   }
 };
+
 
 /**
  * Update merchant info by ID
