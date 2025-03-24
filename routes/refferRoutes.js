@@ -1,5 +1,5 @@
 const express = require("express");
-const { findOrCreateReffer,getRefferByCreator,getTopProfessionals} = require("../controllers/refferController");
+const { findOrCreateReffer,getRefferByCreator,getTopProfessionals,getTopReferrersByArea} = require("../controllers/refferController");
 
 const router = express.Router();
 
@@ -11,5 +11,8 @@ router.get("/reffer/:creatorId", getRefferByCreator);
 
 // New route to get top professionals based on totalReferrals
 router.get("/topprofessionalsbyreffer", getTopProfessionals);
+
+// New route to get top referrers based on totalReferrals
+router.get("/referrers/top-by-area", getTopReferrersByArea);
 
 module.exports = router;

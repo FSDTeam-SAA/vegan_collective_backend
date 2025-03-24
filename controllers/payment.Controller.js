@@ -3,8 +3,7 @@ const Professionalinfo = require('../models/professionalInfo.model')
 const Organizationinfo = require('../models/organizationInfo.model')
 const User = require('../models/user.model')
 const Userpayment = require('../models/userPayment.model')
-// const ProfessionalServices = require('../models/professionalServices.model');
-const Professionalservices = require("../models/professionalServices.model");
+const ProfessionalServices = require("../models/professionalServices.model");
 const nodemailer = require('nodemailer');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY)
 
@@ -285,28 +284,6 @@ const removePaymentMethod = async (req, res) => {
   }
 }
 
-const webhookController = async (req, res) => {
-  let event
-  try {
-    // Verify webhook signature
-    event = stripe.webhooks.constructEvent(
-      req.body,
-      req.headers['stripe-signature'],
-      process.env.STRIPE_WEBHOOK_SECRET
-    )
-  } catch (err) {
-    return res.status(400).send(`Webhook Error: ${err.message}`)
-  }
-
-  // Handle different event types
-  if (event.type === 'payment_intent.succeeded') {
-    const paymentIntent = event.data.object // PaymentIntent object
-    console.log('💰 Payment succeeded:', paymentIntent)
-  }
-
-  // Acknowledge receipt of the event
-  res.status(200).send()
-}
 
 // Email transporter configuration
 const transporter = nodemailer.createTransport({
@@ -628,7 +605,6 @@ const checkPaymentMethodAddOrNot = async (req, res) => {
 module.exports = {
   savePaymentMethod,
   purchaseMethod,
-  webhookController,
   removePaymentMethod,
   confirmBooking,
   getBookingDetailsByUserID,
