@@ -13,6 +13,8 @@ const zoomRoutes = require("./routes/zoomRoutes");
 const organizationVolunteerRoutes = require("./routes/organizationVolunteer.route.js");
 const eventRoutes = require('./routes/eventRoutes.js');
 
+const merchantBookingRoutes = require('./routes/merchantBooking.route.js');
+
 
 require('dotenv').config();
 console.log('ZOOM_API_KEY:', process.env.ZOOM_API_KEY);
@@ -116,6 +118,7 @@ app.use("/api/v1", merchantSupport);
 app.use("/api/v1", merchantGoLive);
 app.use("/api/v1", merchantPolicies);
 app.use('/api/v1', merchantStripe)
+app.use('/api/v1', merchantBookingRoutes);
 
 app.use('/api/v1', merchantGraph); //ADNAN
 app.use('/api/v1', storeReviewForMerchant); //ADNAN
