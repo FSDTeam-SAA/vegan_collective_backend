@@ -261,10 +261,10 @@ exports.updateTrackingNumber = async (req, res) => {
         const { orderNo, trackingNumber, shippingStatus = 'pending' } = req.body;
 
         // Validate input
-        if (!orderNo || !trackingNumber) {
+        if (!orderNo ) {
             return res.status(400).json({
                 success: false,
-                message: 'orderNo and trackingNumber are required',
+                message: 'orderNo is required',
                 data: null
             });
         }
