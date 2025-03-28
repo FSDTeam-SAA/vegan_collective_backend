@@ -15,12 +15,16 @@ exports.subscribe = async (req, res) => {
   try {
     let subscriber = await Subscriber.findOne({ email });
     if (subscriber) {
-      return res.status(400).json({ success: false, message: "Already subscribed" });
+      return res
+        .status(400)
+        .json({ success: false, message: "Already subscribed" });
     }
 
     subscriber = new Subscriber({ email });
     await subscriber.save();
-    res.status(201).json({ success: true, message: "Subscribed successfully!" });
+    res
+      .status(201)
+      .json({ success: true, message: "Subscribed successfully!" });
   } catch (error) {
     res.status(500).json({ success: false, error: "Server error" });
   }
@@ -32,10 +36,14 @@ exports.unsubscribe = async (req, res) => {
   try {
     const subscriber = await Subscriber.findOneAndDelete({ email });
     if (!subscriber) {
-      return res.status(400).json({ success: false, message: "Email not found" });
+      return res
+        .status(400)
+        .json({ success: false, message: "Email not found" });
     }
 
-    res.status(200).json({ success: true, message: "Unsubscribed successfully!" });
+    res
+      .status(200)
+      .json({ success: true, message: "Unsubscribed successfully!" });
   } catch (error) {
     res.status(500).json({ success: false, error: "Server error" });
   }
@@ -47,18 +55,22 @@ exports.sendNewsletter = async (req, res) => {
   try {
     const subscribers = await Subscriber.find();
     if (subscribers.length === 0) {
-      return res.status(400).json({ success: false, message: "No subscribers found" });
+      return res
+        .status(400)
+        .json({ success: false, message: "No subscribers found" });
     }
 
     const mailOptions = {
       from: process.env.EMAIL_USER,
-      to: subscribers.map(sub => sub.email),
+      to: subscribers.map((sub) => sub.email),
       subject,
       text: message,
     };
 
     await transporter.sendMail(mailOptions);
-    res.status(200).json({ success: true, message: "Newsletter sent successfully!" });
+    res
+      .status(200)
+      .json({ success: true, message: "Newsletter sent successfully!" });
   } catch (error) {
     res.status(500).json({ success: false, error: "Error sending email" });
   }
