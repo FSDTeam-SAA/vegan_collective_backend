@@ -5,8 +5,11 @@ const merchantBookingController = require('../controllers/merchantBooking.contro
 // Get all bookings for a specific merchant
 router.get('/booking/:merchantID', merchantBookingController.getMerchantBookings);
 
-// routes/booking.routes.js
-router.put('/order/tracking/:merchantID', merchantBookingController.updateTrackingNumber);
+// // routes/booking.routes.js
+// router.put('/order/tracking/:orderId', merchantBookingController.updateTrackingNumber);
+
+// New route for updating booking
+router.put('/order/tracking/:orderId', merchantBookingController.updateBooking);
 
 
 
