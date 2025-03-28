@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 const Professionalinfo = require("../models/professionalInfo.model");
-const Review = require('../models/professionalReview.model');
+const Review = require("../models/professionalReview.model");
 const User = require("../models/user.model");
 const upload = require("../utils/multerConfig");
 
@@ -11,26 +11,49 @@ exports.createProfessionalInfo = async (req, res) => {
   try {
     upload.single("profilePhoto")(req, res, async (err) => {
       if (err) {
-        return res.status(500).json({ error: "Error uploading file to Cloudinary" });
+        return res
+          .status(500)
+          .json({ error: "Error uploading file to Cloudinary" });
       }
 
-      let { userID, fullName, designation, businessName, address, about, highlightedStatement, experience, certifications, websiteURL, governmentIssuedID, professionalCertification, photoWithID, isVerified } = req.body;
+      let {
+        userID,
+        fullName,
+        designation,
+        businessName,
+        address,
+        about,
+        highlightedStatement,
+        experience,
+        certifications,
+        websiteURL,
+        governmentIssuedID,
+        professionalCertification,
+        photoWithID,
+        isVerified,
+      } = req.body;
 
       console.log("Received userID:", userID);
 
       // ✅ Validate userID format
       if (!mongoose.Types.ObjectId.isValid(userID)) {
-        return res.status(400).json({ success: false, message: "Invalid userID format" });
+        return res
+          .status(400)
+          .json({ success: false, message: "Invalid userID format" });
       }
 
       // ✅ Ensure userID exists in the database
       const userExists = await User.findById(userID);
       if (!userExists) {
-        return res.status(404).json({ success: false, message: "User does not exist" });
+        return res
+          .status(404)
+          .json({ success: false, message: "User does not exist" });
       }
 
       // ✅ Check if professional info already exists
-      const existingProfessionalInfo = await Professionalinfo.findOne({ userId: userID });
+      const existingProfessionalInfo = await Professionalinfo.findOne({
+        userId: userID,
+      });
       if (existingProfessionalInfo) {
         return res.status(400).json({
           success: false,
@@ -63,21 +86,18 @@ exports.createProfessionalInfo = async (req, res) => {
         }
       }
 
-
-         let parsedCertifications = []
-         if (experience) {
-           try {
-             // If experience is a JSON string, parse it
-             parsedCertifications = JSON.parse(certifications)
-           } catch (parseError) {
-             // If it's not JSON, split by commas to create an array
-             parsedCertifications = certifications
-               .split(',')
-               .map((item) => item.trim())
-           }
-         }
-
-    
+      let parsedCertifications = [];
+      if (experience) {
+        try {
+          // If experience is a JSON string, parse it
+          parsedCertifications = JSON.parse(certifications);
+        } catch (parseError) {
+          // If it's not JSON, split by commas to create an array
+          parsedCertifications = certifications
+            .split(",")
+            .map((item) => item.trim());
+        }
+      }
 
       const profilePhotoUrl = req.file ? req.file.path : null;
 
@@ -98,7 +118,7 @@ exports.createProfessionalInfo = async (req, res) => {
         professionalCertification,
         photoWithID,
         isVerified,
-      })
+      });
 
       const savedProfessionalInfo = await newProfessionalInfo.save();
 
@@ -118,9 +138,6 @@ exports.createProfessionalInfo = async (req, res) => {
   }
 };
 
-
-
-
 exports.getAllProfessionalInfo = async (req, res) => {
   try {
     // Extract query parameters for filtering
@@ -137,7 +154,8 @@ exports.getAllProfessionalInfo = async (req, res) => {
     // Build the filter object based on query parameters
     const filter = {};
     if (fullName) filter.fullName = { $regex: fullName, $options: "i" }; // Case-insensitive search
-    if (designation) filter.designation = { $regex: designation, $options: "i" }; // Case-insensitive search
+    if (designation)
+      filter.designation = { $regex: designation, $options: "i" }; // Case-insensitive search
     if (address) filter.address = { $regex: address, $options: "i" }; // Case-insensitive search
 
     // Calculate skip value for pagination
@@ -254,7 +272,7 @@ exports.getProfessionalInfoByUserId = async (req, res) => {
 // Update professional info by ID
 exports.updateProfessionalInfo = [
   upload.single("profilePhoto"), // Multer middleware for file upload
-  
+
   async (req, res) => {
     try {
       const { id } = req.params;
@@ -271,7 +289,23 @@ exports.updateProfessionalInfo = [
       console.log("Uploaded file:", req.file);
 
       // ✅ Prepare update data
-      const updateData = { userID, fullName, designation, businessName, address, about, highlightedStatement, experience, certifications, websiteURL, governmentIssuedID, professionalCertification, photoWithID, isVerified,phoneNumber } = req.body;
+      const updateData = ({
+        userID,
+        fullName,
+        designation,
+        businessName,
+        address,
+        about,
+        highlightedStatement,
+        experience,
+        certifications,
+        websiteURL,
+        governmentIssuedID,
+        professionalCertification,
+        photoWithID,
+        isVerified,
+        phoneNumber,
+      } = req.body);
 
       // ✅ Handle profile photo upload (if provided)
       if (req.file) {
@@ -289,24 +323,27 @@ exports.updateProfessionalInfo = [
 
       // ✅ Handle JSON fields safely
       if (updateData.highlightedStatement) {
-        updateData.highlightedStatement = parseJSONField(updateData.highlightedStatement);
+        updateData.highlightedStatement = parseJSONField(
+          updateData.highlightedStatement
+        );
       }
       if (updateData.experience) {
         updateData.experience = parseJSONField(updateData.experience);
       }
 
-         if (updateData.certifications) {
-           updateData.certifications = parseJSONField(updateData.certifications)
-         }
-
-
-
+      if (updateData.certifications) {
+        updateData.certifications = parseJSONField(updateData.certifications);
+      }
 
       // ✅ Update the professional info
-      const updatedInfo = await Professionalinfo.findByIdAndUpdate(id, updateData, {
-        new: true,
-        runValidators: true,
-      });
+      const updatedInfo = await Professionalinfo.findByIdAndUpdate(
+        id,
+        updateData,
+        {
+          new: true,
+          runValidators: true,
+        }
+      );
 
       if (!updatedInfo) {
         return res.status(404).json({
@@ -331,7 +368,6 @@ exports.updateProfessionalInfo = [
   },
 ];
 
-
 /**
  * Delete professional info by ID
  */
@@ -340,10 +376,23 @@ exports.deleteProfessionalInfo = async (req, res) => {
     const { id } = req.params;
     const deletedInfo = await Professionalinfo.findByIdAndDelete(id);
     if (!deletedInfo) {
-      return res.status(404).json({ success: false, message: "Professional info not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Professional info not found" });
     }
-    return res.status(200).json({ success: true, message: "Professional info deleted successfully" });
+    return res
+      .status(200)
+      .json({
+        success: true,
+        message: "Professional info deleted successfully",
+      });
   } catch (error) {
-    return res.status(500).json({ success: false, message: "Error deleting professional info", error: error.message });
+    return res
+      .status(500)
+      .json({
+        success: false,
+        message: "Error deleting professional info",
+        error: error.message,
+      });
   }
 };
