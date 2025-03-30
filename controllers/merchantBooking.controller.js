@@ -278,12 +278,12 @@ exports.updateBooking = async (req, res) => {
     const { trackingNumber, shippingStatus } = req.body;
 
     // Validate required fields
-    if (!trackingNumber || !shippingStatus) {
-      return res.status(400).json({
-        success: false,
-        message: "Tracking number and shipping status are required",
-      });
-    }
+    // if (!trackingNumber || !shippingStatus) {
+    //   return res.status(400).json({
+    //     success: false,
+    //     message: "Tracking number and shipping status are required",
+    //   });
+    // }
 
     // Validate shipping status
     const validStatuses = ["pending", "shipped", "delivered", "cancelled"];
