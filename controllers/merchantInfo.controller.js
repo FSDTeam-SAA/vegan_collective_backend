@@ -209,7 +209,7 @@ exports.getMerchantInfoByMerchantID = async (req, res) => {
     res.status(200).json({
       success: true,
       message: "Merchant data retrieved successfully",
-      merchant,
+      data: merchant, // Wrap merchant in a data property
       totalReviews,
       totalRating: parseFloat(totalRating.toFixed(2)), // Keeping it to 2 decimal places
     });
