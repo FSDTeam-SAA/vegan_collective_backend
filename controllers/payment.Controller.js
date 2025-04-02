@@ -76,6 +76,7 @@ const purchaseMethod = async (req, res) => {
       professionalServicesId,
       serviceBookingTime,
       goLiveID,
+      organizationGoLiveID,
     } = req.body
 
     // Validate required fields
@@ -132,7 +133,7 @@ const purchaseMethod = async (req, res) => {
       seller = await Professionalinfo.findOne({userId:professionalID})
       sellerType = 'Professional'
     } else if (organizationID) {
-      seller = await Organizationinfo.findOne(organizationID)
+      seller = await Organizationinfo.findOne({ userID:organizationID })
       sellerType = 'Organization'
     } 
     else {
@@ -205,6 +206,7 @@ const purchaseMethod = async (req, res) => {
         professionalServicesId: professionalServicesId || null,
         serviceBookingTime: serviceBookingTime,
         goLiveID,
+        organizationGoLiveID,
       })
       await newPaymentRecord.save()
 
