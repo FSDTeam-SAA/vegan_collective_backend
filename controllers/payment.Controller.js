@@ -76,6 +76,7 @@ const purchaseMethod = async (req, res) => {
       professionalServicesId,
       serviceBookingTime,
       goLiveID,
+      organizationGoLiveID,
     } = req.body
 
     // Validate required fields
@@ -205,6 +206,7 @@ const purchaseMethod = async (req, res) => {
         professionalServicesId: professionalServicesId || null,
         serviceBookingTime: serviceBookingTime,
         goLiveID,
+        organizationGoLiveID,
       })
       await newPaymentRecord.save()
 
