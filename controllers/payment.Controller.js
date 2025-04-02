@@ -132,7 +132,7 @@ const purchaseMethod = async (req, res) => {
       seller = await Professionalinfo.findOne({userId:professionalID})
       sellerType = 'Professional'
     } else if (organizationID) {
-      seller = await Organizationinfo.findOne(organizationID)
+      seller = await Organizationinfo.findOne({ userID:organizationID })
       sellerType = 'Organization'
     } 
     else {
