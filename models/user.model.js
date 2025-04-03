@@ -54,7 +54,17 @@ const userSchema = new mongoose.Schema(
       type: String,
       enum:["approved","declined","pending"],
       default:"pending",
-    }
+    },
+    address:{
+      type: String
+    
+    },
+    bio:{
+      type: String
+    },
+    profilePhoto: {
+      type: String,
+    },
   },
   {
     timestamps: true,
