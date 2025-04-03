@@ -350,3 +350,76 @@ exports.updateIsgratings = async (req, res) => {
     });
   }
 };
+
+
+// Update user profile
+exports.updateUserProfile = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { fullName, phoneNumber, email, address, bio } = req.body;
+    
+    // Find the user by ID
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({
+        status: false,
+        message: "User not found.",
+      });
+    }
+
+    // Check if email is being changed and if it's already taken
+    if (email && email !== user.email) {
+      const existingUser = await User.findOne({ email });
+      if (existingUser) {
+        return res.status(400).json({
+          status: false,
+          message: "Email already in use by another account.",
+        });
+      }
+    }
+
+    // Prepare update data
+    const updateData = {
+      fullName: fullName || user.fullName,
+      phoneNumber: phoneNumber || user.phoneNumber,
+      email: email || user.email,
+      address: address || user.address,
+      bio: bio || user.bio,
+    };
+
+    // Handle profile photo upload if present
+    if (req.file) {
+      updateData.profilePhoto = req.file.path; // Cloudinary URL is stored in req.file.path
+    }
+
+    // Update the user
+    const updatedUser = await User.findByIdAndUpdate(userId, updateData, {
+      new: true,
+      runValidators: true,
+    });
+
+    // Return the updated user data
+    return res.status(200).json({
+      status: true,
+      message: "Profile updated successfully.",
+      data: {
+        _id: updatedUser._id,
+        role: updatedUser.role,
+        fullName: updatedUser.fullName,
+        phoneNumber: updatedUser.phoneNumber,
+        email: updatedUser.email,
+        address: updatedUser.address,
+        bio: updatedUser.bio,
+        profilePhoto: updatedUser.profilePhoto,
+        
+      },
+    });
+  } catch (error) {
+    console.error("Error updating profile:", error);
+    return res.status(500).json({
+      status: false,
+      message: "An error occurred while updating the profile.",
+      error: error.message,
+    });
+  }
+};

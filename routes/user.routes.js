@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const userController = require("../controllers/user.controller");
 const authController = require("../controllers/auth.Controller");
+const upload = require("../utils/multerConfig");
 
 // Register a new user
 router.post("/register", userController.registerUser);
@@ -28,6 +29,14 @@ router.get("/profile/:userId", userController.getUserProfile);
 
 // Update user profile
 router.put('/users/:userId/update-isgratings', userController.updateIsgratings);
+
+
+// Update user profile
+router.put(
+    "/profile/:userId",
+    upload.single("profilePhoto"), // Middleware for handling single file upload
+    userController.updateUserProfile
+  );
 
 
 module.exports = router;
