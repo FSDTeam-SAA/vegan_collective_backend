@@ -15,6 +15,8 @@ const eventRoutes = require('./routes/eventRoutes.js');
 
 const merchantBookingRoutes = require('./routes/merchantBooking.route.js');
 
+const path = require('path'); // Add this
+
 
 require('dotenv').config();
 console.log('ZOOM_API_KEY:', process.env.ZOOM_API_KEY);
@@ -23,6 +25,8 @@ console.log('ZOOM_ACCOUNT_ID:', process.env.ZOOM_ACCOUNT_ID);
 
 const app = express();
 const PORT = process.env.PORT || 3001;
+
+
 
 app.use(cookieParser());
 app.use(express.json());
@@ -52,6 +56,8 @@ const professionalInfo = require("./routes/professionalInfo.route.js");
 
 const getProfessionalGraph = require("./routes/professionalGraph.route.js"); //ADNAN
 
+
+
 //routes for merchant
 const merchantInfo = require("./routes/merchantInfo.route.js");
 const merchantProducts = require("./routes/merchantProducts.route.js");
@@ -78,6 +84,8 @@ const organizationGoLive = require("./routes/organizationGoLive.route.js");
 const organizationFundraisingManagement = require("./routes/organizationFundraisingManagement.route.js");
 
 const organizationReview = require("./routes/organizationReview.route.js"); //ADNAN
+// Add this to handle the direct /auth/callback route:
+app.use('/auth', require('./routes/merchantGoLive.route'));
 
 //routes for users
 const userProductWishlist = require("./routes/userProductWishlist.route.js");
@@ -93,6 +101,20 @@ const userPaymentDetailsRoute = require("./routes/userPaymentDetails.route.js")
 
 const newsletterRoutes = require("./routes/newsletterRoutes");
 
+const googleMeetRoutes = require('./routes/meetRoutes.js');
+
+
+
+
+
+// Static files
+app.use(express.static(path.join(__dirname, 'public')));
+
+// Serve frontend
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'meet.html'));
+});
+
 
 //endpoints for professional
 app.use("/api/v1", professionalBooking);
@@ -106,6 +128,9 @@ app.use("/api/v1", support);
 app.use("/api/v1", professionalInfo);
 
 app.use("/api/v1", getProfessionalGraph); //ADNAN
+
+// Serve static files from the 'public' folder
+app.use(express.static(path.join(__dirname, 'public')));
 
 //endpoints for merchant
 app.use("/api/v1", merchantInfo);
@@ -134,6 +159,10 @@ app.use("/api/v1", organizationGoLive);
 app.use("/api/v1", organizationFundraisingManagement);
 
 app.use("/api/v1", organizationReview); //ADNAN
+
+
+// API Routes
+app.use('/', require('./routes/meetRoutes'));
 
 //endpoints for user
 app.use("/api/v1", userProductWishlist);
@@ -173,8 +202,13 @@ app.use("/api/v1", organizationVolunteerRoutes);
 //newsletter routes
 app.use("/api/v1", newsletterRoutes);
 
+
+
 //event routes
 app.use("/api/v1", eventRoutes);
+
+//google meet routes
+app.use('/api/v1/google-meet', googleMeetRoutes);
 
 app.get("/api/v1/", (req, res) => {
   res.status(201).json({
