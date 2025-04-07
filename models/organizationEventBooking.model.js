@@ -4,7 +4,7 @@ const organizationEventBookingSchema = new mongoose.Schema(
   {
     organizationEventID: {
       type: mongoose.Types.ObjectId,
-      ref: "Organizationeventmanagement",
+      ref: "Organizationeventmanagement",  //in the organizationeventmanagement model comesc id, eventTitle, eventType,price,Attendees,date,time
     },
     attendeeDetail: [
       {
@@ -22,6 +22,10 @@ const organizationEventBookingSchema = new mongoose.Schema(
         },
         specialRequirement: {
           type: String,
+        },
+        userID: {
+          type: mongoose.Types.ObjectId,
+          ref: "User",
         },
         skillAndExperience: {
           type: String,

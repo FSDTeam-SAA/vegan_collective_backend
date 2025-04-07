@@ -9,6 +9,9 @@ const userSchema = new mongoose.Schema(
     fullName: {
       type: String,
     },
+    phoneNumber: {
+      type: String,
+    },
     email: {
       type: String,
       required: true,
@@ -26,8 +29,8 @@ const userSchema = new mongoose.Schema(
     },
     accountType: {
       type: String,
-      enum : ["merchant", "professional", "organization"],
-    }, 
+      enum: ['merchant', 'professional', 'organization'],
+    },
     image: {
       type: String,
     },
@@ -44,53 +47,25 @@ const userSchema = new mongoose.Schema(
     refreshToken: {
       type: String,
     },
-    
-    organizationInfo:[
-      {
-        organizationName: {
-          type: String,
-          required: true,
-        },
-        address: {
-          type: String,
-        },
-        missionStatement: {
-          type: String,
-        },
-        aboutUs: {
-          type: String,
-        },
-        experienceAndCertifications: {
-          type: String,
-        },
-        websiteURL: {
-          type: String,
-        },
-        governmentIssuedID: {
-          type: String,
-          required: true,
-        },
-        charityRegistrationNumber: {
-          type: String,
-          required: true,
-        },
-        photoWithID: {
-          type: String,
-          required: true,
-        },
-        verificationStatus: {
-          type: String,
-          enum: ["verified", "not verified"],
-          default: "not verified",
-        },
-      }
-    ],
-   
+    paymentAdded: {
+      type: Boolean,
+      default: false,
+    },
+
+    isgratings: {
+      type: Boolean,
+      default: false,
+    },
+    isVerified:{
+      type: String,
+      enum:["approved","declined","pending"],
+      default:"pending",
+    }
   },
   {
     timestamps: true,
   }
-);
+)
 
 const User = mongoose.model("User", userSchema);
 module.exports = User;

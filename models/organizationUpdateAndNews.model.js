@@ -17,14 +17,7 @@ const organizationUpdateAndNewsSchema = new mongoose.Schema(
     statement: {
       type: String,
     },
-    comments:[
-      {
-        commnetID:{
-          type: mongoose.Types.ObjectId,
-          ref: "Commentmanipulation",
-        },
-      }
-    ]
+    comments: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Commentmanipulation' }],
   },
   {
     timestamps: true,

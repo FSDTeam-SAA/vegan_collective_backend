@@ -8,6 +8,7 @@ const organizationSupportSchema = new mongoose.Schema(
     },
     ticketSlug:{
       type: String,
+      unique: true,
     },
     name:{
       type: String,

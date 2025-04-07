@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const Support = require('../models/support.model'); // Adjust the path as needed
 const User = require('../models/user.model'); // Assuming you have a User model
 
@@ -5,65 +6,149 @@ const User = require('../models/user.model'); // Assuming you have a User model
 async function generateTicketSlug() {
   const lastTicket = await Support.findOne({}, {}, { sort: { createdAt: -1 } });
   if (!lastTicket) return 'TICK-001'; // If no tickets exist, start with TICK-001
-
   const lastNumber = parseInt(lastTicket.ticketSlug.split('-')[1], 10);
   const newNumber = lastNumber + 1;
   return `TICK-${String(newNumber).padStart(3, '0')}`;
 }
 
 // Create a new support ticket
+
 exports.createSupportTicket = async (req, res) => {
   try {
-    const { userID, subject, message } = req.body;
+    const { professionalID, subject, message } = req.body;
 
-    // Validate user ID and check if the user exists and is professional
-    const user = await User.findById(userID);
-    if (!user || user.accountType !== 'professional') {
-      return res.status(400).json({ error: 'Invalid user ID or account type is not professional' });
+    // Validate professionalID format
+    if (!mongoose.Types.ObjectId.isValid(professionalID)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid professional ID format',
+      });
     }
 
-    // Generate ticketSlug
+    // Check if the user exists and is a professional
+    const user = await User.findById(professionalID);
+    if (!user || user.accountType !== 'professional') {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid professional ID or account type is not professional',
+      });
+    }
+
+    // Generate a sequential ticketSlug
     const ticketSlug = await generateTicketSlug();
 
-    // Create the support ticket
+    // Create a new support ticket
     const newTicket = new Support({
-      userID,
+      professionalID,
       ticketSlug,
       subject,
       message,
-      status: 'pending', // Default status
+      status: 'pending',
     });
 
+    // Save the ticket to the database
     await newTicket.save();
-    res.status(201).json({ message: 'Support ticket created successfully', ticket: newTicket });
+
+    // Include professionalID in the response
+    res.status(201).json({
+      success: true,
+      message: 'Support ticket created successfully',
+      ticket: {
+        ticketSlug: newTicket.ticketSlug,
+        subject: newTicket.subject,
+        message: newTicket.message,
+        status: newTicket.status,
+        professionalID: newTicket.professionalID, // Include professionalID here
+        _id: newTicket._id,
+        createdAt: newTicket.createdAt,
+        updatedAt: newTicket.updatedAt,
+      },
+    });
   } catch (error) {
-    res.status(500).json({ error: 'Server error', details: error.message });
+    console.error('Error creating support ticket:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error',
+      details: error.message,
+    });
   }
 };
 
 // Get all support tickets
 exports.getAllSupportTickets = async (req, res) => {
   try {
-    const tickets = await Support.find().populate('userID', 'name email accountType');
-    res.status(200).json({ tickets });
+    // Fetch all tickets and exclude only the userID field
+    const tickets = await Support.find({}, { professionalID: 0 }) // Exclude only professionalID field
+      .sort({ createdAt: -1 }); // Sort by creation date (newest first)
+
+    res.status(200).json({
+      success: true,
+      message: 'Support tickets retrieved successfully',
+      tickets,
+    });
   } catch (error) {
-    res.status(500).json({ error: 'Server error', details: error.message });
+    console.error('Error fetching all support tickets:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error',
+      details: error.message,
+    });
   }
 };
+
+// Get support tickets by professionalID
+exports.getSupportTicketsByProfessionalID = async (req, res) => {
+  try {
+    const { professionalID } = req.params; 
+
+    if (!mongoose.Types.ObjectId.isValid(professionalID)) {
+      return res.status(400).json({ success: false, message: 'Invalid professional ID format' });
+    }
+
+    // Convert professionalID to ObjectId
+    const tickets = await Support.find(
+      { professionalID: new mongoose.Types.ObjectId(professionalID) }
+    ).sort({ createdAt: -1 });
+
+    if (!tickets.length) {
+      return res.status(404).json({ success: false, message: 'No support tickets found for this professional' });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Support tickets retrieved successfully',
+      tickets,
+    });
+  } catch (error) {
+    console.error('Error fetching support tickets by professional ID:', error);
+    res.status(500).json({ success: false, message: 'Server error', details: error.message });
+  }
+};
+
 
 // Get support ticket by ID
 exports.getSupportTicketById = async (req, res) => {
   try {
     const { id } = req.params;
-    const ticket = await Support.findById(id).populate('userID', 'name email accountType');
 
+    // Fetch the ticket by ID and exclude _id and professionalID fields
+    const ticket = await Support.findById(id, { _id: 0, professionalID: 0 }); // Exclude _id and professionalID fields
     if (!ticket) {
-      return res.status(404).json({ error: 'Support ticket not found' });
+      return res.status(404).json({ success: false, message: 'Support ticket not found' });
     }
 
-    res.status(200).json({ ticket });
+    res.status(200).json({
+      success: true,
+      message: 'Support ticket retrieved successfully',
+      ticket,
+    });
   } catch (error) {
-    res.status(500).json({ error: 'Server error', details: error.message });
+    console.error('Error fetching support ticket by ID:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error',
+      details: error.message,
+    });
   }
 };
 
@@ -73,6 +158,7 @@ exports.updateSupportTicket = async (req, res) => {
     const { id } = req.params;
     const { subject, message, status } = req.body;
 
+    // Update the ticket
     const updatedTicket = await Support.findByIdAndUpdate(
       id,
       { subject, message, status },
@@ -80,12 +166,21 @@ exports.updateSupportTicket = async (req, res) => {
     );
 
     if (!updatedTicket) {
-      return res.status(404).json({ error: 'Support ticket not found' });
+      return res.status(404).json({ success: false, message: 'Support ticket not found' });
     }
 
-    res.status(200).json({ message: 'Support ticket updated successfully', ticket: updatedTicket });
+    res.status(200).json({
+      success: true,
+      message: 'Support ticket updated successfully',
+      ticket: updatedTicket,
+    });
   } catch (error) {
-    res.status(500).json({ error: 'Server error', details: error.message });
+    console.error('Error updating support ticket:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error',
+      details: error.message,
+    });
   }
 };
 
@@ -93,14 +188,23 @@ exports.updateSupportTicket = async (req, res) => {
 exports.deleteSupportTicket = async (req, res) => {
   try {
     const { id } = req.params;
-    const deletedTicket = await Support.findByIdAndDelete(id);
 
+    // Delete the ticket
+    const deletedTicket = await Support.findByIdAndDelete(id);
     if (!deletedTicket) {
-      return res.status(404).json({ error: 'Support ticket not found' });
+      return res.status(404).json({ success: false, message: 'Support ticket not found' });
     }
 
-    res.status(200).json({ message: 'Support ticket deleted successfully' });
+    res.status(200).json({
+      success: true,
+      message: 'Support ticket deleted successfully',
+    });
   } catch (error) {
-    res.status(500).json({ error: 'Server error', details: error.message });
+    console.error('Error deleting support ticket:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error',
+      details: error.message,
+    });
   }
 };

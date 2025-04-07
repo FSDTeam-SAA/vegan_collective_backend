@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 
 const supportSchema = new mongoose.Schema(
   { 
-    userID:{
+    professionalID:{
       type: mongoose.Types.ObjectId,
       ref: "User",
     },

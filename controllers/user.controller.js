@@ -2,11 +2,12 @@ const User = require("../models/user.model");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 const { sendEmail } = require("../utility/emailSender");
+const Reffer = require("../models/reffer.model");
 
 // Register a new user
 exports.registerUser = async (req, res) => {
   try {
-    const { role, fullName, email, password, accountType } = req.body;
+    const { role, fullName, email, password, accountType, ref } = req.body;
 
     // Check if the user already exists
     const existingUser = await User.findOne({ email });
@@ -28,7 +29,27 @@ exports.registerUser = async (req, res) => {
       password: hashedPassword,
       accountType: role === "vendor" ? accountType : null, // Set accountType based on role
       verifyEmail: false,
+      isgratings: false,
+      isVerified: "pending",
     });
+
+    // Handle referral logic if `ref` is provided
+    if (ref) {
+      // Find the referral document by the provided slug
+      const referral = await Reffer.findOne({ slug: ref });
+
+      if (referral) {
+        // Push the new user's ID into the participants array
+        referral.participants.push(user._id);
+
+        // Increment the `remain` field
+        referral.remain += 1;
+
+        // Save the updated referral document
+        await referral.save();
+      }
+    }
+
 
     // Generate verification token
     const verifyToken = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
@@ -67,29 +88,27 @@ exports.registerUser = async (req, res) => {
     };
     await sendEmail(mailOption);
 
-    // Return the user object in the desired format
-    const responseUser = {
-      _id: user._id,
-      role: user.role,
-      fullName: user.fullName,
-      email: user.email,
-      verifyEmail: user.verifyEmail,
-    
-    };
-
-    return res.status(201).json({
-      status: true,
-      message: "User created successfully. Please check your email to verify your account.",
-      data: responseUser,
-      
-    });
-  } catch (error) {
-    return res.status(500).json({
-      status: false,
-      message: "Something went wrong",
-      error: error.message,
-    });
-  }
+// Return the response with the user data
+res.status(201).json({
+  status: true,
+  message: "User created successfully. Please check your email to verify your account.",
+  data: {
+    _id: user._id,
+    role: user.role,
+    fullName: user.fullName,
+    email: user.email,
+    verifyEmail: user.verifyEmail,
+    isgratings: user.isgratings, // Ensure this is included
+    isVerified: user.isVerified, // Ensure this is included
+  },
+});
+} catch (error) {
+res.status(500).json({
+  status: false,
+  message: "An error occurred while registering the user.",
+  error: error.message,
+});
+}
 };
 
 // Verify email
@@ -244,29 +263,31 @@ exports.logoutUser = async (req, res) => {
 // Get user profile
 exports.getUserProfile = async (req, res) => {
   try {
-    const userId = req.params.userId; // Extract userId from route parameters
+    const userId = req.params.userId
     if (!userId) {
       return res.status(400).json({
         status: false,
-        message: "User ID is required",
-      });
+        message: 'User ID is required',
+      })
     }
+
     // Find the user by ID
-    const user = await User.findById(userId);
+    const user = await User.findById(userId)
     if (!user) {
       return res.status(404).json({
         status: false,
-        message: "User not found",
-      });
+        message: 'User not found',
+      })
     }
 
-    //Generate JWT token
-    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: "1h" });
+    // Generate JWT token
+    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
+      expiresIn: '1h',
+    })
 
     return res.status(200).json({
       status: true,
-      message: "User profile retrieved successfully",
-
+      message: 'User profile retrieved successfully',
       data: {
         _id: user._id,
         role: user.role,
@@ -274,12 +295,57 @@ exports.getUserProfile = async (req, res) => {
         email: user.email,
         accountType: user.accountType,
         token,
+        paymentAdded: user.paymentAdded,
+        isgratings: user.isgratings,
+        isVerified: user.isVerified,
       },
-    });
+    })
   } catch (error) {
     return res.status(500).json({
       status: false,
-      message: "Something went wrong",
+      message: 'Something went wrong',
+      error: error.message,
+    })
+  }
+}
+
+
+exports.updateIsgratings = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { isgratings } = req.body;
+
+    // Find the user by ID and update the isgratings field
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { isgratings: isgratings },
+      { new: true } // Return the updated document
+    );
+
+    if (!updatedUser) {
+      return res.status(404).json({
+        status: false,
+        message: "User not found.",
+      });
+    }
+
+    // Return the updated user data
+    res.status(200).json({
+      status: true,
+      message: "isgratings updated successfully.",
+      data: {
+        _id: updatedUser._id,
+        role: updatedUser.role,
+        fullName: updatedUser.fullName,
+        email: updatedUser.email,
+        verifyEmail: updatedUser.verifyEmail,
+        isgratings: updatedUser.isgratings,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: false,
+      message: "An error occurred while updating isgratings.",
       error: error.message,
     });
   }

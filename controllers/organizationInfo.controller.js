@@ -3,6 +3,8 @@ const mongoose = require("mongoose");
 const Organizationinfo = require("../models/organizationInfo.model");
 const User = require("../models/user.model");
 const upload = require("../utils/multerConfig");
+const Organizationeventmanagement = require('../models/organizationEventManagement.model');  // Adjust path as needed
+
 
 /**
  * Create a new organization info entry with profile photo upload
@@ -14,7 +16,7 @@ exports.createOrganizationInfo = async (req, res) => {
         return res.status(500).json({ error: "Error uploading file to Cloudinary" });
       }
 
-      let { userID, organizationName, address, missionStatement, about, shortDescriptionOfOrganization, experience, certifications, websiteURL, governmentIssuedID, professionalCertification, photoWithID, isVerified } = req.body;
+      let { userID, organizationName, address, missionStatement, about, shortDescriptionOfOrganization, experience, certifications, websiteURL, governmentIssuedID, professionalCertification, photoWithID,isVerified } = req.body;
 
       if (!mongoose.Types.ObjectId.isValid(userID)) {
         return res.status(400).json({ success: false, message: "Invalid userID format" });
@@ -56,7 +58,7 @@ exports.createOrganizationInfo = async (req, res) => {
         governmentIssuedID,
         professionalCertification,
         photoWithID,
-        isVerified: "pending",
+        isVerified,
       });
 
       const savedOrganizationInfo = await newOrganizationInfo.save();
@@ -70,28 +72,105 @@ exports.createOrganizationInfo = async (req, res) => {
 /**
  * Get all organization info entries
  */
+
 exports.getAllOrganizationInfo = async (req, res) => {
   try {
-    const organizationInfoList = await Organizationinfo.find();
-    return res.status(200).json({ success: true, message: "Organization info retrieved successfully", data: organizationInfoList });
+    // Extract query parameters for pagination, search, and sorting
+    const page = parseInt(req.query.page, 10) || 1;
+    const limit = parseInt(req.query.limit, 10) || 10;
+    const searchQuery = req.query.search || "";
+    const sortBy = req.query.sortBy || "organizationName";
+    const sortOrder = req.query.sortOrder || "asc";
+
+    // Build the filter for searching by organizationName
+    const filter = searchQuery
+      ? { organizationName: { $regex: searchQuery, $options: "i" } }
+      : {};
+
+    // Calculate total items and total pages
+    const totalItems = await Organizationinfo.countDocuments(filter);
+    const totalPages = Math.ceil(totalItems / limit);
+
+    // Define the sort order
+    const sortOptions = {};
+    sortOptions[sortBy] = sortOrder === "asc" ? 1 : -1;
+
+    // Fetch paginated and sorted organizations
+    const organizationInfoList = await Organizationinfo.find(filter)
+      .sort(sortOptions)
+      .skip((page - 1) * limit)
+      .limit(limit);
+
+    // Fetch event counts in parallel using organizationID (which is the same as userID)
+    const organizationsWithEvents = await Promise.all(
+      organizationInfoList.map(async (organization) => {
+        const organizationID = organization.userID; // Use userID as organizationID
+
+        const totalEvents = await Organizationeventmanagement.countDocuments({
+          organizationID: new mongoose.Types.ObjectId(organizationID),
+        });
+
+        return {
+          ...organization.toObject(), // Convert Mongoose document to plain JS object
+          totalEvents, // Attach totalEvents count
+        };
+      })
+    );
+
+    // Construct pagination metadata
+    const pagination = {
+      currentPage: page,
+      totalPages,
+      totalItems,
+      itemsPerPage: limit,
+    };
+
+    // Return the response with organization data and pagination metadata
+    return res.status(200).json({
+      success: true,
+      message: "Organization info retrieved successfully",
+      data: organizationsWithEvents,
+      pagination: pagination,
+    });
   } catch (error) {
-    res.status(500).json({ success: false, message: "Error retrieving organization info", error: error.message });
+    // Handle errors
+    return res.status(500).json({
+      success: false,
+      message: "Error retrieving organization info",
+      error: error.message,
+    });
   }
 };
 
 /**
- * Get a single organization info entry by ID
+ * Get a single organization info entry by organizationID
  */
-exports.getOrganizationInfoById = async (req, res) => {
+exports.getOrganizationInfoByOrganizationID = async (req, res) => {
   try {
-    const { id } = req.params;
-    const organizationInfo = await Organizationinfo.findById(id);
+    const { organizationID } = req.params; // Extract organizationID from request params
+
+    // Query the database using the organizationID field
+    const organizationInfo = await Organizationinfo.findOne({ organizationID });
+
     if (!organizationInfo) {
-      return res.status(404).json({ success: false, message: "Organization info not found" });
+      return res.status(404).json({
+        success: false,
+        message: "Organization info not found",
+      });
     }
-    res.status(200).json({ success: true, message: "Organization info retrieved successfully", data: organizationInfo });
+
+    return res.status(200).json({
+      success: true,
+      message: "Organization info retrieved successfully",
+      data: organizationInfo,
+    });
   } catch (error) {
-    res.status(500).json({ success: false, message: "Error retrieving organization info", error: error.message });
+    console.error("Error retrieving organization info:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Error retrieving organization info",
+      error: error.message,
+    });
   }
 };
 

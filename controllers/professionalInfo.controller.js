@@ -13,7 +13,7 @@ exports.createProfessionalInfo = async (req, res) => {
         return res.status(500).json({ error: "Error uploading file to Cloudinary" });
       }
 
-      let { userID, fullName, designation, businessName, address, about, highlightedStatement, experience, certifications, websiteURL, governmentIssuedID, professionalCertification, photoWithID } = req.body;
+      let { userID, fullName, designation, businessName, address, about, highlightedStatement, experience, certifications, websiteURL, governmentIssuedID, professionalCertification, photoWithID, isVerified } = req.body;
 
       console.log("Received userID:", userID);
 
@@ -50,6 +50,34 @@ exports.createProfessionalInfo = async (req, res) => {
         }
       }
 
+      // ✅ Parse experience field into an array
+      let parsedExperience = [];
+      if (experience) {
+        try {
+          // If experience is a JSON string, parse it
+          parsedExperience = JSON.parse(experience);
+        } catch (parseError) {
+          // If it's not JSON, split by commas to create an array
+          parsedExperience = experience.split(",").map((item) => item.trim());
+        }
+      }
+
+
+         let parsedCertifications = []
+         if (experience) {
+           try {
+             // If experience is a JSON string, parse it
+             parsedCertifications = JSON.parse(certifications)
+           } catch (parseError) {
+             // If it's not JSON, split by commas to create an array
+             parsedCertifications = certifications
+               .split(',')
+               .map((item) => item.trim())
+           }
+         }
+
+    
+
       const profilePhotoUrl = req.file ? req.file.path : null;
 
       // ✅ Use correct `userId` field name
@@ -62,13 +90,14 @@ exports.createProfessionalInfo = async (req, res) => {
         address,
         about,
         highlightedStatement: parsedHighlightedStatement,
-        experience,
-        certifications,
+        experience: parsedExperience,
+        certifications: parsedCertifications,
         websiteURL,
         governmentIssuedID,
         professionalCertification,
         photoWithID,
-      });
+        isVerified,
+      })
 
       const savedProfessionalInfo = await newProfessionalInfo.save();
 
@@ -94,65 +123,110 @@ exports.createProfessionalInfo = async (req, res) => {
  */
 exports.getAllProfessionalInfo = async (req, res) => {
   try {
-    const { page = 1, limit = 6, sortBy = "fullName", order = "asc", fullName, designation, address } = req.query;
+    // Extract query parameters for filtering
+    const { fullName, designation, address } = req.query;
 
-    // Build filters
+    // Extract query parameters for pagination
+    const page = parseInt(req.query.page, 10) || 1; // Default to page 1 if not provided
+    const limit = parseInt(req.query.limit, 10) || 10; // Default to 10 items per page if not provided
+
+    // Extract query parameters for sorting
+    const sortBy = req.query.sortBy || "createdAt"; // Default to sorting by createdAt
+    const order = req.query.order === "asc" ? 1 : -1; // Default to descending order
+
+    // Build the filter object based on query parameters
     const filter = {};
-    if (fullName) filter.fullName = { $regex: fullName, $options: "i" };
-    if (designation) filter.designation = { $regex: designation, $options: "i" };
-    if (address) filter.address = { $regex: address, $options: "i" };
+    if (fullName) filter.fullName = { $regex: fullName, $options: "i" }; // Case-insensitive search
+    if (designation) filter.designation = { $regex: designation, $options: "i" }; // Case-insensitive search
+    if (address) filter.address = { $regex: address, $options: "i" }; // Case-insensitive search
 
-    // Sorting and pagination
-    const sortOptions = { [sortBy]: order === "asc" ? 1 : -1 };
-    const skip = (parseInt(page) - 1) * parseInt(limit);
+    // Calculate skip value for pagination
+    const skip = (page - 1) * limit;
 
+    // Fetch professional info entries with filtering, pagination, and sorting
     const professionalInfoList = await Professionalinfo.find(filter)
-      .sort(sortOptions)
+      .sort({ [sortBy]: order }) // Dynamic sorting
       .skip(skip)
-      .limit(parseInt(limit));
+      .limit(limit);
 
-    const totalDocuments = await Professionalinfo.countDocuments(filter);
-    const totalPages = Math.ceil(totalDocuments / parseInt(limit));
+    // Count total number of documents matching the filter
+    const totalItems = await Professionalinfo.countDocuments(filter);
 
-    return res.status(200).json({
+    // Calculate total pages
+    const totalPages = Math.ceil(totalItems / limit);
+
+    // Prepare pagination metadata
+    const pagination = {
+      currentPage: page,
+      totalPages,
+      totalItems,
+      itemsPerPage: limit,
+    };
+
+    // Return the list of professional info entries with pagination metadata
+    res.status(200).json({
       success: true,
-      message: "Professional info retrieved successfully",
+      message: "Professional info entries retrieved successfully",
       data: professionalInfoList,
-      pagination: {
-        currentPage: parseInt(page),
-        totalPages,
-        totalItems: totalDocuments,
-        itemsPerPage: parseInt(limit),
-      },
+      pagination,
     });
   } catch (error) {
-    return res.status(500).json({ success: false, message: "Error retrieving professional info", error: error.message });
+    console.error("Error:", error.message);
+    res.status(500).json({
+      success: false,
+      message: "Error retrieving professional info",
+      error: error.message,
+    });
   }
 };
 
+
+
 /**
- * Get a single professional info entry by ID
+ * Get professional info by user ID
  */
-exports.getProfessionalInfoById = async (req, res) => {
+exports.getProfessionalInfoByUserId = async (req, res) => {
   try {
-    const { id } = req.params;
-    const professionalInfo = await Professionalinfo.findById(id);
-    if (!professionalInfo) {
-      return res.status(404).json({ success: false, message: "Professional info not found" });
+    const { userId } = req.params;
+
+    // ✅ Validate userID format
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid userID format",
+      });
     }
-    return res.status(200).json({ success: true, message: "Professional info retrieved successfully", data: professionalInfo });
+
+    // ✅ Find professional info by userId
+    const professionalInfo = await Professionalinfo.findOne({ userId: userId });
+
+    // ✅ Check if professional info exists
+    if (!professionalInfo) {
+      return res.status(404).json({
+        success: false,
+        message: "Professional info not found for this user",
+      });
+    }
+
+    // ✅ Return the professional info
+    res.status(200).json({
+      success: true,
+      message: "Professional info retrieved successfully",
+      data: professionalInfo,
+    });
   } catch (error) {
-    return res.status(500).json({ success: false, message: "Error retrieving professional info", error: error.message });
+    console.error("Error retrieving professional info:", error.message);
+    res.status(500).json({
+      success: false,
+      message: "Error retrieving professional info",
+      error: error.message,
+    });
   }
 };
 
-/**
- * Update professional info by ID
- */
 // Update professional info by ID
 exports.updateProfessionalInfo = [
-  // Multer middleware for form-data file upload
-  upload.single("profilePhoto"), 
+  upload.single("profilePhoto"), // Multer middleware for file upload
   
   async (req, res) => {
     try {
@@ -166,25 +240,40 @@ exports.updateProfessionalInfo = [
         });
       }
 
-      // ✅ Prepare update data from form-data
-      const updateData = { ...req.body };
+      console.log("Incoming request body:", req.body);
+      console.log("Uploaded file:", req.file);
+
+      // ✅ Prepare update data
+      const updateData = { userID, fullName, designation, businessName, address, about, highlightedStatement, experience, certifications, websiteURL, governmentIssuedID, professionalCertification, photoWithID, isVerified,phoneNumber } = req.body;
 
       // ✅ Handle profile photo upload (if provided)
       if (req.file) {
-        updateData.profilePhoto = req.file.buffer.toString("base64"); // Example: save as base64, change if saving to Cloudinary/local storage
+        updateData.profilePhoto = req.file.path; // Use Cloudinary URL instead of buffer
       }
 
-      // ✅ Handle highlightedStatement safely (must be an array of objects)
-      if (updateData.highlightedStatement) {
+      // ✅ Function to safely parse JSON fields
+      const parseJSONField = (field) => {
         try {
-          updateData.highlightedStatement = JSON.parse(updateData.highlightedStatement);
-        } catch (error) {
-          return res.status(400).json({
-            success: false,
-            message: "Invalid JSON format for highlightedStatement",
-          });
+          return JSON.parse(field);
+        } catch {
+          return field; // Keep original value if parsing fails
         }
+      };
+
+      // ✅ Handle JSON fields safely
+      if (updateData.highlightedStatement) {
+        updateData.highlightedStatement = parseJSONField(updateData.highlightedStatement);
       }
+      if (updateData.experience) {
+        updateData.experience = parseJSONField(updateData.experience);
+      }
+
+         if (updateData.certifications) {
+           updateData.certifications = parseJSONField(updateData.certifications)
+         }
+
+
+
 
       // ✅ Update the professional info
       const updatedInfo = await Professionalinfo.findByIdAndUpdate(id, updateData, {
@@ -214,6 +303,7 @@ exports.updateProfessionalInfo = [
     }
   },
 ];
+
 
 /**
  * Delete professional info by ID

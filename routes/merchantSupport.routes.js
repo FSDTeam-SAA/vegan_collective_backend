@@ -8,6 +8,10 @@ router.post("/merchentsupport", merchantSupportController.createTicket);
 // Get all support tickets
 router.get("/merchentsupport", merchantSupportController.getAllTickets);
 
+// Get all support tickets by merchantID
+router.get("/merchentsupport/merchant/:merchantID", merchantSupportController.getTicketsByMerchantID);
+
+
 // Get a single support ticket
 router.get("/merchentsupport/:id", merchantSupportController.getTicketById);
 

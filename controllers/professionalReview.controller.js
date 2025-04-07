@@ -1,147 +1,227 @@
-const express = require("express");
-const mongoose = require("mongoose");
-const Review = require("../models/professionalReview.model");
-const User = require("../models/user.model");
+const Review = require('../models/professionalReview.model'); // Import the Review model
+const Professionalinfo = require('../models/professionalInfo.model'); // Import the Professional model
+const mongoose = require('mongoose');
 
-// Create a new review
-exports.createReview = async (req, res) => {
+
+// Controller to add a review
+exports.addReview = async (req, res) => {
   try {
     const { userID, professionalID, rating, comment } = req.body;
 
-    // Validate input
+    // Validate required fields
     if (!userID || !professionalID || !rating) {
-      return res.status(400).json({ success: false, message: 'All fields are required.' });
+      return res.status(400).json({
+        success: false,
+        message: "All fields (userID, professionalID, rating) are required.",
+      });
     }
 
-    // Check if the user has already reviewed this professional
-    const existingReview = await Review.findOne({ userID, professionalID });
-    if (existingReview) {
-      return res.status(400).json({ success: false, message: 'You have already reviewed this professional.' });
-    }
-
-    // Create the review
+    // Create a new review
     const newReview = new Review({ userID, professionalID, rating, comment });
     await newReview.save();
 
-    res.status(201).json({ success: true, message: 'Review created successfully.', data: newReview });
+    // Calculate the average rating for the professional
+    const reviews = await Review.find({ professionalID });
+    const totalRating = reviews.reduce((sum, review) => sum + review.rating, 0);
+    const averageRating = (totalRating / reviews.length).toFixed(2);
+
+    // Return response with the desired structure
+    return res.status(201).json({
+      success: true,
+      message: "Review added successfully.",
+      data: [
+        {
+          ...newReview.toObject(), // Spread the review object
+          averageRating, // Add the averageRating to the same object
+        },
+      ],
+    });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ success: false, message: 'Server error.' });
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error while adding review.",
+    });
   }
 };
 
-// Get all reviews
-// Get all reviews
+
+//get all reviews
 exports.getAllReviews = async (req, res) => {
   try {
-    const reviews = await Review.find()
-      .populate('userID', 'name') // Populate user details
-      .populate('professionalID', 'name'); // Populate professional details
-    res.status(200).json({ success: true, data: reviews });
+    // Fetch all reviews
+    const reviews = await Review.find();
+
+    return res.status(200).json({
+      success: true,
+      message: "Reviews fetched successfully.",
+      data: reviews,
+    });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ success: false, message: 'Server error.' });
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error while fetching reviews.",
+    });
   }
 };
 
-// Get a single review by ID
-exports.getReviewById = async (req, res) => {
-  try {
-    const review = await Review.findById(req.params.id)
-      .populate('userID', 'userID') // Populate user details
-      .populate('professionalID'); // Populate professional details
-    if (!review) {
-      return res.status(404).json({ success: false, message: 'Review not found.' });
-    }
-    res.status(200).json({ success: true, data: review });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ success: false, message: 'Server error.' });
-  }
-};
-
-// Get a single review by ID
-exports.getReviewById = async (req, res) => {
-  try {
-    const review = await Review.findById(req.params.id).populate('userID', 'name').populate('professionalID', 'name');
-    if (!review) {
-      return res.status(404).json({ success: false, message: 'Review not found.' });
-    }
-    res.status(200).json({ success: true, data: review });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ success: false, message: 'Server error.' });
-  }
-};
-
-// Update a review by ID
-exports.updateReview = async (req, res) => {
-  try {
-    const { rating, comment } = req.body;
-
-    // Validate input
-    if (!rating && !comment) {
-      return res.status(400).json({ success: false, message: 'At least one field is required to update.' });
-    }
-
-    const updatedReview = await Review.findByIdAndUpdate(
-      req.params.id,
-      { rating, comment },
-      { new: true, runValidators: true }
-    );
-
-    if (!updatedReview) {
-      return res.status(404).json({ success: false, message: 'Review not found.' });
-    }
-
-    res.status(200).json({ success: true, message: 'Review updated successfully.', data: updatedReview });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ success: false, message: 'Server error.' });
-  }
-};
-
-// Delete a review by ID
-exports.deleteReview = async (req, res) => {
-  try {
-    const review = await Review.findByIdAndDelete(req.params.id);
-    if (!review) {
-      return res.status(404).json({ success: false, message: 'Review not found.' });
-    }
-    res.status(200).json({ success: true, message: 'Review deleted successfully.' });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ success: false, message: 'Server error.' });
-  }
-};
-
-// Calculate average rating for a professional
-
-
-
-exports.getAverageRating = async (req, res) => {
+//get all reviews of a professional ID with pagination and filtering by Highest rating, lowest rating and most relevant , most recent
+//get all reviews of a professional ID with pagination and filtering by Highest rating, lowest rating and most relevant , most recent
+exports.getReviewsOfProfessional = async (req, res) => {
   try {
     const { professionalID } = req.params;
+    const { page = 1, limit = 10, sort = 'desc', filter = 'highest' } = req.query;
 
-    // Validate the professionalID
-    if (!mongoose.Types.ObjectId.isValid(professionalID)) {
-      return res.status(400).json({ success: false, message: 'Invalid professionalID.' });
+    let query = { professionalID };
+    let sortObj = {};
+
+    if (filter === 'highest') {
+      sortObj = { rating: -1 };
+    } else if (filter === 'lowest') {
+      sortObj = { rating: 1 };
+    } else if (filter === 'mostRecent') {
+      sortObj = { createdAt: -1 };
+    } else if (filter === 'mostRelevant') {
+      // You can implement your own logic for most relevant reviews
+      // For example, you can sort by rating and then by createdAt
+      sortObj = { rating: -1, createdAt: -1 };
     }
 
-    // Log the incoming professionalID for debugging
-    console.log('Professional ID:', professionalID);
+    const reviews = await Review.find(query)
+      .sort(sortObj)
+      .skip((page - 1) * limit)
+      .limit(Number(limit))
+      .populate('userID', 'fullName'); // Populate the userID field with the fullName field
 
-    // Aggregate to calculate the average rating
-    const result = await Review.aggregate([
-      { $match: { professionalID: new mongoose.Types.ObjectId(professionalID) } }, // Use 'new' here
-      { $group: { _id: null, averageRating: { $avg: '$rating' } } },
-    ]);
+    const totalReviews = await Review.countDocuments(query);
+    const totalPages = Math.ceil(totalReviews / limit);
 
-    const averageRating = result.length > 0 ? result[0].averageRating : 0;
+    const pagination = {
+      currentPage: page,
+      totalPages: totalPages,
+      totalItems: totalReviews,
+      itemsPerPage: limit,
+    };
 
-    res.status(200).json({ success: true, data: { professionalID, averageRating } });
+    return res.status(200).json({
+      success: true,
+      message: "Reviews fetched successfully.",
+      data: reviews.map(review => ({
+        ...review.toObject(),
+        userID: review.userID._id,
+        fullName: review.userID.fullName,
+      })),
+      pagination,
+    });
   } catch (error) {
-    console.error('Error in getAverageRating:', error.message); // Log the error message
-    res.status(500).json({ success: false, message: 'Server error.', error: error.message });
+    console.error(error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error while fetching reviews.",
+    });
   }
 };
+
+
+
+
+
+
+
+exports.getTopProfessionals = async (req, res) => {
+/*************  ✨ Codeium Command ⭐  *************/
+/**
+ * Retrieves reviews for a specific professional with pagination and sorting options.
+ * 
+ * @param {Object} req - The request object containing parameters and query.
+ * @param {Object} req.params - The parameters object.
+ * @param {string} req.params.professionalID - The ID of the professional whose reviews are to be fetched.
+ * @param {Object} req.query - The query object containing pagination and sorting information.
+ * @param {number} [req.query.page=1] - The page number for pagination.
+ * @param {number} [req.query.limit=10] - The number of reviews per page.
+ * @param {string} [req.query.sort='desc'] - The sort order for reviews based on creation date ("asc" or "desc").
+ * @param {string} [req.query.filter='highest'] - The filter criteria (currently not used in logic).
+ * 
+ * @param {Object} res - The response object used to send back the desired HTTP response.
+ * 
+ * @returns {void} Responds with a JSON object containing success status, message, and list of reviews.
+ * On error, responds with a JSON object containing success status and error message.
+ */
+
+/******  5459dc2b-5525-4fce-97c9-395a6fc6383c  *******/  try {
+    // Get the rating filter from query params
+    const ratingFilter = parseFloat(req.query.ratting);
+    
+    // Define min and max rating for filtering
+    let minRating = 0;
+    let maxRating = 5;
+    
+    // If rating filter is provided, set the range (e.g., for 4, range is 3.1-4.0)
+    if (!isNaN(ratingFilter)) {
+      maxRating = ratingFilter;
+      minRating = maxRating - 0.9; // For range like 3.1 to 4.0
+    }
+
+    // Step 1: Aggregate reviews to calculate average ratings and total reviews
+    const professionalsWithRatings = await Review.aggregate([
+      {
+        $group: {
+          _id: "$professionalID", // Group reviews by professionalID
+          averageRating: { $avg: "$rating" }, // Calculate average rating
+          totalReviews: { $sum: 1 }, // Count total reviews for each professional
+        },
+      },
+      { 
+        $match: { 
+          averageRating: { 
+            $gte: minRating, 
+            $lte: maxRating 
+          } 
+        } 
+      },
+      { $sort: { averageRating: -1 } }, // Sort by rating descending
+    ]);
+
+    // Step 2: Extract professional IDs (which are actually userId values)
+    const professionalUserIDs = professionalsWithRatings.map(prof => new mongoose.Types.ObjectId(prof._id));
+
+    // Step 3: Fetch professional details using userId instead of _id
+    const professionals = await Professionalinfo.find(
+      { userId: { $in: professionalUserIDs } }, // Match userId, not _id
+      "userId profilePhoto businessName about address"
+    ).lean();
+
+    // Step 4: Combine review data with professional details
+    const result = professionalsWithRatings.map(professionalWithRating => {
+      const professionalInfo = professionals.find(
+        pro => pro.userId.toString() === professionalWithRating._id.toString()
+      );
+
+      return {
+        professionalID: professionalWithRating._id,
+        businessName: professionalInfo?.businessName || "Not Found",
+        about: professionalInfo?.about || "Not Found",
+        profilePhoto: professionalInfo?.profilePhoto || "Not Found",
+        address: professionalInfo?.address || "Not Found",
+        averageRating: professionalWithRating.averageRating.toFixed(2),
+        totalReviews: professionalWithRating.totalReviews,
+      };
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Top professionals fetched successfully.",
+      data: result,
+      // filterApplied: ratingFilter ? `${minRating.toFixed(1)} to ${maxRating.toFixed(1)}` : "None"
+    });
+  } catch (error) {
+    console.error("Error fetching top professionals:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error while fetching top professionals.",
+      error: error.message
+    });
+  }
+};
+
