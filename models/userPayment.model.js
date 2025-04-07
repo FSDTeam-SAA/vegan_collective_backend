@@ -60,6 +60,11 @@ const userPaymentSchema = new mongoose.Schema(
       type: String,
       default: null,
     },
+    shippingStatus: {
+      type: String,
+      enum: ['Pending', 'Shipped', 'Delivered'],
+      default: 'Pending',
+    },
   },
   {
     timestamps: true,
