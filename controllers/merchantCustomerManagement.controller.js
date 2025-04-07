@@ -1,5 +1,9 @@
 const MerchantCustomerManagement = require('../models/merchantCustomerManagement.model');
 const mongoose = require('mongoose');
+const Userpayment = require('../models/userPayment.model')
+const MerchantProducts = require('../models/merchantProducts.model')
+const Merchantinfo = require('../models/merchantInfo.model')
+
 
 // Create a new customer entry
 exports.createCustomer = async (req, res) => {
@@ -158,3 +162,59 @@ exports.deleteCustomer = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
+
+// customer order product  management
+exports.customerOrderProductData = async (req, res) => {
+  try {
+    const { userID, page = 1, limit = 10 } = req.query
+
+    if (!userID) {
+      return res
+        .status(400)
+        .json({ success: false, message: 'userID is required' })
+    }
+
+    // Fetch orders with pagination, sorted by createdAt descending
+    const orders = await Userpayment.find({ userID, sellerType: 'Merchant' })
+      .populate('productId') // Populate product details
+      .populate({ path: 'sellerID', model: 'Merchantinfo' }) // Populate seller details from Merchantinfo
+      .sort({ createdAt: -1 }) // Newest orders first
+      .skip((page - 1) * limit)
+      .limit(parseInt(limit))
+
+    if (!orders.length) {
+      return res
+        .status(404)
+        .json({ success: false, message: 'No orders found for this user.' })
+    }
+
+    // Generate Order Numbers dynamically
+    const formattedOrders = orders.map((order, index) => ({
+      ...order._doc,
+      orderNumber: `ORD-${String(index + 1).padStart(3, '0')}`, // ORD-001, ORD-002, etc.
+      shippingStatus: 'Pending', // Default to Pending
+    }))
+
+    // Pagination metadata
+    const totalOrders = await Userpayment.countDocuments({
+      userID,
+      sellerType: 'Merchant',
+    })
+    const totalPages = Math.ceil(totalOrders / limit)
+
+    res.status(200).json({
+      success: true,
+      message: 'Orders retrieved successfully',
+      data: formattedOrders,
+      pagination: {
+        currentPage: parseInt(page),
+        totalPages,
+        totalItems: totalOrders,
+        itemsPerPage: parseInt(limit),
+      },
+    })
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message })
+  }
+}
