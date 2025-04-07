@@ -39,6 +39,13 @@ unique: true,
 default: () => new mongoose.Types.ObjectId().toString(), // Generate a unique ID
 },
 
+meetings: [{
+  type: mongoose.Types.ObjectId,
+  ref: 'Meeting'
+}]
+
+
+
 },
 {
 timestamps: true,
