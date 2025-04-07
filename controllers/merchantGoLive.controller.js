@@ -74,6 +74,41 @@ exports.getAllEvents = async (req, res) => {
   }
 };
 
+// Get all events for a specific user with optional filters for type
+exports.getAllEventsByUser = async (req, res) => {
+  const { type, userID } = req.query;
+  try {
+    let filter = {};
+
+    if (userID) {
+      if (!mongoose.Types.ObjectId.isValid(userID)) {
+        return res
+          .status(400)
+          .json({ success: false, message: "Invalid user ID" });
+      }
+      // Assuming you have a way to associate users with events
+      // This might need adjustment based on your actual schema
+      //filter.attendees = userID; // or whatever field links users to events
+    }
+
+    let events = await Merchantgolive.find(filter);
+    const currentDate = new Date();
+
+    if (type === "upcoming") {
+      events = events.filter((event) => new Date(event.date) >= currentDate);
+    } else if (type === "past") {
+      events = events.filter((event) => new Date(event.date) < currentDate);
+    }
+
+    res.status(200).json({ success: true, events });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ success: false, message: "Server error", error: error.message });
+  }
+};
+
+
 // Get a single event by ID
 exports.getEventById = async (req, res) => {
   try {

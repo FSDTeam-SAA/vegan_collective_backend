@@ -8,7 +8,7 @@ const merchantGoLiveSchema = new mongoose.Schema(
      
     },
     eventTitle: {
-      type: String
+      type: String,
      
     },
     description: {
@@ -33,11 +33,19 @@ const merchantGoLiveSchema = new mongoose.Schema(
         return this.eventType === 'paid event';
       },
     },
+    eventId: { // Add this if you need a unique eventId
+      type: String,
+      unique: true,
+      default: () => new mongoose.Types.ObjectId().toString(), // Generate a unique ID
+    },
+    
   },
   {
     timestamps: true,
   }
 );
+
+
 
 const Merchantgolive = mongoose.model('Merchantgolive', merchantGoLiveSchema);
 module.exports = Merchantgolive;
