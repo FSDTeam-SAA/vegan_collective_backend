@@ -1,10 +1,35 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
 const meetingSchema = new mongoose.Schema({
-    zoomId: { type: String, required: true, unique: true },
-    meetingId: { type: String, required: true },
-    startUrls: { type: [String], default: [] },  // Ensure array type
-    joinUrls: { type: [String], default: [] }    // Ensure array type
+    eventTitle: {
+    type: String,
+    required: true,
+  },
+  startTime: {
+    type: Date,
+    required: true,
+  },
+  endTime: {
+    type: Date,
+    required: true,
+  },
+  meetLink: {
+    type: String,
+    required: true,
+  },
+  calendarLink: {
+    type: String,
+    required: true,
+  },
+  eventId: {
+    type: String,
+    required: true,
+    unique: true,
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now,
+  },
 });
 
-module.exports = mongoose.model('Meeting', meetingSchema);
+module.exports = mongoose.model("Meeting", meetingSchema);
