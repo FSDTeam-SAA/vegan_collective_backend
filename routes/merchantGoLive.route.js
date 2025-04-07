@@ -21,17 +21,5 @@ router.put('/merchantGoLive/:id', merchantGoLiveController.updateEvent);
 router.delete('/merchantGoLive/:id', merchantGoLiveController.deleteEvent);
 
 
-
-// Google Meet Integration Routes
-// Google OAuth Routes
-router.get('/auth/:merchantID', merchantGoLiveController.getAuthUrl);
-router.get('/auth/callback', merchantGoLiveController.handleAuthCallback); // Add this callback 
-router.post('/:merchantID/:_id/add-google-meet', merchantGoLiveController.addGoogleMeet);
-router.get('/meetings/:merchantID', merchantGoLiveController.getMerchantMeetings);
-
-
-
 module.exports = router;
 
-// // New route for creating Google Meet
-// router.post('/create-google-meet', merchantGoLiveController.createGoogleMeet);

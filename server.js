@@ -101,7 +101,7 @@ const userPaymentDetailsRoute = require("./routes/userPaymentDetails.route.js")
 
 const newsletterRoutes = require("./routes/newsletterRoutes");
 
-const googleMeetRoutes = require('./routes/meetRoutes.js');
+
 
 
 
@@ -110,10 +110,6 @@ const googleMeetRoutes = require('./routes/meetRoutes.js');
 // Static files
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Serve frontend
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'meet.html'));
-});
 
 
 //endpoints for professional
@@ -161,8 +157,7 @@ app.use("/api/v1", organizationFundraisingManagement);
 app.use("/api/v1", organizationReview); //ADNAN
 
 
-// API Routes
-app.use('/', require('./routes/meetRoutes'));
+
 
 //endpoints for user
 app.use("/api/v1", userProductWishlist);
@@ -207,8 +202,7 @@ app.use("/api/v1", newsletterRoutes);
 //event routes
 app.use("/api/v1", eventRoutes);
 
-//google meet routes
-app.use('/api/v1/google-meet', googleMeetRoutes);
+
 
 app.get("/api/v1/", (req, res) => {
   res.status(201).json({
