@@ -18,6 +18,12 @@ const merchantInfoSchema = new mongoose.Schema(
     address: {
       type: String,
     },
+    country:{
+      type: String,
+    },
+    state:{
+      type: String,
+    },
     about: {
       type: String,
     },
