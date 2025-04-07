@@ -2,49 +2,93 @@ const OrganizationUpdateAndNews = require("../models/organizationUpdateAndNews.m
 const upload = require("../utils/multerConfig");
 
 const createOrganizationUpdate = async (req, res) => {
-    try {
+  try {
       if (!req.file) {
-        return res.status(400).json({ success: false, message: "Image file is required" });
+          return res.status(400).json({ success: false, message: "Image file is required" });
       }
-  
+
       const { title, shortDescription, statement, organizationID } = req.body;
-  
-      // Force shortDescription to be a string (convert array to string if needed)
+
+      // Ensure shortDescription is always a string
       const formattedShortDescription = Array.isArray(shortDescription)
-        ? shortDescription.join(" ") // Merge into one string
-        : shortDescription;
-  
+          ? shortDescription.join(" ")
+          : shortDescription;
+
       const newUpdate = new OrganizationUpdateAndNews({
-        organizationID,
-        title,
-        image: req.file.path, // Cloudinary URL
-        shortDescription: formattedShortDescription, // Store as string
-        statement,
+          organizationID,
+          title,
+          image: req.file.path, // Cloudinary URL
+          shortDescription: formattedShortDescription,
+          statement,
+          likedBy: [] // Initialize likedBy as an empty array
       });
-  
+
       await newUpdate.save();
-  
+
       res.status(201).json({
-        success: true,
-        message: "Organization update created successfully",
-        data: newUpdate,
+          success: true,
+          message: "Organization update created successfully",
+          data: newUpdate,
       });
-    } catch (error) {
+  } catch (error) {
       console.error("Error creating organization update:", error);
       res.status(500).json({ success: false, message: "Internal server error" });
-    }
-  };
+  }
+};
+
 
   // Get all organization updates
-const getAllOrganizationUpdates = async (req, res) => {
+  const getAllOrganizationUpdates = async (req, res) => {
     try {
-      const updates = await OrganizationUpdateAndNews.find().populate("organizationID", "name"); // Populate organization name
-      res.status(200).json({ success: true, message: "Organization updates fetched successfully", data: updates });
+        const updates = await OrganizationUpdateAndNews.find()
+            .populate("organizationID", "_id") 
+            .populate("likedBy", "_id") // Populate likedBy field
+            .lean(); 
+  
+            const formattedUpdates = updates.map(update => ({
+                ...update,
+                organizationID: update.organizationID?._id || update.organizationID, 
+                likedBy: [],
+            }));
+  
+        res.status(200).json({ success: true, message: "Organization updates fetched successfully", data: formattedUpdates });
     } catch (error) {
-      console.error("Error fetching organization updates:", error);
-      res.status(500).json({ success: false, message: "Internal server error" });
+        console.error("Error fetching organization updates:", error);
+        res.status(500).json({ success: false, message: "Internal server error" });
     }
   };
+  
+  
+//get all organization updates by organizationID
+
+const getAllOrganizationUpdatesByOrganizationID = async (req, res) => {
+  try {
+      const { organizationID } = req.params;
+
+      if (!organizationID) {
+          return res.status(400).json({ success: false, message: "Organization ID is required" });
+      }
+
+      const updates = await OrganizationUpdateAndNews.find({ organizationID })
+          .populate("organizationID", "_id") 
+          .populate("likedBy", "_id") // Populate likedBy field
+          .lean(); 
+
+          const formattedUpdates = updates.map(update => ({
+            ...update,
+            organizationID: update.organizationID?._id || update.organizationID, 
+            likedBy: update.likedBy.map(user => user._id || user), 
+        }));
+
+      res.status(200).json({ success: true, message: "Organization updates fetched successfully", data: formattedUpdates });
+  } catch (error) {
+      console.error("Error fetching organization updates:", error);
+      res.status(500).json({ success: false, message: "Internal server error" });
+  }
+};
+
+
+
   
   // Get an organization update by ID
   const getOrganizationUpdateById = async (req, res) => {
@@ -53,13 +97,12 @@ const getAllOrganizationUpdates = async (req, res) => {
 
         // Fetch the organization update and populate the comments field
         const update = await OrganizationUpdateAndNews.findById(id)
-            .populate("organizationID", "name") // Populate organization details
             .populate({
                 path: "comments", // Populate the comments array
-                select: "userID comment", // Only include userID and comment fields
+                select: "userID comment createdAt", // Include createdAt from the comment
                 populate: {
                     path: "userID", // Populate the userID inside each comment
-                    select: "fullName", // Fetch fullName instead of just ID
+                    select: "fullName profilePhoto", // Fetch fullName and profilePhoto
                 },
             });
 
@@ -68,19 +111,22 @@ const getAllOrganizationUpdates = async (req, res) => {
         }
 
         // Transform the comments array into the correct structure
-        const transformedUpdate = {
-            ...update.toObject(), // Convert Mongoose document to a plain object
-            comments: update.comments.map((comment) => ({
-                userID: comment.userID._id, // Include userID
-                comment: comment.comment, // Include comment text
-            })),
-        };
+        const transformedComments = update.comments.map((comment) => ({
+            userID: comment.userID._id, // Include userID
+            fullName: comment.userID.fullName, // Include fullName
+            comment: comment.comment, // Include comment text
+            createdAt: comment.createdAt, // Include createdAt from the comment
+        }));
 
-        res.status(200).json({ success: true, message: "Organization update fetched successfully", data: transformedUpdate });
+        // Return only the comments array
+        res.status(200).json({ 
+            success: true, 
+            message: "Organization update fetched successfully", 
+            data: transformedComments 
+        });
     } catch (error) {
         console.error("Error fetching organization update by ID:", error);
         res.status(500).json({ success: false, message: "Internal server error" });
     }
 };
-
-module.exports = { createOrganizationUpdate, getAllOrganizationUpdates, getOrganizationUpdateById };
+module.exports = { createOrganizationUpdate, getAllOrganizationUpdates,getAllOrganizationUpdatesByOrganizationID, getOrganizationUpdateById };

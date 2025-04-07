@@ -74,40 +74,6 @@ const getAverageRating = async (req, res) => {
     }
 };
 
-// const getAllReviewsForSpecificOrganization = async (req, res) => {
-//     try {
-//         const { organizationID } = req.params;
-
-//         if (!organizationID) {
-//             return res.status(400).json({
-//                 success: false,
-//                 message: "organizationID is required",
-//             });
-//         }
-
-//         const reviews = await Organizationreview.find({ organizationID })
-//             .populate("userID", "fullName _id")
-//             .sort({ createdAt: -1 });
-
-//         return res.status(200).json({
-//             success: true,
-//             reviews: reviews.map(review => ({
-//                 userID: review.userID?._id,  
-//                 userName: review.userID?.fullName, 
-//                 rating: review.rating,
-//                 comment: review.comment,
-//                 createdAt: review.createdAt
-//             }))
-//         });
-
-//     } catch (error) {
-//         return res.status(500).json({
-//             success: false,
-//             message: error.message,
-//         });
-//     }
-// };
-
 const getAllReviewsForSpecificOrganization = async (req, res) => {
     try {
         const { organizationID } = req.params;
@@ -158,37 +124,83 @@ const getAllReviewsForSpecificOrganization = async (req, res) => {
     }
 };
 
-const getTopOrganizationBasedOnReview = async (req, res) => {
+// Function to get the top organization based on the average rating
+
+const getTopOrganizations = async (req, res) => {
     try {
+        const { limit = 10 } = req.query; // Default limit is 10
+
         const topOrganizations = await Organizationreview.aggregate([
             {
                 $group: {
-                    _id: "$organizationID", 
-                    avgRating: { $avg: "$rating" }, 
-                    totalReviews: { $sum: 1 } 
+                    _id: "$organizationID",
+                    avgRating: { $avg: "$rating" },
+                    totalReviews: { $sum: 1 }
                 }
             },
-            { $sort: { avgRating: -1 } }, 
-            { $limit: 10 } 
+            {
+                $match: {
+                    avgRating: { $gt: 0 } // Only include organizations with an average rating greater than 0
+                }
+            },
+            {
+                $sort: { avgRating: -1 } // Sort by average rating in descending order
+            },
+            {
+                $limit: parseInt(limit, 10) // Limit the number of results
+            },
+            {
+                $lookup: {
+                    from: "organizationinfos", // The collection to join with
+                    localField: "_id",
+                    foreignField: "userID", // Assuming organizationID in Organizationreview is the same as userID in Organizationinfo
+                    as: "organizationInfo"
+                }
+            },
+            {
+                $unwind: "$organizationInfo" // Unwind the joined organization info
+            },
+            {
+                $project: {
+                    organizationID: "$_id",
+                    avgRating: { $round: ["$avgRating", 2] }, // Round the average rating to 2 decimal places
+                    totalReviews: 1,
+                    organizationName: "$organizationInfo.organizationName",
+                    profilePhoto: "$organizationInfo.profilePhoto",
+                    address: "$organizationInfo.address",
+                    shortDescriptionOfOrganization: "$organizationInfo.shortDescriptionOfOrganization"
+                }
+            }
         ]);
+
+        if (topOrganizations.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: "No organizations found with reviews.",
+            });
+        }
 
         return res.status(200).json({
             success: true,
+            message: "Top organizations fetched successfully.",
             topOrganizations: topOrganizations.map(org => ({
-                organizationID: org._id,
-                avgRating: org.avgRating.toFixed(2), 
-                totalReviews: org.totalReviews
+                organizationID: org.organizationID,
+                avgRating: org.avgRating.toFixed(2), // Format the average rating to 2 decimal places
+                totalReviews: org.totalReviews,
+                organizationName: org.organizationName,
+                profilePhoto: org.profilePhoto,
+                address: org.address,
+                shortDescriptionOfOrganization: org.shortDescriptionOfOrganization
             }))
         });
 
     } catch (error) {
         return res.status(500).json({
             success: false,
-            message: error.message
+            message: "Internal Server Error: " + error.message,
         });
     }
 };
 
 
-
-module.exports = {createOrganizationReview, getAverageRating, getAllReviewsForSpecificOrganization, getTopOrganizationBasedOnReview};
+module.exports = {createOrganizationReview, getAverageRating, getAllReviewsForSpecificOrganization, getTopOrganizations};

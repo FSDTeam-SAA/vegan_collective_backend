@@ -50,10 +50,60 @@ exports.createProduct = async (req, res) => {
   }
 };
 
-// Get All Products with Pagination, Search, and Sorting
+// Get All Products with Pagination, Search, and Sorting for MerchantID
+// exports.getAllProducts = async (req, res) => {
+//   try {
+//     const { page = 1, limit = 10, search = "", sort = "asc", merchantID, category } = req.query;
+//     const query = {};
+
+//     // Filter by merchantID if provided
+//     if (merchantID) {
+//       query.merchantID = merchantID;
+//     }
+
+//     // Filter by category if provided
+//     if (category) {
+//       query.category = category; // Assuming your product schema has a `category` field
+//     }
+
+//     // Search by product name (case-insensitive)
+//     if (search) {
+//       query.productName = { $regex: search, $options: "i" };
+//     }
+
+//     // Sorting logic (ascending or descending)
+//     const sortOrder = sort === "desc" ? -1 : 1;
+
+//     // Get paginated products
+//     const products = await MerchantProducts.find(query)
+//       .sort({ price: sortOrder })
+//       .skip((page - 1) * limit)
+//       .limit(Number(limit));
+
+//     // Total items count
+//     const totalItems = await MerchantProducts.countDocuments(query);
+//     const totalPages = Math.ceil(totalItems / limit);
+
+//     // Ensure data is always an array of objects
+//     res.status(200).json({
+//       success: true,
+//       message: "Products fetched successfully",
+//       data: products.map((product) => ({ ...product.toObject() })), // Ensure each item is an object
+//       pagination: {
+//         currentPage: Number(page),
+//         totalPages,
+//         totalItems,
+//         itemsPerPage: Number(limit),
+//       },
+//     });
+//   } catch (error) {
+//     res.status(500).json({ success: false, message: error.message, data: [] });
+//   }
+// };
+
 exports.getAllProducts = async (req, res) => {
   try {
-    const { page = 1, limit = 10, search = "", sort = "asc", merchantID, category } = req.query;
+    const { page = 1, limit = 10, search = "", sort = "asc", merchantID, category, visibility = "all" } = req.query;
     const query = {};
 
     // Filter by merchantID if provided
@@ -70,6 +120,14 @@ exports.getAllProducts = async (req, res) => {
     if (search) {
       query.productName = { $regex: search, $options: "i" };
     }
+
+    // Visibility filter
+    if (visibility === "true") {
+      query.visibility = true;
+    } else if (visibility === "false") {
+      query.visibility = false;
+    }
+    // If visibility is "all", no filter is applied
 
     // Sorting logic (ascending or descending)
     const sortOrder = sort === "desc" ? -1 : 1;
@@ -209,3 +267,23 @@ exports.deleteProduct = async (req, res) => {
     res.status(500).json({ success: false, message: error.message, data: [] });
   }
 };
+
+// get product by merchantID 
+exports.getProductsByMerchant = async (req, res) => {
+  try {
+    const { merchantID } = req.query
+
+    if (!merchantID) {
+      return res.status(400).json({ message: 'Merchant ID is required' })
+    }
+
+    const products = await MerchantProducts.find({ merchantID })
+      .select('productName _id') // Selecting only productName and _id
+      .exec()
+
+    res.status(200).json({success: true, message: "Successfully get product and Id and Product Name"
+      ,data:products })
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message })
+  }
+}

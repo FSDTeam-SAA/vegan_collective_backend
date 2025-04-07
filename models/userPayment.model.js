@@ -31,6 +31,11 @@ const userPaymentSchema = new mongoose.Schema(
       ref: 'Professionalservices',
       default: null,
     },
+    organizationGoLiveID: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Organizationgolive',
+      default: null,
+    },
     serviceBookingTime: {
       type: String,
       default: null,
@@ -50,6 +55,15 @@ const userPaymentSchema = new mongoose.Schema(
       type: String,
       unique: true,
       default: null,
+    },
+    goLiveID: {
+      type: String,
+      default: null,
+    },
+    shippingStatus: {
+      type: String,
+      enum: ['Pending', 'Shipped', 'Delivered'],
+      default: 'Pending',
     },
   },
   {

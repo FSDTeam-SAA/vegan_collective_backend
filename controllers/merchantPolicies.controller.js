@@ -1,5 +1,5 @@
-const MerchantPolicy = require('../models/merchantPolicies.model');
-const User = require('../models/user.model');
+const MerchantPolicy = require("../models/merchantPolicies.model");
+const User = require("../models/user.model");
 
 // Create a new Merchant Policy
 exports.createPolicy = async (req, res) => {
@@ -11,7 +11,7 @@ exports.createPolicy = async (req, res) => {
     if (!merchantExists) {
       return res.status(400).json({
         success: false,
-        message: 'Invalid merchant ID',
+        message: "Invalid merchant ID",
       });
     }
 
@@ -20,13 +20,13 @@ exports.createPolicy = async (req, res) => {
 
     res.status(201).json({
       success: true,
-      message: 'Merchant policy created successfully',
+      message: "Merchant policy created successfully",
       data: policy,
     });
   } catch (error) {
     res.status(400).json({
       success: false,
-      message: error.message || 'Failed to create merchant policy',
+      message: error.message || "Failed to create merchant policy",
     });
   }
 };
@@ -34,17 +34,17 @@ exports.createPolicy = async (req, res) => {
 // Get all Merchant Policies
 exports.getAllPolicies = async (req, res) => {
   try {
-    const policies = await MerchantPolicy.find().populate('merchantID');
+    const policies = await MerchantPolicy.find().populate("merchantID");
 
     res.status(200).json({
       success: true,
-      message: 'Merchant policies retrieved successfully',
+      message: "Merchant policies retrieved successfully",
       data: policies,
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: error.message || 'Failed to retrieve merchant policies',
+      message: error.message || "Failed to retrieve merchant policies",
     });
   }
 };
@@ -53,27 +53,29 @@ exports.getAllPolicies = async (req, res) => {
 exports.getPolicyById = async (req, res) => {
   try {
     // Find the policy by ID and populate the 'merchantID' field
-    const policy = await MerchantPolicy.findById(req.params.id).populate('merchantID');
+    const policy = await MerchantPolicy.findById(req.params.id).populate(
+      "merchantID"
+    );
 
     // If no policy is found, return a 404 error
     if (!policy) {
       return res.status(404).json({
         success: false,
-        message: 'Policy not found',
+        message: "Policy not found",
       });
     }
 
     // Wrap the policy object in an array for the response
     res.status(200).json({
       success: true,
-      message: 'Merchant policy retrieved successfully',
+      message: "Merchant policy retrieved successfully",
       data: [policy], // Ensure the response is always an array
     });
   } catch (error) {
     // Handle any errors that occur during the process
     res.status(500).json({
       success: false,
-      message: error.message || 'Failed to retrieve merchant policy',
+      message: error.message || "Failed to retrieve merchant policy",
     });
   }
 };
@@ -88,7 +90,7 @@ exports.updatePolicy = async (req, res) => {
       if (!merchantExists) {
         return res.status(400).json({
           success: false,
-          message: 'Invalid merchant ID',
+          message: "Invalid merchant ID",
         });
       }
     }
@@ -102,19 +104,19 @@ exports.updatePolicy = async (req, res) => {
     if (!policy) {
       return res.status(404).json({
         success: false,
-        message: 'Policy not found',
+        message: "Policy not found",
       });
     }
 
     res.status(200).json({
       success: true,
-      message: 'Merchant policy updated successfully',
+      message: "Merchant policy updated successfully",
       data: policy,
     });
   } catch (error) {
     res.status(400).json({
       success: false,
-      message: error.message || 'Failed to update merchant policy',
+      message: error.message || "Failed to update merchant policy",
     });
   }
 };
@@ -126,18 +128,18 @@ exports.deletePolicy = async (req, res) => {
     if (!policy) {
       return res.status(404).json({
         success: false,
-        message: 'Policy not found',
+        message: "Policy not found",
       });
     }
 
     res.status(200).json({
       success: true,
-      message: 'Merchant policy deleted successfully',
+      message: "Merchant policy deleted successfully",
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: error.message || 'Failed to delete merchant policy',
+      message: error.message || "Failed to delete merchant policy",
     });
   }
 };

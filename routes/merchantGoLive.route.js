@@ -8,6 +8,9 @@ router.post('/merchantGoLive', merchantGoLiveController.createEvent);
 // Get all events
 router.get('/merchantGoLive', merchantGoLiveController.getAllEvents);
 
+// Get all events by user ID
+router.get('/usermerchantGoLive', merchantGoLiveController.getAllEventsByUser); // Add this line
+
 // Get event by ID
 router.get('/merchantGoLive/:id', merchantGoLiveController.getEventById);
 
@@ -17,4 +20,6 @@ router.put('/merchantGoLive/:id', merchantGoLiveController.updateEvent);
 // Delete event by ID
 router.delete('/merchantGoLive/:id', merchantGoLiveController.deleteEvent);
 
+
 module.exports = router;
+

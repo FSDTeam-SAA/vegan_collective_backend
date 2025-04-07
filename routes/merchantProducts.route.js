@@ -22,4 +22,7 @@ router.put("/merchantProduct/:id", upload.single("productImage"), merchantProduc
 // Delete a product
 router.delete("/merchantProduct/:id", merchantProductsController.deleteProduct);
 
+// get product by merchantId
+router.get('/products', merchantProductsController.getProductsByMerchant) // Define the route
+
 module.exports = router;

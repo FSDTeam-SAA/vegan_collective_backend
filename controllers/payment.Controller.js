@@ -3,7 +3,7 @@ const Professionalinfo = require('../models/professionalInfo.model')
 const Organizationinfo = require('../models/organizationInfo.model')
 const User = require('../models/user.model')
 const Userpayment = require('../models/userPayment.model')
-const ProfessionalServices = require('../models/professionalServices.model');
+const ProfessionalServices = require("../models/professionalServices.model");
 const nodemailer = require('nodemailer');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY)
 
@@ -63,166 +63,6 @@ const savePaymentMethod = async (req, res) => {
   }
 }
 
-// const purchaseMethod = async (req, res) => {
-//   try {
-//     const {
-//       userID,
-//       amount,
-//       merchantID,
-//       professionalID,
-//       organizationID,
-//       productId,
-//       professionalServicesId,
-//       serviceBookingTime,
-//     } = req.body
-
-//     // Validate required fields
-//     if (!userID || !amount) {
-//       return res
-//         .status(400)
-//         .json({ success: false, message: 'Missing required fields' })
-//     }
-
-//     // Find user
-//     const user = await User.findOne({ _id: userID })
-
-//     if (!user) {
-//       return res.status(404).json({ success: false, message: 'User not found' })
-//     }
-
-//     // Check user payment method
-//     const userPayment = await Userpayment.findOne({ userID })
-//     if (!userPayment) {
-//       return res.status(400).json({
-//         success: false,
-//         message: 'User does not have a valid payment method',
-//       })
-//     }
-
-//     const { customerId, paymentMethodId } = userPayment
-
-//     console.log("customer payment info____",customerId, paymentMethodId)
-//     // Check if payment method is already attached to the customer
-//     const paymentMethod = await stripe.paymentMethods
-//       .retrieve(paymentMethodId)
-//       .catch(() => null)
-
-//     if (!paymentMethod || paymentMethod.customer !== customerId) {
-//       // Reattach the payment method if needed
-//       await stripe.paymentMethods.attach(paymentMethodId, {
-//         customer: customerId,
-//       })
-
-//       // Set the default payment method for the customer
-//       await stripe.customers.update(customerId, {
-//         invoice_settings: { default_payment_method: paymentMethodId },
-//       })
-//     }
-
-//     // Determine seller type and ID
-//     let seller, sellerID, sellerType, sellerStripeAccountId
-
-//     if (merchantID) {
-//       seller = await Merchantinfo.findById(merchantID)
-//       sellerType = 'Merchant'
-//     } else if (professionalID) {
-//       console.log("professionalID____", professionalID)
-//       seller = await Professionalinfo.findOne({userId:professionalID})
-//       sellerType = 'Professional'
-//     } else if (organizationID) {
-//       seller = await Organizationinfo.findOne(organizationID)
-//       sellerType = 'Organization'
-//     } else {
-//       return res
-//         .status(400)
-//         .json({ success: false, message: 'No valid seller ID provided' })
-//     }
-
-//     // Validate seller existence
-//     if (!seller) {
-//       return res
-//         .status(404)
-//         .json({ success: false, message: `${sellerType} not found` })
-//     }
-
-//     sellerID = seller._id
-//     sellerStripeAccountId = seller.stripeAccountId
-
-//     if (!sellerStripeAccountId) {
-//       return res.status(400).json({
-//         success: false,
-//         message: `${sellerType} does not have a connected Stripe account`,
-//       })
-//     }
-
-//     // Charge the customer
-//     const paymentIntent = await chargeCustomer(
-//       customerId,
-//       paymentMethodId,
-//       amount
-//     )
-//     console.log(paymentIntent, 'PaymentIntent created')
-
-//     if (paymentIntent.status === 'succeeded') {
-//       const vendorAmount = Math.round(amount * 0.9 * 100) // Vendor gets 90%
-
-//       // Transfer money to the seller
-//       const transfer = await stripe.transfers.create({
-//         amount: vendorAmount,
-//         currency: 'usd',
-//         destination: sellerStripeAccountId,
-//         transfer_group: `ORDER_${paymentIntent.id}`,
-//       })
-
-//       // Validate service booking time
-//       // const bookingTime = serviceBookingTime
-//       //   ? new Date(serviceBookingTime)
-//       //   : null
-//       // if (bookingTime && isNaN(bookingTime.getTime())) {
-//       //   return res.status(400).json({
-//       //     success: false,
-//       //     message: 'Invalid service booking time format',
-//       //   })
-//       // }
-
-//       // Save transaction record
-//       const newPaymentRecord = new Userpayment({
-//         userID,
-//         customerId,
-//         paymentMethodId,
-//         sellerID,
-//         sellerType,
-//         sellerStripeAccountId,
-//         amount,
-//         productId: productId || [],
-//         professionalServicesId: professionalServicesId || null,
-//         serviceBookingTime: serviceBookingTime,
-//       })
-//       await newPaymentRecord.save()
-
-//       return res.status(200).json({
-//         success: true,
-//         message: 'Payment processed and transferred successfully',
-//         paymentIntentId: paymentIntent.id,
-//         transferId: transfer.id,
-//         amountReceived: paymentIntent.amount_received,
-//         transferredAmount: vendorAmount / 100,
-//         purchasedProducts: productId,
-//         bookedService: professionalServicesId,
-//         bookingTime: serviceBookingTime,
-//       })
-//     } else {
-//       return res.status(400).json({ success: false, message: 'Payment failed' })
-//     }
-//   } catch (error) {
-//     console.error('Error processing payment:', error)
-//     return res.status(500).json({
-//       success: false,
-//       message: 'Payment processing failed',
-//       details: error.message,
-//     })
-//   }
-// }
 
 const purchaseMethod = async (req, res) => {
   try {
@@ -235,6 +75,8 @@ const purchaseMethod = async (req, res) => {
       productId,
       professionalServicesId,
       serviceBookingTime,
+      goLiveID,
+      organizationGoLiveID,
     } = req.body
 
     // Validate required fields
@@ -262,7 +104,7 @@ const purchaseMethod = async (req, res) => {
 
     const { customerId, paymentMethodId } = userPayment
 
-    console.log("customer payment info____",customerId, paymentMethodId)
+    // console.log("customer payment info____",customerId, paymentMethodId)
     // Check if payment method is already attached to the customer
     const paymentMethod = await stripe.paymentMethods
       .retrieve(paymentMethodId)
@@ -291,9 +133,10 @@ const purchaseMethod = async (req, res) => {
       seller = await Professionalinfo.findOne({userId:professionalID})
       sellerType = 'Professional'
     } else if (organizationID) {
-      seller = await Organizationinfo.findOne(organizationID)
+      seller = await Organizationinfo.findOne({ userID:organizationID })
       sellerType = 'Organization'
-    } else {
+    } 
+    else {
       return res
         .status(400)
         .json({ success: false, message: 'No valid seller ID provided' })
@@ -337,7 +180,7 @@ const purchaseMethod = async (req, res) => {
       paymentMethodId,
       amount
     )
-    console.log(paymentIntent, 'PaymentIntent created')
+    // console.log(paymentIntent, 'PaymentIntent created')
 
     if (paymentIntent.status === 'succeeded') {
       const vendorAmount = Math.round(amount * 0.9 * 100) // Vendor gets 90%
@@ -362,6 +205,8 @@ const purchaseMethod = async (req, res) => {
         productId: productId || [],
         professionalServicesId: professionalServicesId || null,
         serviceBookingTime: serviceBookingTime,
+        goLiveID,
+        organizationGoLiveID,
       })
       await newPaymentRecord.save()
 
@@ -380,7 +225,7 @@ const purchaseMethod = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Payment failed' })
     }
   } catch (error) {
-    console.error('Error processing payment:', error)
+    // console.error('Error processing payment:', error)
     return res.status(500).json({
       success: false,
       message: 'Payment processing failed',
@@ -441,28 +286,6 @@ const removePaymentMethod = async (req, res) => {
   }
 }
 
-const webhookController = async (req, res) => {
-  let event
-  try {
-    // Verify webhook signature
-    event = stripe.webhooks.constructEvent(
-      req.body,
-      req.headers['stripe-signature'],
-      process.env.STRIPE_WEBHOOK_SECRET
-    )
-  } catch (err) {
-    return res.status(400).send(`Webhook Error: ${err.message}`)
-  }
-
-  // Handle different event types
-  if (event.type === 'payment_intent.succeeded') {
-    const paymentIntent = event.data.object // PaymentIntent object
-    console.log('💰 Payment succeeded:', paymentIntent)
-  }
-
-  // Acknowledge receipt of the event
-  res.status(200).send()
-}
 
 // Email transporter configuration
 const transporter = nodemailer.createTransport({
@@ -660,6 +483,7 @@ const getCalendarData = async (req, res) => {
         title: booking.professionalServicesId.serviceName, // Service name as the title
         datetime: serviceDate.toISOString(), // Convert date to ISO string
         type: "booking", // Static type for all events
+        serviceBookingTime: booking.serviceBookingTime, // Include the service booking time
       };
     });
 
@@ -679,21 +503,114 @@ const getCalendarData = async (req, res) => {
 };
 
 
+const getProfessionalCalendarData = async (req, res) => {
+  try {
+    const { professionalId } = req.params; // Get professionalId from URL parameters
+    const { month, year } = req.query; // Get month and year from query parameters
 
+    if (!professionalId) {
+      return res.status(400).json({ success: false, message: 'Professional ID is required' });
+    }
 
+    // Validate month and year
+    if (!month || !year) {
+      return res.status(400).json({ success: false, message: 'Month and year are required' });
+    }
 
+    // Find all services provided by the professional
+    const professionalServices = await Professionalservices.find({ userID: professionalId });
 
+    if (!professionalServices.length) {
+      return res.status(200).json({
+        success: true,
+        message: 'No services found for this professional',
+        calendarData: [], // Return empty array
+      });
+    }
 
+    // Extract service IDs from the professional services
+    const serviceIds = professionalServices.map(service => service._id);
 
+    // Find all payments (bookings) associated with these services
+    const bookings = await Userpayment.find({ professionalServicesId: { $in: serviceIds } }).populate('professionalServicesId');
 
+    if (!bookings.length) {
+      return res.status(200).json({
+        success: true,
+        message: 'No bookings found for these services',
+        calendarData: [], // Return empty array
+      });
+    }
+
+    // Filter bookings by month and year
+    const filteredBookings = bookings.filter((booking) => {
+      if (!booking.professionalServicesId) return false; // Skip bookings with missing services
+
+      const serviceDate = new Date(booking.professionalServicesId.date);
+      const serviceMonth = serviceDate.getMonth() + 1; // getMonth() returns 0-11, so add 1
+      const serviceYear = serviceDate.getFullYear();
+
+      // Check if the booking matches the provided month and year
+      return serviceMonth === parseInt(month) && serviceYear === parseInt(year);
+    });
+
+    // Format response for calendar data
+    const calendarData = filteredBookings.map((booking, index) => {
+      const serviceDate = new Date(booking.professionalServicesId.date);
+
+      return {
+        id: (index + 1).toString(), // Generate a unique ID for each calendar event
+        title: booking.professionalServicesId.serviceName, // Service name as the title
+        datetime: serviceDate.toISOString(), // Convert date to ISO string
+        type: "booking", // Static type for all events
+        serviceBookingTime: booking.serviceBookingTime, // Include the service booking time
+      };
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: 'Professional calendar data retrieved successfully',
+      calendarData, // Will be an empty array if no bookings match
+    });
+  } catch (error) {
+    console.error('Error fetching professional calendar data:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to retrieve professional calendar data',
+      details: error.message,
+    });
+  }
+};
+
+// check user payment method save or not
+const checkPaymentMethodAddOrNot = async (req, res) => {
+    try {
+        const { userId } = req.params;
+
+        // Find user record
+        const user = await User.findById(userId);
+
+        if (!user) {
+            return res.status(404).json({ success: false, message: 'User not found' });
+        }
+
+        res.status(200).json({ 
+            success: true, 
+            message: user.paymentAdded ? 'Payment method exists' : 'No payment method found', 
+            paymentAdded: user.paymentAdded 
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'Internal server error', error: error.message });
+    }
+}
 
 module.exports = {
   savePaymentMethod,
   purchaseMethod,
-  webhookController,
   removePaymentMethod,
   confirmBooking,
   getBookingDetailsByUserID,
   getCalendarData,
-  
+  getProfessionalCalendarData,
+  checkPaymentMethodAddOrNot,
 }

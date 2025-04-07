@@ -13,7 +13,7 @@ router.put("/merchant/uploadImages", uploadMerchantImages);
 router.get("/merchant", merchantInfoController.getAllMerchantInfo);
 
 // Get a single merchant info by ID
-router.get("/merchant/:id", merchantInfoController.getMerchantInfoByMerchantID);
+router.get("/merchant/:userID", merchantInfoController.getMerchantInfoByMerchantID);
 
 // Update a merchant info by ID
 router.put("/merchant/:id", merchantInfoController.updateMerchantInfo);
@@ -27,5 +27,13 @@ router.post('/stripe/account-id', merchantInfoController.addAccountIdController)
 router.post('/remove/account-id', merchantInfoController.removeAccountIdController)
 
 router.get('/checkAccountId/:userID', merchantInfoController.checkAccountId)
+
+// top merchant
+router.get('/top-merchants', merchantInfoController.getTopMerchants)
+
+router.get(
+  '/top-merchants/byReferrals',
+  merchantInfoController.getTopMerchantsByReferral
+)
 
 module.exports = router;

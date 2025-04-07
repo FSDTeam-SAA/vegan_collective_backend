@@ -16,6 +16,15 @@ exports.addReview = async (req, res) => {
       });
     }
 
+    // Check if the user has already reviewed the professional
+    const existingReview = await Review.findOne({ userID, professionalID });
+    if (existingReview) {
+      return res.status(400).json({
+        success: false,
+        message: "You have already reviewed this professional.",
+      });
+    }
+
     // Create a new review
     const newReview = new Review({ userID, professionalID, rating, comment });
     await newReview.save();
@@ -52,10 +61,32 @@ exports.getAllReviews = async (req, res) => {
     // Fetch all reviews
     const reviews = await Review.find();
 
+    // Calculate total reviews for each professional
+    const professionalReviews = reviews.reduce((acc, review) => {
+      if (!acc[review.professionalID]) {
+        acc[review.professionalID] = {
+          totalReviews: 0,
+          reviews: [],
+        };
+      }
+      acc[review.professionalID].totalReviews += 1;
+      acc[review.professionalID].reviews.push(review);
+      return acc;
+    }, {});
+
+    // Format the response
+    const response = Object.keys(professionalReviews).map((professionalID) => {
+      return {
+        professionalID,
+        totalReviews: professionalReviews[professionalID].totalReviews,
+        reviews: professionalReviews[professionalID].reviews,
+      };
+    });
+
     return res.status(200).json({
       success: true,
       message: "Reviews fetched successfully.",
-      data: reviews,
+      data: response,
     });
   } catch (error) {
     console.error(error);
@@ -66,7 +97,7 @@ exports.getAllReviews = async (req, res) => {
   }
 };
 
-//get all reviews of a professional ID with pagination and filtering by Highest rating, lowest rating and most relevant , most recent
+
 //get all reviews of a professional ID with pagination and filtering by Highest rating, lowest rating and most relevant , most recent
 exports.getReviewsOfProfessional = async (req, res) => {
   try {
@@ -76,6 +107,7 @@ exports.getReviewsOfProfessional = async (req, res) => {
     let query = { professionalID };
     let sortObj = {};
 
+    // Define sorting logic based on the filter
     if (filter === 'highest') {
       sortObj = { rating: -1 };
     } else if (filter === 'lowest') {
@@ -83,35 +115,43 @@ exports.getReviewsOfProfessional = async (req, res) => {
     } else if (filter === 'mostRecent') {
       sortObj = { createdAt: -1 };
     } else if (filter === 'mostRelevant') {
-      // You can implement your own logic for most relevant reviews
-      // For example, you can sort by rating and then by createdAt
+      // Custom logic for most relevant reviews
       sortObj = { rating: -1, createdAt: -1 };
     }
 
+    // Fetch reviews with pagination and sorting
     const reviews = await Review.find(query)
       .sort(sortObj)
       .skip((page - 1) * limit)
       .limit(Number(limit))
-      .populate('userID', 'fullName'); // Populate the userID field with the fullName field
+      .populate('userID', 'fullName'); // Populate user details
 
+    // Calculate total reviews for the professional
     const totalReviews = await Review.countDocuments(query);
+
+    // Calculate total pages for pagination
     const totalPages = Math.ceil(totalReviews / limit);
 
+    // Pagination metadata
     const pagination = {
-      currentPage: page,
+      currentPage: Number(page),
       totalPages: totalPages,
       totalItems: totalReviews,
-      itemsPerPage: limit,
+      itemsPerPage: Number(limit),
     };
 
+    // Return response with reviews, pagination, and total reviews
     return res.status(200).json({
       success: true,
       message: "Reviews fetched successfully.",
-      data: reviews.map(review => ({
-        ...review.toObject(),
-        userID: review.userID._id,
-        fullName: review.userID.fullName,
-      })),
+      data: {
+        totalReviews, // Add total reviews for the professional
+        reviews: reviews.map(review => ({
+          ...review.toObject(),
+          userID: review.userID._id,
+          fullName: review.userID.fullName,
+        })),
+      },
       pagination,
     });
   } catch (error) {
@@ -130,26 +170,7 @@ exports.getReviewsOfProfessional = async (req, res) => {
 
 
 exports.getTopProfessionals = async (req, res) => {
-/*************  ✨ Codeium Command ⭐  *************/
-/**
- * Retrieves reviews for a specific professional with pagination and sorting options.
- * 
- * @param {Object} req - The request object containing parameters and query.
- * @param {Object} req.params - The parameters object.
- * @param {string} req.params.professionalID - The ID of the professional whose reviews are to be fetched.
- * @param {Object} req.query - The query object containing pagination and sorting information.
- * @param {number} [req.query.page=1] - The page number for pagination.
- * @param {number} [req.query.limit=10] - The number of reviews per page.
- * @param {string} [req.query.sort='desc'] - The sort order for reviews based on creation date ("asc" or "desc").
- * @param {string} [req.query.filter='highest'] - The filter criteria (currently not used in logic).
- * 
- * @param {Object} res - The response object used to send back the desired HTTP response.
- * 
- * @returns {void} Responds with a JSON object containing success status, message, and list of reviews.
- * On error, responds with a JSON object containing success status and error message.
- */
-
-/******  5459dc2b-5525-4fce-97c9-395a6fc6383c  *******/  try {
+  try {
     // Get the rating filter from query params
     const ratingFilter = parseFloat(req.query.ratting);
     
@@ -181,6 +202,7 @@ exports.getTopProfessionals = async (req, res) => {
         } 
       },
       { $sort: { averageRating: -1 } }, // Sort by rating descending
+      { $limit: 6 } // Limit to top 6 professionals
     ]);
 
     // Step 2: Extract professional IDs (which are actually userId values)
