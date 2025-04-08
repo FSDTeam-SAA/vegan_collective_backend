@@ -71,6 +71,12 @@ const userSchema = new mongoose.Schema(
     profilePhoto: {
       type: String,
     },
+    grandEmail:{
+      type: String,
+    },
+    grandId:{
+      type: String,
+    },
   },
   {
     timestamps: true,
