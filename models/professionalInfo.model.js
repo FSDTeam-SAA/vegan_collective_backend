@@ -29,6 +29,9 @@ const professionalInfoSchema = new mongoose.Schema(
     state:{
       type: String,
     },
+    city:{
+      type: String,
+    },
     about: {
       type: String,
     },

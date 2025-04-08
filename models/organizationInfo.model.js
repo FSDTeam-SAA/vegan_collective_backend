@@ -20,6 +20,9 @@ const organizationInfoSchema = new mongoose.Schema(
     state:{
       type: String,
     },
+    city:{
+      type: String,
+    },
     missionStatement: {
       type: String,
     },

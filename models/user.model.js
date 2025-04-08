@@ -27,6 +27,9 @@ const userSchema = new mongoose.Schema(
     state:{
       type: String,
     },
+    city:{
+      type: String,
+    },
     accountType: {
       type: String,
       enum: ['merchant', 'professional', 'organization'],
