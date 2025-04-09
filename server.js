@@ -5,14 +5,14 @@ const cookieParser = require("cookie-parser");
 const cors = require("cors");
 const authenticateToken = require("./middleware/auth.middleware");
 const refferRoutes = require("./routes/refferRoutes");
-const session = require('express-session');
-const passport = require('passport');
+const session = require("express-session");
+const passport = require("passport");
 const smsRoutes = require("./routes/smsRoutes.js");
 const zoomRoutes = require("./routes/zoomRoutes");
 const organizationVolunteerRoutes = require("./routes/organizationVolunteer.route.js");
-const eventRoutes = require('./routes/eventRoutes.js');
-const merchantBookingRoutes = require('./routes/merchantBooking.route.js');
-const path = require('path');
+const eventRoutes = require("./routes/eventRoutes.js");
+const merchantBookingRoutes = require("./routes/merchantBooking.route.js");
+const path = require("path");
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -21,10 +21,10 @@ const PORT = process.env.PORT || 3001;
 app.use(cookieParser());
 app.use(express.json());
 app.use(cors({ origin: "*" }));
-app.use(session({ secret: 'cats', resave: false, saveUninitialized: true }));
+app.use(session({ secret: "cats", resave: false, saveUninitialized: true }));
 app.use(passport.initialize());
 app.use(passport.session());
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, "public")));
 
 // Existing routes
 const userRoute = require("./routes/user.routes.js");
@@ -78,8 +78,11 @@ const newsletterRoutes = require("./routes/newsletterRoutes");
 
 // New Google Meet routes
 const meetRoutes = require("./routes/meetRoutes");
+const calendarRoutes = require("./routes/calendar.Routes.js");
 
 // Route handlers
+app.use("/api/v1", meetRoutes);
+app.use("/api/v1", calendarRoutes);
 app.use("/api/v1", professionalBooking);
 app.use("/api/v1", professionalEvent);
 app.use("/api/v1", professionalFAQ);
@@ -100,10 +103,10 @@ app.use("/api/v1", merchantCustomerManagement);
 app.use("/api/v1", merchantSupport);
 app.use("/api/v1", merchantGoLive);
 app.use("/api/v1", merchantPolicies);
-app.use('/api/v1', merchantStripe);
-app.use('/api/v1', merchantBookingRoutes);
-app.use('/api/v1', merchantGraph);
-app.use('/api/v1', storeReviewForMerchant);
+app.use("/api/v1", merchantStripe);
+app.use("/api/v1", merchantBookingRoutes);
+app.use("/api/v1", merchantGraph);
+app.use("/api/v1", storeReviewForMerchant);
 
 app.use("/api/v1", organizationInfo);
 app.use("/api/v1", organizationUpdateAndNews);
@@ -123,7 +126,7 @@ app.use("/api/v1", userGoLive);
 
 app.use("/api/v1", founderVendorManagement);
 app.use("/api/v1", founderVerificationManagement);
-app.use('/api/v1', userPaymentDetailsRoute);
+app.use("/api/v1", userPaymentDetailsRoute);
 app.use("/api/v1", userRoute);
 
 // Global routes
@@ -131,8 +134,8 @@ app.use("/api/v1/auth/zoom", zoomRoutes);
 app.use("/api/v1", refferRoutes);
 app.use("/api/v1/sms", smsRoutes);
 app.use("/api/v1/payment", paymentRoute);
-app.use('/api/v1/payment', checkUserPaymentRoute);
-app.use('/api/v1', googleAuthRoute);
+app.use("/api/v1/payment", checkUserPaymentRoute);
+app.use("/api/v1", googleAuthRoute);
 app.use("/api/v1", organizationVolunteerRoutes);
 app.use("/api/v1", newsletterRoutes);
 app.use("/api/v1", eventRoutes);
@@ -140,23 +143,22 @@ app.use("/api/v1", eventRoutes);
 // Google Meet routes - prefixed with /api/v1 to match your structure
 // app.use("/api/v1/meet", meetRoutes);
 // Handle auth callback separately if needed
-app.use('/api/v1/auth/google/callback', require('./routes/meetRoutes'));
+app.use("/api/v1/auth/google/callback", require("./routes/meetRoutes"));
 
 // API Routes
-app.use('/', require('./routes/meetRoutes')); // All API routes prefixed with /api
+app.use("/", require("./routes/meetRoutes")); // All API routes prefixed with /api
 
 // Static files
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, "public")));
 
 // Serve frontend
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'meet.html'));
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "meet.html"));
 });
 
-
 // Root route
-app.get('/', (req, res) => {
-  res.send('Vegan Collective Server with Zoom and Google Meet Integration');
+app.get("/", (req, res) => {
+  res.send("Vegan Collective Server with Zoom and Google Meet Integration");
 });
 
 app.get("/api/v1/", (req, res) => {
@@ -168,28 +170,17 @@ app.get("/api/v1/", (req, res) => {
 
 // Error handling middleware
 app.use((err, req, res, next) => {
-  console.error('Global error handler:', err);
-  res.status(500).json({ 
+  console.error("Global error handler:", err);
+  res.status(500).json({
     success: false,
-    error: err.message || 'Internal Server Error'
+    error: err.message || "Internal Server Error",
   });
 });
 
 app.listen(PORT, async () => {
   await dbConnection();
   console.log(`Server is running at http://localhost:${PORT}/api/v1`);
-  
 });
-
-
-
-
-
-
-
-
-
-
 
 // const express = require("express");
 // const dbConnection = require("./dbConfig/dbConnection");
@@ -210,7 +201,6 @@ app.listen(PORT, async () => {
 
 // const path = require('path'); // Add this
 
-
 // require('dotenv').config();
 // console.log('ZOOM_API_KEY:', process.env.ZOOM_API_KEY);
 // console.log('ZOOM_API_SECRET:', process.env.ZOOM_API_SECRET);
@@ -219,15 +209,12 @@ app.listen(PORT, async () => {
 // const app = express();
 // const PORT = process.env.PORT || 3001;
 
-
-
 // app.use(cookieParser());
 // app.use(express.json());
 // app.use(cors({ origin: "*" }));
 // app.use(session({ secret: 'cats', resave: false, saveUninitialized: true }))
 // app.use(passport.initialize())
 // app.use(passport.session())
-
 
 // //routes for user
 // const userRoute = require("./routes/user.routes.js");
@@ -248,8 +235,6 @@ app.listen(PORT, async () => {
 // const professionalInfo = require("./routes/professionalInfo.route.js");
 
 // const getProfessionalGraph = require("./routes/professionalGraph.route.js"); //ADNAN
-
-
 
 // //routes for merchant
 // const merchantInfo = require("./routes/merchantInfo.route.js");
@@ -294,16 +279,8 @@ app.listen(PORT, async () => {
 
 // const newsletterRoutes = require("./routes/newsletterRoutes");
 
-
-
-
-
-
-
 // // Static files
 // app.use(express.static(path.join(__dirname, 'public')));
-
-
 
 // //endpoints for professional
 // app.use("/api/v1", professionalBooking);
@@ -349,9 +326,6 @@ app.listen(PORT, async () => {
 
 // app.use("/api/v1", organizationReview); //ADNAN
 
-
-
-
 // //endpoints for user
 // app.use("/api/v1", userProductWishlist);
 // app.use("/api/v1", userProfile);
@@ -390,12 +364,8 @@ app.listen(PORT, async () => {
 // //newsletter routes
 // app.use("/api/v1", newsletterRoutes);
 
-
-
 // //event routes
 // app.use("/api/v1", eventRoutes);
-
-
 
 // app.get("/api/v1/", (req, res) => {
 //   res.status(201).json({
