@@ -5,6 +5,8 @@ const User = require("../models/user.model"); // Import your User model
 
 router.get("/nylas/auth", (req, res) => {
   const email = req.query.email; // Extract userId from query parameters
+  const redirectTo = req.query.redirectTo; // Extract redirectTo from query parameters
+  const userId = req.query.userId; // Extract userId from query parameters
 
   if (!email) {
     return res.status(400).json({ error: "email is required" });
@@ -12,15 +14,20 @@ router.get("/nylas/auth", (req, res) => {
 
   const authUrl = nylas.auth.urlForOAuth2({
     clientId: nylasConfig.clientId,
-    redirectUri: nylasConfig.redirectUri,
+    redirectUri: `${process.env.BACKEND_URL}/api/oauth/exchange`,
     loginHint: email, // Pass the userId as a login hint
+    state: `redirectTo=${redirectTo}&userId=${userId}`, // Pass the redirectTo parameter in the state
   });
 
   res.redirect(authUrl); // Redirect the user to the Nylas authentication URL
 });
 
 router.get("/oauth/exchange", (req, res) => {
-  const { code } = req.query; // Extract code and userId from query parameters
+  const { code, state } = req.query; // Extract code and userId from query parameters\
+
+  const userId = state.split("&")[1].split("=")[1]; // Extract the userId from the state parameter
+
+  const redirectToUrl = state.split("&")[0].split("=")[1]; // Extract the redirectTo URL from the state parameter
 
   if (!code) {
     return res.status(400).json({ error: "code are required" });
@@ -36,7 +43,7 @@ router.get("/oauth/exchange", (req, res) => {
       // Save the access token and userId to your database here
       const { grantId, email } = response;
 
-      const user = User.findOne({ email: email });
+      const user = User.findOne({ _id: userId });
       if (!user) {
         return res.status(404).json({
           success: false,
@@ -55,10 +62,7 @@ router.get("/oauth/exchange", (req, res) => {
 
       // save the grantId and email to grantEmail on User model
 
-      res.json({
-        message: "Calender connected successfully",
-        accessToken: response.accessToken,
-      });
+      res.redirect(`${process.env.FONTEND_URL}/${redirectToUrl}`);
     })
     .catch((error) => {
       console.error("Error exchanging code for token:", error);
