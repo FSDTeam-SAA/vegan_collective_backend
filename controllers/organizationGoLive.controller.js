@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const Organizationgolive = require("../models/organizationGoLive.model");
+const { createMeeting } = require("../utils/create-event-meeting");
 
 // Helper function to determine event status
 const getEventStatus = (eventDate) => {
@@ -29,6 +30,22 @@ exports.createEvent = async (req, res) => {
     // Determine event status
     const eventStatus = getEventStatus(`${date}T${time}`);
 
+    const eventCreateRes = await createMeeting({
+      userId: organizationID,
+      eventTitle,
+      description,
+      date,
+      time,
+    });
+
+    if (!eventCreateRes) {
+      return res
+        .status(500)
+        .json({ success: false, message: "Failed to create meeting" });
+    }
+
+    const meetingUrl = eventCreateRes.data.conferencing.details.url;
+
     // Create the event
     const newEvent = await Organizationgolive.create({
       organizationID,
@@ -39,6 +56,8 @@ exports.createEvent = async (req, res) => {
       eventType,
       price,
       eventStatus, // Add event status to the document
+      meetingLink: meetingUrl,
+      meetingId: eventCreateRes.data.id,
     });
 
     res.status(201).json({
@@ -105,121 +124,121 @@ exports.createEvent = async (req, res) => {
 
 // Get event by ID
 exports.getEventById = async (req, res) => {
-    try {
-      const { id } = req.params;
-  
-      // Check if the ID is a valid ObjectId
-      if (!mongoose.Types.ObjectId.isValid(id)) {
-        return res.status(400).json({
-          success: false,
-          message: "Invalid event ID.",
-        });
-      }
-  
-      // Find the event by ID
-      const event = await Organizationgolive.findById(id);
-  
-      if (!event) {
-        return res.status(404).json({
-          success: false,
-          message: "Event not found.",
-        });
-      }
-  
-      res.status(200).json({
-        success: true,
-        message: "Event fetched successfully.",
-        data: event,
-      });
-    } catch (error) {
-      console.error(error);
-      res.status(500).json({
-        success: false,
-        message: "Internal server error.",
-      });
-    }
-  };
-  
-  // Update event by ID
-  exports.updateEvent = async (req, res) => {
-    try {
-      const { id } = req.params;
-      const updateData = req.body;
-  
-      // Check if the ID is a valid ObjectId
-      if (!mongoose.Types.ObjectId.isValid(id)) {
-        return res.status(400).json({
-          success: false,
-          message: "Invalid event ID.",
-        });
-      }
-  
-      // Find and update the event
-      const updatedEvent = await Organizationgolive.findByIdAndUpdate(
-        id,
-        updateData,
-        { new: true, runValidators: true } // Return the updated document and run validation
-      );
-  
-      if (!updatedEvent) {
-        return res.status(404).json({
-          success: false,
-          message: "Event not found.",
-        });
-      }
-  
-      res.status(200).json({
-        success: true,
-        message: "Event updated successfully.",
-        data: updatedEvent,
-      });
-    } catch (error) {
-      console.error(error);
-      res.status(500).json({
-        success: false,
-        message: "Internal server error.",
-      });
-    }
-  };
-  
-  // Delete event by ID
-  exports.deleteEvent = async (req, res) => {
-    try {
-      const { id } = req.params;
-  
-      // Check if the ID is a valid ObjectId
-      if (!mongoose.Types.ObjectId.isValid(id)) {
-        return res.status(400).json({
-          success: false,
-          message: "Invalid event ID.",
-        });
-      }
-  
-      // Find and delete the event
-      const deletedEvent = await Organizationgolive.findByIdAndDelete(id);
-  
-      if (!deletedEvent) {
-        return res.status(404).json({
-          success: false,
-          message: "Event not found.",
-        });
-      }
-  
-      res.status(200).json({
-        success: true,
-        message: "Event deleted successfully.",
-        data: deletedEvent,
-      });
-    } catch (error) {
-      console.error(error);
-      res.status(500).json({
-        success: false,
-        message: "Internal server error.",
-      });
-    }
-  };
+  try {
+    const { id } = req.params;
 
-  // Get events by organizationID and eventType
+    // Check if the ID is a valid ObjectId
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid event ID.",
+      });
+    }
+
+    // Find the event by ID
+    const event = await Organizationgolive.findById(id);
+
+    if (!event) {
+      return res.status(404).json({
+        success: false,
+        message: "Event not found.",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Event fetched successfully.",
+      data: event,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error.",
+    });
+  }
+};
+
+// Update event by ID
+exports.updateEvent = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updateData = req.body;
+
+    // Check if the ID is a valid ObjectId
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid event ID.",
+      });
+    }
+
+    // Find and update the event
+    const updatedEvent = await Organizationgolive.findByIdAndUpdate(
+      id,
+      updateData,
+      { new: true, runValidators: true } // Return the updated document and run validation
+    );
+
+    if (!updatedEvent) {
+      return res.status(404).json({
+        success: false,
+        message: "Event not found.",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Event updated successfully.",
+      data: updatedEvent,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error.",
+    });
+  }
+};
+
+// Delete event by ID
+exports.deleteEvent = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Check if the ID is a valid ObjectId
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid event ID.",
+      });
+    }
+
+    // Find and delete the event
+    const deletedEvent = await Organizationgolive.findByIdAndDelete(id);
+
+    if (!deletedEvent) {
+      return res.status(404).json({
+        success: false,
+        message: "Event not found.",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Event deleted successfully.",
+      data: deletedEvent,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error.",
+    });
+  }
+};
+
+// Get events by organizationID and eventType
 // Get events by organizationID and eventType (paid/free)
 exports.getEventsByOrganizationAndType = async (req, res) => {
   try {
@@ -236,7 +255,8 @@ exports.getEventsByOrganizationAndType = async (req, res) => {
     if (!eventtype || !["paid event", "free event"].includes(eventtype)) {
       return res.status(400).json({
         success: false,
-        message: "Invalid or missing 'eventtype' parameter. Must be 'paid event' or 'free event'.",
+        message:
+          "Invalid or missing 'eventtype' parameter. Must be 'paid event' or 'free event'.",
       });
     }
 

@@ -25,6 +25,13 @@ const organizationGoLiveSchema = new mongoose.Schema(
     price: {
       type: Number,
     },
+    meetingId: {
+      type: String,
+    },
+
+    meetingLink: {
+      type: String,
+    },
   },
   {
     timestamps: true,
