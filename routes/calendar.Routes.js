@@ -4,57 +4,54 @@ const router = express.Router();
 const User = require("../models/user.model"); // Import your User model
 
 router.get("/nylas/auth", (req, res) => {
-  const userId = req.query.userId; // Extract userId from query parameters
+  const email = req.query.email; // Extract userId from query parameters
 
-  if (!userId) {
-    return res.status(400).json({ error: "userId is required" });
+  if (!email) {
+    return res.status(400).json({ error: "email is required" });
   }
-
-  console.log("User ID:", userId); // Log the userId for debugging
 
   const authUrl = nylas.auth.urlForOAuth2({
     clientId: nylasConfig.clientId,
-    redirectUri: `${process.env.BACKEND_URL}/api/v1/oauth/exchange?userId=${userId}`,
+    redirectUri: nylasConfig.redirectUri,
+    loginHint: email, // Pass the userId as a login hint
   });
 
   res.redirect(authUrl); // Redirect the user to the Nylas authentication URL
 });
 
 router.get("/oauth/exchange", (req, res) => {
-  const { code, userId } = req.query; // Extract code and userId from query parameters
+  const { code } = req.query; // Extract code and userId from query parameters
 
-  if (!code || !userId) {
-    return res.status(400).json({ error: "code and userId are required" });
+  if (!code) {
+    return res.status(400).json({ error: "code are required" });
   }
   nylas.auth
-    .exchangeCodeForToken(code, {
+    .exchangeCodeForToken({
       clientId: nylasConfig.clientId,
       clientSecret: nylasConfig.apiKey,
-      redirectUri: `${process.env.BACKEND_URL}/api/v1/oauth/exchange?userId=${userId}`,
+      redirectUri: nylasConfig.redirectUri,
       code: code,
     })
     .then(async (response) => {
       // Save the access token and userId to your database here
-      console.log("Access Token:", response.accessToken);
-      console.log("User ID:", userId);
       const { grantId, email } = response;
 
-      if (!userId) {
-        return res.status(400).json({ error: "userId is required" });
+      const user = User.findOne({ email: email });
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          message: "Please Connect you account with your platform email",
+        });
       }
 
-      const user = await User.findByIdAndUpdate(
-        userId,
+      const updatedUser = await User.findOneAndUpdate(
+        { email: email },
         {
-          grantId: grantId,
-          grantEmail: email,
+          grandId: grantId,
+          grandEmail: email,
         },
         { new: true }
       );
-
-      if (!user) {
-        return res.status(404).json({ error: "User not found" });
-      }
 
       // save the grantId and email to grantEmail on User model
 

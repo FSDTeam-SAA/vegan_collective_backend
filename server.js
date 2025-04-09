@@ -82,7 +82,7 @@ const calendarRoutes = require("./routes/calendar.Routes.js");
 
 // Route handlers
 app.use("/api/v1", meetRoutes);
-app.use("/api/v1", calendarRoutes);
+app.use("/api", calendarRoutes);
 app.use("/api/v1", professionalBooking);
 app.use("/api/v1", professionalEvent);
 app.use("/api/v1", professionalFAQ);
