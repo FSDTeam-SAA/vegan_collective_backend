@@ -70,4 +70,35 @@ router.get("/oauth/exchange", (req, res) => {
     });
 });
 
+router.get("/checkCalendar", (req, res) => {
+  const userId = req.query.userId; // Extract userId from query parameters
+
+  if (!userId) {
+    return res
+      .status(400)
+      .json({ message: "userId is required", success: false });
+  }
+
+  User.findById(userId)
+    .then((user) => {
+      if (!user) {
+        return res
+          .status(404)
+          .json({ message: "User not found", success: false });
+      }
+
+      if (!user.grandEmail) {
+        return res
+          .status(400)
+          .json({ error: "Calendar not connected", success: false });
+      }
+
+      res.status(200).json({ success: true, message: "Calendar connected" });
+    })
+    .catch((error) => {
+      console.error("Error checking calendar connection:", error);
+      res.status(500).json({ error: "Failed to check calendar connection" });
+    });
+});
+
 module.exports = router;
