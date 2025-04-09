@@ -44,7 +44,7 @@ router.get("/oauth/exchange", (req, res) => {
         });
       }
 
-      const updatedUser = await User.findOneAndUpdate(
+      await User.findOneAndUpdate(
         { email: email },
         {
           grandId: grantId,
