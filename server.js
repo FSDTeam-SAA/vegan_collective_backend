@@ -76,9 +76,10 @@ const checkUserPaymentRoute = require("./routes/checkUserPayment.route.js");
 const userPaymentDetailsRoute = require("./routes/userPaymentDetails.route.js");
 const newsletterRoutes = require("./routes/newsletterRoutes");
 
+
+//route for super Admin
+const superAdminRoute = require("./routes/superAdmin.route.js");
 const superAdminRoutes = require('./routes/superAdminAuthRoute');
-
-
 
 // New Google Meet routes
 const meetRoutes = require("./routes/meetRoutes");
@@ -158,6 +159,9 @@ app.use("/", require("./routes/meetRoutes")); // All API routes prefixed with /a
 // Static files
 app.use(express.static(path.join(__dirname, "public")));
 
+//API Routes for super admin
+app.use("/api/v1", superAdminRoute);
+
 // Serve frontend
 app.get("*", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "meet.html"));
@@ -167,6 +171,8 @@ app.get("*", (req, res) => {
 app.get("/", (req, res) => {
   res.send("Vegan Collective Server with Zoom and Google Meet Integration");
 });
+
+
 
 app.get("/api/v1/", (req, res) => {
   res.status(201).json({
