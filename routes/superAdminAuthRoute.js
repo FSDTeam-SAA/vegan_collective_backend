@@ -8,9 +8,9 @@ const {
 router.post("/Superadminlogin", superAdminLogin);
 
 // POST /api/superadmin/send-reset-link
-router.post("/send-reset-link", sendResetPasswordLink);
+router.post("/Superadminlogin/send-reset-link", sendResetPasswordLink);
 
 // POST /api/superadmin/reset-password
-router.post("/reset-password", resetPassword);
+router.post("/Superadminlogin/reset-password", resetPassword);
 
 module.exports = router;
