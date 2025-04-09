@@ -10,6 +10,9 @@ exports.createMeeting = async ({
 }) => {
   const userInfo = await User.findById(userId);
 
+  console.log(userInfo, "userInfo");
+  console.log("userId", userId);
+
   // Combine date and time into an ISO 8601 string
   const dateTimeString = `${date}T${time}`;
   const startTime = new Date(dateTimeString); // Create a Date object (in milliseconds)
@@ -20,9 +23,7 @@ exports.createMeeting = async ({
   const endTimeInSeconds = Math.floor(endTime.getTime() / 1000);
 
   if (!userInfo) {
-    return res
-      .status(404)
-      .json({ success: false, message: "User Info not found" });
+    return null;
   }
   const eventCreateRes = await nylas.events.create({
     identifier: userInfo.grandId,

@@ -1,14 +1,36 @@
-const Golive = require('../models/professionalGoLive.model'); // Adjust the path as necessary
-const mongoose = require('mongoose');
+const Golive = require("../models/professionalGoLive.model"); // Adjust the path as necessary
+const mongoose = require("mongoose");
+const { createMeeting } = require("../utils/create-event-meeting");
+const User = require("../models/user.model"); // Adjust the path as needed
+const { nylas } = require("../config/nylasConfig"); // Adjust the path as needed
 
 // Create a new live event
 exports.createLiveEvent = async (req, res) => {
   try {
-    const { userID, eventTitle, description, date, time, eventType, price } = req.body;
+    const { userID, eventTitle, description, date, time, eventType, price } =
+      req.body;
 
-    if (eventType === 'paid event' && price === undefined) {
-      return res.status(400).json({ success: false, message: 'Price is required for paid events' });
+    if (eventType === "paid event" && price === undefined) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Price is required for paid events" });
     }
+
+    const eventCreateRes = await createMeeting({
+      userId: userID,
+      eventTitle,
+      description,
+      date,
+      time,
+    });
+
+    if (!eventCreateRes) {
+      return res
+        .status(500)
+        .json({ success: false, message: "Failed to create meeting" });
+    }
+
+    const meetingUrl = eventCreateRes.data.conferencing.details.url;
 
     const newEvent = new Golive({
       userID,
@@ -17,13 +39,23 @@ exports.createLiveEvent = async (req, res) => {
       date,
       time,
       eventType,
-      price: eventType === 'paid event' ? price : undefined,
+      price: eventType === "paid event" ? price : undefined,
+      meetingLink: meetingUrl,
+      meetingId: eventCreateRes.data.id,
     });
 
     await newEvent.save();
-    res.status(201).json({ success: true, message: 'Event created successfully', event: newEvent });
+    res.status(201).json({
+      success: true,
+      message: "Event created successfully",
+      event: newEvent,
+    });
   } catch (error) {
-    res.status(500).json({ success: false, message: 'Error creating event', error: error.message });
+    res.status(500).json({
+      success: false,
+      message: "Error creating event",
+      error: error.message,
+    });
   }
 };
 
@@ -33,29 +65,42 @@ exports.getLiveEvents = async (req, res) => {
     const { type, userID } = req.query;
 
     if (!type || !userID) {
-      return res.status(400).json({ success: false, message: 'Type and userID are required' });
+      return res
+        .status(400)
+        .json({ success: false, message: "Type and userID are required" });
     }
 
-    const currentDate = new Date().toISOString().split('T')[0];
+    const currentDate = new Date().toISOString().split("T")[0];
     let query = { userID };
-    
-    if (type === 'upcoming') {
+
+    if (type === "upcoming") {
       query.date = { $gte: currentDate };
-    } else if (type === 'past') {
+    } else if (type === "past") {
       query.date = { $lt: currentDate };
     } else {
-      return res.status(400).json({ success: false, message: 'Invalid type. Use "upcoming" or "past"' });
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid type. Use "upcoming" or "past"',
+      });
     }
 
     const events = await Golive.find(query);
-    const eventsWithStatus = events.map(event => ({
+    const eventsWithStatus = events.map((event) => ({
       ...event.toObject(),
-      eventStatus: event.date >= currentDate ? 'upcoming' : 'past'
+      eventStatus: event.date >= currentDate ? "upcoming" : "past",
     }));
 
-    res.status(200).json({ success: true, message: 'Events fetched successfully', events: eventsWithStatus });
+    res.status(200).json({
+      success: true,
+      message: "Events fetched successfully",
+      events: eventsWithStatus,
+    });
   } catch (error) {
-    res.status(500).json({ success: false, message: 'Error fetching events', error: error.message });
+    res.status(500).json({
+      success: false,
+      message: "Error fetching events",
+      error: error.message,
+    });
   }
 };
 
@@ -65,34 +110,48 @@ exports.getEventById = async (req, res) => {
     const { id } = req.params;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({ success: false, message: 'Invalid event ID' });
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid event ID" });
     }
 
     const event = await Golive.findById(id);
 
     if (!event) {
-      return res.status(404).json({ success: false, message: 'Event not found' });
+      return res
+        .status(404)
+        .json({ success: false, message: "Event not found" });
     }
 
-    res.status(200).json({ success: true, message: 'Event fetched successfully', event });
+    res
+      .status(200)
+      .json({ success: true, message: "Event fetched successfully", event });
   } catch (error) {
-    res.status(500).json({ success: false, message: 'Error fetching event', error: error.message });
+    res.status(500).json({
+      success: false,
+      message: "Error fetching event",
+      error: error.message,
+    });
   }
 };
-
 
 // Update all fields of an event by ID
 exports.updateEvent = async (req, res) => {
   try {
     const { id } = req.params;
-    const { userID, eventTitle, description, date, time, eventType, price } = req.body;
+    const { userID, eventTitle, description, date, time, eventType, price } =
+      req.body;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({ success: false, message: 'Invalid event ID' });
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid event ID" });
     }
 
-    if (eventType === 'paid event' && price === undefined) {
-      return res.status(400).json({ success: false, message: 'Price is required for paid events' });
+    if (eventType === "paid event" && price === undefined) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Price is required for paid events" });
     }
 
     const updatedEvent = await Golive.findByIdAndUpdate(
@@ -104,18 +163,28 @@ exports.updateEvent = async (req, res) => {
         date,
         time,
         eventType,
-        price: eventType === 'paid event' ? price : undefined,
+        price: eventType === "paid event" ? price : undefined,
       },
       { new: true }
     );
 
     if (!updatedEvent) {
-      return res.status(404).json({ success: false, message: 'Event not found' });
+      return res
+        .status(404)
+        .json({ success: false, message: "Event not found" });
     }
 
-    res.status(200).json({ success: true, message: 'Event updated successfully', event: updatedEvent });
+    res.status(200).json({
+      success: true,
+      message: "Event updated successfully",
+      event: updatedEvent,
+    });
   } catch (error) {
-    res.status(500).json({ success: false, message: 'Error updating event', error: error.message });
+    res.status(500).json({
+      success: false,
+      message: "Error updating event",
+      error: error.message,
+    });
   }
 };
 
@@ -125,17 +194,48 @@ exports.deleteEvent = async (req, res) => {
     const { id } = req.params;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({ success: false, message: 'Invalid event ID' });
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid event ID" });
     }
 
     const deletedEvent = await Golive.findByIdAndDelete(id);
 
     if (!deletedEvent) {
-      return res.status(404).json({ success: false, message: 'Event not found' });
+      return res
+        .status(404)
+        .json({ success: false, message: "Event not found" });
     }
 
-    res.status(200).json({ success: true, message: 'Event deleted successfully', event: deletedEvent });
+    const meetingId = deletedEvent.meetingId;
+    const userInfo = await User.findById(deletedEvent.userID);
+
+    if (!userInfo) {
+      return res
+        .status(404)
+        .json({ success: false, message: "User Info not found" });
+    }
+
+    try {
+      await nylas.events.destroy({
+        identifier: userInfo.grandId,
+        eventId: meetingId,
+        queryParams: {
+          calendarId: userInfo.grandEmail,
+        },
+      });
+
+      res
+        .status(200)
+        .json({ success: true, message: "Event deleted successfully" });
+    } catch (error) {
+      throw Error(error);
+    }
   } catch (error) {
-    res.status(500).json({ success: false, message: 'Error deleting event', error: error.message });
+    res.status(500).json({
+      success: false,
+      message: "Error deleting event",
+      error: error.message,
+    });
   }
 };

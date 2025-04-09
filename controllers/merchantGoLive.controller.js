@@ -3,6 +3,7 @@ const mongoose = require("mongoose");
 
 const User = require("../models/user.model"); // Adjust the path as needed
 const { createMeeting } = require("../utils/create-event-meeting");
+const { nylas } = require("../config/nylasConfig"); // Adjust the path as needed
 
 // Create a new event
 exports.createEvent = async (req, res) => {

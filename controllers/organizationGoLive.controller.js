@@ -1,6 +1,8 @@
 const mongoose = require("mongoose");
 const Organizationgolive = require("../models/organizationGoLive.model");
 const { createMeeting } = require("../utils/create-event-meeting");
+const { nylas } = require("../config/nylasConfig"); // Adjust the path as needed
+const User = require("../models/user.model"); // Adjust the path as needed
 
 // Helper function to determine event status
 const getEventStatus = (eventDate) => {
@@ -224,11 +226,29 @@ exports.deleteEvent = async (req, res) => {
       });
     }
 
-    res.status(200).json({
-      success: true,
-      message: "Event deleted successfully.",
-      data: deletedEvent,
-    });
+    const meetingId = deletedEvent.meetingId;
+    const userInfo = await User.findById(deletedEvent.organizationID);
+    if (!userInfo) {
+      return res
+        .status(404)
+        .json({ success: false, message: "User Info not found" });
+    }
+
+    try {
+      await nylas.events.destroy({
+        identifier: userInfo.grandId,
+        eventId: meetingId,
+        queryParams: {
+          calendarId: userInfo.grandEmail,
+        },
+      });
+
+      res
+        .status(200)
+        .json({ success: true, message: "Event deleted successfully" });
+    } catch (error) {
+      throw Error(error);
+    }
   } catch (error) {
     console.error(error);
     res.status(500).json({
