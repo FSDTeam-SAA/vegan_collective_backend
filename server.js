@@ -76,11 +76,16 @@ const checkUserPaymentRoute = require("./routes/checkUserPayment.route.js");
 const userPaymentDetailsRoute = require("./routes/userPaymentDetails.route.js");
 const newsletterRoutes = require("./routes/newsletterRoutes");
 
+const superAdminRoutes = require('./routes/superAdminAuthRoute');
+
 
 
 // New Google Meet routes
 const meetRoutes = require("./routes/meetRoutes");
 const calendarRoutes = require("./routes/calendar.Routes.js");
+
+//super admin 
+app.use("/api/v1", superAdminRoutes);
 
 // Route handlers
 app.use("/api/v1", meetRoutes);
