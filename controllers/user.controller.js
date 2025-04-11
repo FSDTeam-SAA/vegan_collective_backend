@@ -7,7 +7,7 @@ const Reffer = require("../models/reffer.model");
 // Register a new user
 exports.registerUser = async (req, res) => {
   try {
-    const { role, fullName, email, password, accountType, ref } = req.body;
+    const { role, fullName, email, password,country,state,city, accountType, ref } = req.body;
 
     // Check if the user already exists
     const existingUser = await User.findOne({ email });
@@ -26,6 +26,9 @@ exports.registerUser = async (req, res) => {
       role,
       fullName,
       email,
+      country,
+      state,
+      city,
       password: hashedPassword,
       accountType: role === "vendor" ? accountType : null, // Set accountType based on role
       verifyEmail: false,
@@ -97,6 +100,9 @@ res.status(201).json({
     role: user.role,
     fullName: user.fullName,
     email: user.email,
+    country: user.country,
+    state: user.state,
+    city: user.city,
     verifyEmail: user.verifyEmail,
     isgratings: user.isgratings, // Ensure this is included
     isVerified: user.isVerified, // Ensure this is included
@@ -167,6 +173,9 @@ exports.verifyEmail = async (req, res) => {
         role: user.role,
         fullName: user.fullName,
         email: user.email,
+        country: user.country,
+        state: user.state,
+        city: user.city,
         verifyEmail: user.verifyEmail,
         accountType: user.accountType,
       },
@@ -231,6 +240,9 @@ exports.loginUser = async (req, res) => {
           accountType: user.accountType,
           fullName: user.fullName,
           email: user.email,
+          country: user.country,
+          state: user.state,
+          city: user.city,
         },
       },
     });
@@ -293,6 +305,9 @@ exports.getUserProfile = async (req, res) => {
         role: user.role,
         fullName: user.fullName,
         email: user.email,
+        country: user.country,
+        state: user.state,
+        city: user.city,
         accountType: user.accountType,
         token,
         paymentAdded: user.paymentAdded,
@@ -338,6 +353,9 @@ exports.updateIsgratings = async (req, res) => {
         role: updatedUser.role,
         fullName: updatedUser.fullName,
         email: updatedUser.email,
+        country: updatedUser.country,
+        state: updatedUser.state,
+        city: updatedUser.city,
         verifyEmail: updatedUser.verifyEmail,
         isgratings: updatedUser.isgratings,
       },
@@ -356,7 +374,7 @@ exports.updateIsgratings = async (req, res) => {
 exports.updateUserProfile = async (req, res) => {
   try {
     const { userId } = req.params;
-    const { fullName, phoneNumber, email, address, bio } = req.body;
+    const { fullName, phoneNumber, email, country, state, city, bio } = req.body;
     
     // Find the user by ID
     const user = await User.findById(userId);
@@ -383,7 +401,9 @@ exports.updateUserProfile = async (req, res) => {
       fullName: fullName || user.fullName,
       phoneNumber: phoneNumber || user.phoneNumber,
       email: email || user.email,
-      address: address || user.address,
+      country: country || user.country,
+      state: state || user.state,
+      city: city || user.city,
       bio: bio || user.bio,
     };
 
@@ -408,7 +428,9 @@ exports.updateUserProfile = async (req, res) => {
         fullName: updatedUser.fullName,
         phoneNumber: updatedUser.phoneNumber,
         email: updatedUser.email,
-        address: updatedUser.address,
+       country: updatedUser.country,
+        state: updatedUser.state,
+        city: updatedUser.city,
         bio: updatedUser.bio,
         profilePhoto: updatedUser.profilePhoto,
         
