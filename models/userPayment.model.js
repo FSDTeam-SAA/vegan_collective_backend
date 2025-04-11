@@ -51,10 +51,18 @@ const userPaymentSchema = new mongoose.Schema(
       enum: ['cancel', 'confirmed'],
       default: 'confirmed',
     },
+    // bookingID: {
+    //   type: String,
+    //   unique: true,
+    //   default: null,
+    // },
+
     bookingID: {
       type: String,
       unique: true,
-      default: null,
+      default: function() {
+        return mongoose.Types.ObjectId().toString(); // Or any other unique ID generation
+      },
     },
     goLiveID: {
       type: String,
