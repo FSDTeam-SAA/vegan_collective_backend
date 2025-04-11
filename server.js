@@ -82,14 +82,14 @@ const superAdminRoute = require("./routes/superAdmin.route.js");
 const superAdminRoutes = require('./routes/superAdminAuthRoute');
 
 // New Google Meet routes
-const meetRoutes = require("./routes/meetRoutes");
+
 const calendarRoutes = require("./routes/calendar.Routes.js");
 
 //super admin 
 app.use("/api/v1", superAdminRoutes);
 
 // Route handlers
-app.use("/api/v1", meetRoutes);
+
 app.use("/api", calendarRoutes);
 app.use("/api/v1", professionalBooking);
 app.use("/api/v1", professionalEvent);
@@ -149,23 +149,22 @@ app.use("/api/v1", newsletterRoutes);
 app.use("/api/v1", eventRoutes);
 
 // Google Meet routes - prefixed with /api/v1 to match your structure
-// app.use("/api/v1/meet", meetRoutes);
-// Handle auth callback separately if needed
-app.use("/api/v1/auth/google/callback", require("./routes/meetRoutes"));
 
-// API Routes
-// app.use("/", require("./routes/meetRoutes")); // All API routes prefixed with /api
+// Handle auth callback separately if needed
+
+
+// All API routes prefixed with /api
 
 // Static files
 app.use(express.static(path.join(__dirname, "public")));
 
 //API Routes for super admin
-app.use("/api/v1", superAdminRoute);
+app.use("/api/v1/", superAdminRoute);
 
 // Serve frontend
-app.get("*", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "meet.html"));
-});
+// app.get("*", (req, res) => {
+//   res.sendFile(path.join(__dirname, "public", "meet.html"));
+// });
 
 // Root route
 app.get("/", (req, res) => {
@@ -174,7 +173,7 @@ app.get("/", (req, res) => {
 
 
 
-app.get("/api/v1/", (req, res) => {
+app.get("/api/v1", (req, res) => {
   res.status(201).json({
     status: true,
     message: "Welcome to Vegan Collective",
