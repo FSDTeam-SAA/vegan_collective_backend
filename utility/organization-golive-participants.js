@@ -1,5 +1,6 @@
 const User = require("../models/user.model");
 const OrganizationEventModel = require("../models/organizationGoLive.model"); // Assuming the Event model exists
+const { nylas } = require("../config/nylasConfig");
 
 exports.organizationGoLiveParticipantsManage = async (
   userId,
@@ -23,6 +24,8 @@ exports.organizationGoLiveParticipantsManage = async (
       throw new Error("Organization or Event not found.");
     }
 
+    const owner = await User.findById(event.organizationID);
+
     // Step 4: Check if the user is already a participant
     if (!event.participants.includes(userId)) {
       // Step 5: Add the userId to the participants array
@@ -32,6 +35,22 @@ exports.organizationGoLiveParticipantsManage = async (
         { new: true } // Return the updated document
       );
 
+      const participantsPushToCalender = await nylas.events.update({
+        identifier: owner.grandId,
+        eventId: event.meetingId,
+        requestBody: {
+          participants: [
+            {
+              name: user.fullName,
+              email: user.email,
+            },
+          ],
+        },
+        queryParams: {
+          calendarId: owner.grandEmail,
+        },
+      });
+
       // Step 6: Return the updated event
       return {
         success: true,
@@ -40,7 +59,6 @@ exports.organizationGoLiveParticipantsManage = async (
       };
     }
 
-    console.log("User added to participants successfully.");
     return {
       success: true,
       message: "User added to participants successfully.",
