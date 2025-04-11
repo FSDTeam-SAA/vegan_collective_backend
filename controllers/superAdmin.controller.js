@@ -231,57 +231,110 @@ const getAllVerifiersForSuperAdmin = async (req, res) => {
 
   const getVendorVerificationCounts = async (req, res) => {
     try {
-      const { country, state, city } = req.query;
-  
-      // Build query for vendors
-      const query = { role: "vendor" };
-      if (country) query.country = country;
-      if (state) query.state = state;
-      if (city) query.city = city;
-  
-      // Get counts and earnings concurrently
-      const [approvedCount, pendingCount, paymentData] = await Promise.all([
-        User.countDocuments({ ...query, isVerified: "approved" }),
-        User.countDocuments({ ...query, isVerified: "pending" }),
-        Userpayment.aggregate([
-          {
-            $match: {
-              status: "confirmed"
-            }
-          },
-          {
-            $group: {
-              _id: null,
-              totalAmount: { $sum: "$amount" },
-              platformEarnings: { $sum: { $multiply: ["$amount", 0.1] } }
-            }
-          }
-        ])
-      ]);
-  
-      // Extract earnings data
-      const earningsData = paymentData.length > 0 ? paymentData[0] : {
-        totalAmount: 0,
-        platformEarnings: 0
-      };
+        const { country, state, city, timeFilter = "lifetime" } = req.query;
 
-      return res.status(200).json({
-        success: true,
-        message: "Vendor verification counts and earnings fetched successfully",
-        data: {
-          verifiedVendors: approvedCount,
-          pendingVerifications: pendingCount,
-          totalEarnings: earningsData.totalAmount,
-          platformEarnings: earningsData.platformEarnings
-        },
-      });
+        // Function to calculate date ranges
+        const getDateRange = (filter) => {
+            const now = new Date();
+            const start = new Date();
+            let end = new Date();
+
+            switch(filter) {
+                case "1months":
+                    // Current month (1st to last day)
+                    start.setDate(1);
+                    start.setHours(0, 0, 0, 0);
+                    end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+                    end.setHours(23, 59, 59, 999);
+                    break;
+                case "3months":
+                    start.setMonth(now.getMonth() - 3);
+                    start.setHours(0, 0, 0, 0);
+                    end.setHours(23, 59, 59, 999);
+                    break;
+                case "6months":
+                    start.setMonth(now.getMonth() - 6);
+                    start.setHours(0, 0, 0, 0);
+                    end.setHours(23, 59, 59, 999);
+                    break;
+                case "1year":
+                    start.setFullYear(now.getFullYear() - 1);
+                    start.setHours(0, 0, 0, 0);
+                    end.setHours(23, 59, 59, 999);
+                    break;
+                case "lifetime":
+                    return {}; // No date filter
+                default:
+                    throw new Error("Invalid time filter. Use: 1month, 3months, 6months, 1year, or lifetime");
+            }
+            return { $gte: start, $lte: end };
+        };
+
+        const dateRange = getDateRange(timeFilter);
+
+        // Build base queries for vendors
+        const vendorQuery = { role: "vendor" };
+        if (country) vendorQuery.country = country;
+        if (state) vendorQuery.state = state;
+        if (city) vendorQuery.city = city;
+
+        // Add date filter if not lifetime
+        const vendorDateQuery = timeFilter !== "lifetime" 
+            ? { ...vendorQuery, createdAt: dateRange } 
+            : vendorQuery;
+
+        // Build payment match query
+        const paymentMatch = { status: "confirmed" };
+        if (timeFilter !== "lifetime") {
+            paymentMatch.createdAt = dateRange;
+        }
+
+        // Get counts and earnings concurrently
+        const [approvedCount, pendingCount, paymentData] = await Promise.all([
+            User.countDocuments({ ...vendorDateQuery, isVerified: "approved" }),
+            User.countDocuments({ ...vendorDateQuery, isVerified: "pending" }),
+            Userpayment.aggregate([
+                {
+                    $match: paymentMatch
+                },
+                {
+                    $group: {
+                        _id: null,
+                        totalAmount: { $sum: "$amount" },
+                        platformEarnings: { $sum: { $multiply: ["$amount", 0.1] } }
+                    }
+                }
+            ])
+        ]);
+
+        // Extract earnings data
+        const earningsData = paymentData.length > 0 ? paymentData[0] : {
+            totalAmount: 0,
+            platformEarnings: 0
+        };
+
+        return res.status(200).json({
+            success: true,
+            message: "Vendor verification counts and earnings fetched successfully",
+            data: {
+                verifiedVendors: approvedCount,
+                pendingVerifications: pendingCount,
+                totalEarnings: earningsData.totalAmount,
+                platformEarnings: earningsData.platformEarnings,
+                timePeriod: timeFilter,
+                // dateRange: timeFilter !== "lifetime" ? {
+                //     start: dateRange.$gte,
+                //     end: dateRange.$lte
+                // } : null
+            },
+        });
     } catch (error) {
-      return res.status(500).json({
-        success: false,
-        message: error.message,
-      });
+        return res.status(500).json({
+            success: false,
+            message: error.message,
+        });
     }
-  };
+};
 
 module.exports = {
   verifierCreate,
