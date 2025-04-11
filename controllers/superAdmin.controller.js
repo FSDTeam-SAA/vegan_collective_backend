@@ -240,24 +240,24 @@ const getAllVerifiersForSuperAdmin = async (req, res) => {
             let end = new Date();
 
             switch(filter) {
-                case "1months":
+                case "1m":
                     // Current month (1st to last day)
                     start.setDate(1);
                     start.setHours(0, 0, 0, 0);
                     end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
                     end.setHours(23, 59, 59, 999);
                     break;
-                case "3months":
+                case "3m":
                     start.setMonth(now.getMonth() - 3);
                     start.setHours(0, 0, 0, 0);
                     end.setHours(23, 59, 59, 999);
                     break;
-                case "6months":
+                case "6m":
                     start.setMonth(now.getMonth() - 6);
                     start.setHours(0, 0, 0, 0);
                     end.setHours(23, 59, 59, 999);
                     break;
-                case "1year":
+                case "1y":
                     start.setFullYear(now.getFullYear() - 1);
                     start.setHours(0, 0, 0, 0);
                     end.setHours(23, 59, 59, 999);
@@ -265,7 +265,7 @@ const getAllVerifiersForSuperAdmin = async (req, res) => {
                 case "lifetime":
                     return {}; // No date filter
                 default:
-                    throw new Error("Invalid time filter. Use: 1month, 3months, 6months, 1year, or lifetime");
+                    throw new Error("Invalid time filter. Use: 1m, 3m, 6m, 1y, or lifetime");
             }
             return { $gte: start, $lte: end };
         };
