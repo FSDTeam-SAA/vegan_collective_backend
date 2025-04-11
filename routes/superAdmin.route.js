@@ -17,6 +17,9 @@ router.get("/superadmin/getAllProfessionals", getAllProfessionalsForSuperAdmin);
 //super admin can get all organizations with pagination and filter
 router.get("/superadmin/getAllOrganizations", getAllOrganizationsForSuperAdmin);
 
+//super admin can get all verifiers with pagination and filter
+router.get("/superadmin/getAllVerifiers", getAllVerifiersForSuperAdmin);
+
 //super admin can get all verifiers 
 router.get("/superadmin/getVendorVerificationCounts", getVendorVerificationCounts);
 
