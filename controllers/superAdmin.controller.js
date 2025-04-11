@@ -2,6 +2,8 @@ const Merchantinfo = require("../models/merchantInfo.model");
 const Organizationinfo = require("../models/organizationInfo.model");
 const Professionalinfo = require("../models/professionalInfo.model");
 const User = require("../models/user.model");
+const Userpayment = require('../models/userPayment.model');
+const mongoose = require("mongoose");
 
 const verifierCreate = async (req, res) => {
   try {
@@ -227,11 +229,66 @@ const getAllVerifiersForSuperAdmin = async (req, res) => {
     }
   };
 
+  const getVendorVerificationCounts = async (req, res) => {
+    try {
+      const { country, state, city } = req.query;
+  
+      // Build query for vendors
+      const query = { role: "vendor" };
+      if (country) query.country = country;
+      if (state) query.state = state;
+      if (city) query.city = city;
+  
+      // Get counts and earnings concurrently
+      const [approvedCount, pendingCount, paymentData] = await Promise.all([
+        User.countDocuments({ ...query, isVerified: "approved" }),
+        User.countDocuments({ ...query, isVerified: "pending" }),
+        Userpayment.aggregate([
+          {
+            $match: {
+              status: "confirmed"
+            }
+          },
+          {
+            $group: {
+              _id: null,
+              totalAmount: { $sum: "$amount" },
+              platformEarnings: { $sum: { $multiply: ["$amount", 0.1] } }
+            }
+          }
+        ])
+      ]);
+  
+      // Extract earnings data
+      const earningsData = paymentData.length > 0 ? paymentData[0] : {
+        totalAmount: 0,
+        platformEarnings: 0
+      };
+
+      return res.status(200).json({
+        success: true,
+        message: "Vendor verification counts and earnings fetched successfully",
+        data: {
+          verifiedVendors: approvedCount,
+          pendingVerifications: pendingCount,
+          totalEarnings: earningsData.totalAmount,
+          platformEarnings: earningsData.platformEarnings
+        },
+      });
+    } catch (error) {
+      return res.status(500).json({
+        success: false,
+        message: error.message,
+      });
+    }
+  };
+
 module.exports = {
   verifierCreate,
   getAllUsersForSuperAdmin,
   getAllMerchantsForSuperAdmin,
   getAllProfessionalsForSuperAdmin,
   getAllOrganizationsForSuperAdmin,
-  getAllVerifiersForSuperAdmin
+  getAllVerifiersForSuperAdmin,
+  getVendorVerificationCounts,
 };
