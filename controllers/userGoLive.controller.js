@@ -48,7 +48,7 @@ exports.checkUserGoLivePurchase = async (req, res) => {
         eventType: event.eventType,
         price: event.price,
         meetingId: event.meetingId,
-        meetingLink: event.meetingLink,
+        meetingLink: event.meetingLink, // This is the field you want to add
         purchaseDate: payment.createdAt,
         purchaseAmount: payment.amount,
         eventStatus: eventDateTime > now ? 'upcoming' : 'past',
