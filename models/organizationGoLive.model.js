@@ -32,6 +32,10 @@ const organizationGoLiveSchema = new mongoose.Schema(
     meetingLink: {
       type: String,
     },
+    participants: {
+      type: [String], // Array of strings
+      default: [], // Default value is an empty array
+    },
   },
   {
     timestamps: true,

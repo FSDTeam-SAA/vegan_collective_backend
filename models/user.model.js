@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
 const userSchema = new mongoose.Schema(
   {
@@ -21,18 +21,18 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    country:{
+    country: {
       type: String,
     },
-    state:{
+    state: {
       type: String,
     },
-    city:{
+    city: {
       type: String,
     },
     accountType: {
       type: String,
-      enum: ['merchant', 'professional', 'organization'],
+      enum: ["merchant", "professional", "organization"],
     },
     image: {
       type: String,
@@ -59,32 +59,31 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
-    isVerified:{
+    isVerified: {
       type: String,
-      enum:["approved","declined","pending"],
-      default:"pending",
+      enum: ["approved", "declined", "pending"],
+      default: "pending",
     },
-    address:{
-      type: String
-    
+    address: {
+      type: String,
     },
-    bio:{
-      type: String
+    bio: {
+      type: String,
     },
     profilePhoto: {
       type: String,
     },
-    grandEmail:{
+    grandEmail: {
       type: String,
     },
-    grandId:{
+    grandId: {
       type: String,
     },
   },
   {
     timestamps: true,
   }
-)
+);
 
 const User = mongoose.model("User", userSchema);
 module.exports = User;

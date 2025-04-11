@@ -98,21 +98,31 @@ exports.getAllEvents = async (req, res) => {
 // Get all events for a specific user with optional filters for type
 exports.getAllEventsByUser = async (req, res) => {
   const { type, userID } = req.query;
-  try {
-    let filter = {};
 
-    if (userID) {
-      if (!mongoose.Types.ObjectId.isValid(userID)) {
-        return res
-          .status(400)
-          .json({ success: false, message: "Invalid user ID" });
-      }
-      // Assuming you have a way to associate users with events
-      // This might need adjustment based on your actual schema
-      //filter.attendees = userID; // or whatever field links users to events
+  try {
+    // Step 1: Validate user ID
+    if (!userID) {
+      return res
+        .status(400)
+        .json({ success: false, message: "User ID is required." });
     }
 
+    if (!mongoose.Types.ObjectId.isValid(userID)) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid user ID." });
+    }
+
+    // Step 2: Build the filter
+    let filter = {};
+
+    // Check if the user is in the participants array
+    filter.participants = userID;
+
+    // Step 3: Retrieve events from the database
     let events = await Merchantgolive.find(filter);
+
+    // Step 4: Filter events based on the "type" query parameter
     const currentDate = new Date();
 
     if (type === "upcoming") {
@@ -121,8 +131,10 @@ exports.getAllEventsByUser = async (req, res) => {
       events = events.filter((event) => new Date(event.date) < currentDate);
     }
 
+    // Step 5: Return the filtered events
     res.status(200).json({ success: true, events });
   } catch (error) {
+    console.error("Error retrieving events:", error.message);
     res
       .status(500)
       .json({ success: false, message: "Server error", error: error.message });
