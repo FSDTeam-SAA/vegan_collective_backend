@@ -154,7 +154,7 @@ app.use("/api/v1", eventRoutes);
 app.use("/api/v1/auth/google/callback", require("./routes/meetRoutes"));
 
 // API Routes
-app.use("/", require("./routes/meetRoutes")); // All API routes prefixed with /api
+// app.use("/", require("./routes/meetRoutes")); // All API routes prefixed with /api
 
 // Static files
 app.use(express.static(path.join(__dirname, "public")));
