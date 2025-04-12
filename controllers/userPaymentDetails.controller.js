@@ -62,47 +62,47 @@ const Professionalservices = require('../models/professionalServices.model')
 
 const getUserPaymentsByService = async (req, res) => {
   try {
-    const { userID, page = 1, limit = 10, filter = 'All' } = req.query
+    const { userID, page = 1, limit = 10, filter = 'All' } = req.query;
 
     if (!userID) {
       return res.status(400).json({
         success: false,
         message: 'userID is required',
-      })
+      });
     }
 
-    const pageNum = parseInt(page)
-    const limitNum = parseInt(limit)
-    const skip = (pageNum - 1) * limitNum
+    const pageNum = parseInt(page);
+    const limitNum = parseInt(limit);
+    const skip = (pageNum - 1) * limitNum;
 
     let query = {
       userID,
       professionalServicesId: { $ne: null },
-    }
+    };
 
     // Filter upcoming bookings
     if (filter === 'UpcomingBookings') {
-      const currentDate = new Date()
-      query.serviceBookingTime = { $gte: currentDate } // Only fetch future bookings
+      const currentDate = new Date();
+      query.serviceBookingTime = { $gte: currentDate.toISOString() }; // Compare with ISO string
     }
 
     const payments = await Userpayment.find(query)
       .skip(skip)
       .limit(limitNum)
       .populate('professionalServicesId')
-      .populate('userID')
+      .populate('userID');
 
     // Generate and update unique booking IDs if they don't already have one
     for (let payment of payments) {
       if (!payment.bookingID) {
-        const uniqueId = payment._id.toString().slice(-6)
-        payment.bookingID = `Bok-${uniqueId}`
-        await payment.save()
+        const uniqueId = payment._id.toString().slice(-6);
+        payment.bookingID = `Bok-${uniqueId}`;
+        await payment.save();
       }
     }
 
-    const totalPayments = await Userpayment.countDocuments(query)
-    const totalPages = Math.ceil(totalPayments / limitNum)
+    const totalPayments = await Userpayment.countDocuments(query);
+    const totalPages = Math.ceil(totalPayments / limitNum);
 
     res.status(200).json({
       success: true,
@@ -112,11 +112,11 @@ const getUserPaymentsByService = async (req, res) => {
         totalPages,
         totalResults: totalPayments,
       },
-    })
+    });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message })
+    res.status(500).json({ success: false, message: error.message });
   }
-}
+};
 
 
 //for Professionals with
