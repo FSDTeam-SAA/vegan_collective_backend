@@ -221,6 +221,14 @@ exports.loginUser = async (req, res) => {
       });
     }
 
+    // Additional check for vendors - must be approved to login
+    if (user.role === "vendor" && user.isVerified !== "approved") {
+      return res.status(403).json({
+        status: false,
+        message: "Your vendor account is pending approval. Please wait for founder approval before logging in.",
+      });
+    }
+
     // Generate JWT token
     const token = jwt.sign(
       { userId: user._id, email: user.email, role: user.role },
@@ -243,6 +251,7 @@ exports.loginUser = async (req, res) => {
           country: user.country,
           state: user.state,
           city: user.city,
+          isVerified: user.isVerified, // Include verification status in response
         },
       },
     });
