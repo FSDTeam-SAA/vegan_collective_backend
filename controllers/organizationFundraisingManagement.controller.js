@@ -70,13 +70,6 @@ exports.getCampaignsByOrganizationID = async (req, res) => {
     // Find all campaigns that belong to the specified organization ID
     const campaigns = await Organizationfundraisingmanagement.find({ organizationID }).populate("organizationID");
 
-    if (campaigns.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: "No campaigns found for the specified organization ID",
-      });
-    }
-
     // Map through the campaigns and format the response
     const formattedCampaigns = campaigns.map((campaign) => {
       const percentageValue = Math.round((campaign.achieved / campaign.fundraisingGoal) * 100); // Round to nearest integer
@@ -90,13 +83,14 @@ exports.getCampaignsByOrganizationID = async (req, res) => {
         deadline: campaign.deadline,
         percentage: percentage, // Add formatted percentage
         __v: campaign.__v,
+        
       };
     });
 
     res.status(200).json({
       success: true,
       message: "Campaigns retrieved successfully",
-      data: formattedCampaigns,
+      data: formattedCampaigns || [],
     });
   } catch (error) {
     res.status(500).json({
