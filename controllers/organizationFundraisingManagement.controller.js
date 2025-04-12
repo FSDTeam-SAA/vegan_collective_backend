@@ -83,6 +83,7 @@ exports.getCampaignsByOrganizationID = async (req, res) => {
         deadline: campaign.deadline,
         percentage: percentage, // Add formatted percentage
         __v: campaign.__v,
+        
       };
     });
 
