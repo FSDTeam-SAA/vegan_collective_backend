@@ -95,11 +95,36 @@ exports.getAllOrganizationInfo = async (req, res) => {
     const sortOptions = {};
     sortOptions[sortBy] = sortOrder === "asc" ? 1 : -1;
 
-    // Fetch paginated and sorted organizations
-    const organizationInfoList = await Organizationinfo.find(filter)
-      .sort(sortOptions)
-      .skip((page - 1) * limit)
-      .limit(limit);
+    // Fetch paginated and sorted organizations with user details
+    const organizationInfoList = await Organizationinfo.aggregate([
+      { $match: filter },
+      {
+        $lookup: {
+          from: "users", // The name of the User collection
+          localField: "userID",
+          foreignField: "_id",
+          as: "userDetails",
+        },
+      },
+      {
+        $unwind: "$userDetails", // Unwind the userDetails array
+      },
+      {
+        $addFields: {
+          country: "$userDetails.country",
+          state: "$userDetails.state",
+          city: "$userDetails.city",
+        },
+      },
+      {
+        $project: {
+          userDetails: 0, // Exclude the userDetails field from the final output
+        },
+      },
+      { $sort: sortOptions },
+      { $skip: (page - 1) * limit },
+      { $limit: limit },
+    ]);
 
     // Fetch event counts in parallel using organizationID (which is the same as userID)
     const organizationsWithEvents = await Promise.all(
@@ -111,7 +136,7 @@ exports.getAllOrganizationInfo = async (req, res) => {
         });
 
         return {
-          ...organization.toObject(), // Convert Mongoose document to plain JS object
+          ...organization, // Use the plain JS object from the aggregation result
           totalEvents, // Attach totalEvents count
         };
       })

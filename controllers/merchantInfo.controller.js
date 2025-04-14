@@ -144,6 +144,11 @@ exports.getAllMerchantInfo = async (req, res) => {
           city: "$userDetails.city",
         },
       },
+      {
+        $project: {
+          userDetails: 0, // Exclude the userDetails field
+        },
+      },
       { $sort: sortOptions },
       { $skip: skip },
       { $limit: parseInt(limit) },
