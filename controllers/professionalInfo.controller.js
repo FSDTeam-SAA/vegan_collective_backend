@@ -176,6 +176,22 @@ exports.getAllProfessionalInfo = async (req, res) => {
     // Get the user IDs of the professionals
     const professionalIds = professionalInfoList.map((prof) => prof.userId);
 
+    // Fetch user details (country, state, city) for these professionals
+    const userDetails = await User.find(
+      { _id: { $in: professionalIds } },
+      { country: 1, state: 1, city: 1 } // Select only the required fields
+    );
+
+    // Create a map of userId to user details
+    const userDetailsMap = userDetails.reduce((acc, curr) => {
+      acc[curr._id.toString()] = {
+        country: curr.country,
+        state: curr.state,
+        city: curr.city,
+      };
+      return acc;
+    }, {});
+
     // Fetch total reviews and average rating for these professionals
     const reviewStats = await Review.aggregate([
       {
@@ -199,9 +215,12 @@ exports.getAllProfessionalInfo = async (req, res) => {
       return acc;
     }, {});
 
-    // Add totalReviews and averageRating to each professional info entry
+    // Add totalReviews, averageRating, and user details (country, state, city) to each professional info entry
     const professionalInfoWithStats = professionalInfoList.map((prof) => ({
       ...prof.toObject(),
+      country: userDetailsMap[prof.userId.toString()]?.country || null, // Default to null if not found
+      state: userDetailsMap[prof.userId.toString()]?.state || null, // Default to null if not found
+      city: userDetailsMap[prof.userId.toString()]?.city || null, // Default to null if not found
       totalReviews: reviewStatsMap[prof.userId.toString()]?.totalReviews || 0, // Default to 0 if no reviews exist
       averageRating: reviewStatsMap[prof.userId.toString()]?.averageRating || 0, // Default to 0 if no reviews exist
     }));
