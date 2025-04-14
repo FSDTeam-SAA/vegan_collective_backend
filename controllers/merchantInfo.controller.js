@@ -124,10 +124,31 @@ exports.getAllMerchantInfo = async (req, res) => {
     const sortOptions = { [sortBy]: order === "asc" ? 1 : -1 };
     const skip = (parseInt(page) - 1) * parseInt(limit);
 
-    const merchantInfoList = await Merchantinfo.find(filter)
-      .sort(sortOptions)
-      .skip(skip)
-      .limit(parseInt(limit));
+    const merchantInfoList = await Merchantinfo.aggregate([
+      { $match: filter },
+      {
+        $lookup: {
+          from: "users", // The name of the User collection
+          localField: "userID",
+          foreignField: "_id",
+          as: "userDetails",
+        },
+      },
+      {
+        $unwind: "$userDetails", // Unwind the userDetails array
+      },
+      {
+        $addFields: {
+          country: "$userDetails.country",
+          state: "$userDetails.state",
+          city: "$userDetails.city",
+        },
+      },
+      { $sort: sortOptions },
+      { $skip: skip },
+      { $limit: parseInt(limit) },
+    ]);
+
     const totalDocuments = await Merchantinfo.countDocuments(filter);
     const totalPages = Math.ceil(totalDocuments / parseInt(limit));
 
