@@ -184,9 +184,11 @@ exports.customerOrderProductData = async (req, res) => {
       .limit(parseInt(limit))
 
     if (!orders.length) {
-      return res
-        .status(404)
-        .json({ success: false, message: 'No orders found for this user.' })
+      return res.status(200).json({
+        success: true,
+        message: 'No orders found for this user.',
+        data: [],
+      });
     }
 
     // Generate Order Numbers dynamically
