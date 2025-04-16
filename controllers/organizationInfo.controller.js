@@ -6,9 +6,7 @@ const upload = require("../utils/multerConfig");
 const Organizationeventmanagement = require('../models/organizationEventManagement.model');  // Adjust path as needed
 
 
-/**
- * Create a new organization info entry with profile photo upload
- */
+// Create a new organization info entry
 exports.createOrganizationInfo = async (req, res) => {
   try {
     upload.single("profilePhoto")(req, res, async (err) => {
