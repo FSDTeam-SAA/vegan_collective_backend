@@ -12,7 +12,7 @@ const zoomRoutes = require("./routes/zoomRoutes");
 const organizationVolunteerRoutes = require("./routes/organizationVolunteer.route.js");
 const eventRoutes = require("./routes/eventRoutes.js");
 const merchantBookingRoutes = require("./routes/merchantBooking.route.js");
-const userOverviewRoutes = require('./routes/userOverviewRoutes');
+const getUserOverview = require('./routes/userOverviewRoutes');
 const path = require("path");
 
 const app = express();
@@ -136,7 +136,7 @@ app.use("/api/v1", userProfile);
 app.use("/api/v1", userPayment);
 app.use("/api/v1", userSupport);
 app.use("/api/v1", userGoLive);
-app.use('/api/v1', userOverviewRoutes);
+app.use('/api/v1', getUserOverview);
 
 app.use("/api/v1", founderVendorManagement);
 app.use("/api/v1", founderVerificationManagement);

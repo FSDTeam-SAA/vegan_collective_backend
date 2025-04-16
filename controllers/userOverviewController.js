@@ -1,19 +1,26 @@
 const Userpayment = require('../models/userPayment.model');
-const Professionalservicebooking = require('../models/professionalServices.model');
-const Organizationeventmanagement = require('../models/organizationEventManagement.model');
+const OrganizationVolunteer = require('../models/organizationvolunteer.model');
 
 exports.getUserOverview = async (req, res) => {
   try {
     const userId = req.params.userId;
 
-    // Fetch the number of products ordered
-    const productsOrdered = await Userpayment.countDocuments({ userID: userId });
+    // 1. Products Ordered - Count where productId array is not empty
+    const productsOrdered = await Userpayment.countDocuments({ 
+      userID: userId,
+      productId: { $exists: true, $not: { $size: 0 } }
+    });
 
-    // Fetch the number of services booked
-    const servicesBooked = await Professionalservicebooking.countDocuments({ userID: userId });
+    // 2. Services Booked - Count where professionalServicesId exists (not null)
+    const servicesBooked = await Userpayment.countDocuments({ 
+      userID: userId,
+      professionalServicesId: { $exists: true, $ne: null }
+    });
 
-    // Fetch the number of volunteer events
-    const volunteerEvents = await Organizationeventmanagement.countDocuments({ organizationID: userId });
+    // 3. Volunteer Events - Count events where user is an attendee
+    const volunteerEvents = await OrganizationVolunteer.countDocuments({
+      "attendeeDetail.userID": userId
+    });
 
     res.status(200).json({
       success: true,
