@@ -519,6 +519,12 @@ exports.getTopMerchants = async (req, res) => {
     const skip = (page - 1) * limit;
 
     const pipeline = [
+      // First match only documents where sellerType is "Merchant"
+      {
+        $match: {
+          sellerType: "Merchant"
+        }
+      },
       {
         $unwind: { path: "$productId", preserveNullAndEmptyArrays: true },
       },
@@ -565,12 +571,10 @@ exports.getTopMerchants = async (req, res) => {
           totalSales: 1,
           totalOrders: 1,
           businessName: "$merchantInfo.businessName",
-
           profilePhoto: "$merchantInfo.profilePhoto",
           about: "$merchantInfo.about",
           shortDescriptionOfStore: "$merchantInfo.shortDescriptionOfStore",
           address: "$merchantInfo.address",
-
           // Exclude the 'products' field from the response
         },
       },
@@ -585,8 +589,13 @@ exports.getTopMerchants = async (req, res) => {
       },
     ];
 
-    // Get total count of merchants for pagination
+    // Get total count of merchants for pagination (with sellerType filter)
     const totalMerchants = await Userpayment.aggregate([
+      { 
+        $match: {
+          sellerType: "Merchant"
+        }
+      },
       { $group: { _id: "$sellerID" } },
       { $count: "total" },
     ]);
