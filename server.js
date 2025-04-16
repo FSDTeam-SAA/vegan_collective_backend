@@ -12,6 +12,7 @@ const zoomRoutes = require("./routes/zoomRoutes");
 const organizationVolunteerRoutes = require("./routes/organizationVolunteer.route.js");
 const eventRoutes = require("./routes/eventRoutes.js");
 const merchantBookingRoutes = require("./routes/merchantBooking.route.js");
+const userOverviewRoutes = require('./routes/userOverviewRoutes');
 const path = require("path");
 
 const app = express();
@@ -69,6 +70,7 @@ const userProfile = require("./routes/userProfile.route.js");
 const userPayment = require("./routes/userPayment.route.js");
 const userSupport = require("./routes/userSupport.route.js");
 const userGoLive = require("./routes/userGoLive.route.js");
+
 
 const paymentRoute = require("./routes/payment.Routes.js");
 const googleAuthRoute = require("./routes/googleAuth.js");
@@ -134,6 +136,7 @@ app.use("/api/v1", userProfile);
 app.use("/api/v1", userPayment);
 app.use("/api/v1", userSupport);
 app.use("/api/v1", userGoLive);
+app.use('/api/v1', userOverviewRoutes);
 
 app.use("/api/v1", founderVendorManagement);
 app.use("/api/v1", founderVerificationManagement);
