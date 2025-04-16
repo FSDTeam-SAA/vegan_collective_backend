@@ -86,6 +86,8 @@ const calendarRoutes = require("./routes/calendar.Routes.js");
 
 const geolocationRoutes = require('./routes/geolocation.route');
 
+const locationRoutes = require("./routes/getLocation.Routes.js");
+
 //super admin 
 app.use("/api/v1", superAdminRoutes);
 
@@ -149,6 +151,8 @@ app.use("/api/v1", organizationVolunteerRoutes);
 app.use("/api/v1", newsletterRoutes);
 app.use("/api/v1", eventRoutes);
 
+
+
 // Google Meet routes - prefixed with /api/v1 to match your structure
 
 // Handle auth callback separately if needed
@@ -163,6 +167,8 @@ app.use(express.static(path.join(__dirname, "public")));
 app.use("/api/v1/", superAdminRoute);
 
 app.use('/api/v1/geolocation', geolocationRoutes);
+
+app.use("/api/v1", locationRoutes);
 
 // Serve frontend
 // app.get("*", (req, res) => {
